@@ -1,0 +1,47 @@
+{
+  "name": "qr-shop-platform-api",
+  "version": "0.1.0",
+  "description": "Backend for QR Shop Marketplace, Merchant, and Admin.",
+  "main": "src/server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "build": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "node scripts/seed-login.js && node scripts/seed-three-merchants.js",
+    "db:seed:townships": "node scripts/seed-townships.js",
+    "db:seed:mall": "node scripts/seed-mall-meta.js",
+    "db:seed:announcements": "node scripts/seed-announcements.js",
+    "db:seed:merchants": "node scripts/seed-three-merchants.js",
+    "db:studio": "prisma studio",
+    "test": "NODE_ENV=test vitest run",
+    "test:unit": "NODE_ENV=test vitest run tests/unit",
+    "test:integration": "NODE_ENV=test vitest run tests/integration",
+    "test:watch": "NODE_ENV=test vitest"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "@supabase/supabase-js": "^2.118.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.5.0",
+    "serverless-http": "^3.2.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/supertest": "^6.0.3",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.16.2",
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "hero": {
+    "imageUrl": "https://images.unsplash.com/photo-1607083206869-4c79793e3030?auto=format&fit=crop&w=1400&q=85",
+    "eyebrow": "LIMITED TIME",
+    "title": "Deals of the week",
+    "subtitle": "Beauty, grocery, home & more — save every day",
+    "cta": "Shop deals"
+  },
+  "categories": [
+    {
+      "id": "beauty",
+      "name": "Beauty",
+      "nameMy": "အလှကုန်",
+      "icon": "sparkles",
+      "imageUrl": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "personal",
+      "name": "Personal care",
+      "nameMy": "ကိုယ်ရေးသုံး",
+      "icon": "person.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "grocery",
+      "name": "Grocery",
+      "nameMy": "စားသောက်ကုန်",
+      "icon": "bag.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "drinks",
+      "name": "Drinks",
+      "nameMy": "အဖျော်ယမကာ",
+      "icon": "cup.and.saucer.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "snacks",
+      "name": "Snacks",
+      "nameMy": "အဆာပြေ",
+      "icon": "fork.knife",
+      "imageUrl": "https://images.unsplash.com/photo-1621939514649-280e2ee7a36e?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "home",
+      "name": "Home",
+      "nameMy": "အိမ်သုံး",
+      "icon": "house.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "nameMy": "မီးဖိုချောင်",
+      "icon": "fork.knife",
+      "imageUrl": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "fashion",
+      "name": "Fashion",
+      "nameMy": "ဖက်ရှင်",
+      "icon": "tshirt.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "electronics",
+      "name": "Electronics",
+      "nameMy": "အီလက်ထရောနစ်",
+      "icon": "desktopcomputer",
+      "imageUrl": "https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "baby",
+      "name": "Baby & kids",
+      "nameMy": "ကလေးသုံး",
+      "icon": "figure.and.child.holdinghands",
+      "imageUrl": "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "health",
+      "name": "Health",
+      "nameMy": "ကျန်းမာရေး",
+      "icon": "cross.case.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "pets",
+      "name": "Pets",
+      "nameMy": "အိမ်မွေးတိရစ္ဆာန်",
+      "icon": "pawprint.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "essentials",
+      "name": "Essentials",
+      "nameMy": "နေ့စဉ်သုံး",
+      "icon": "shippingbox.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=600&q=85"
+    },
+    {
+      "id": "brands",
+      "name": "Top brands",
+      "nameMy": "အမှတ်တံဆိပ်",
+      "icon": "storefront.fill",
+      "imageUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=85"
+    }
+  ]
+}

@@ -1,0 +1,605 @@
+// QR Shop Platform API — Marketplace · Merchant · Admin
+// Postgres: Supabase (DATABASE_URL).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  buyer
+  merchant
+  staff
+  admin
+  super_admin
+}
+
+enum ShopStatus {
+  pending
+  approved
+  rejected
+  suspended
+}
+
+enum OrderFulfillment {
+  delivery
+  pickup
+}
+
+enum OrderPayment {
+  cod
+  kpay
+  uabpay
+  ayapay
+  cbpay
+  mmqr
+  cash
+}
+
+enum OrderSource {
+  marketplace
+  pos
+  shop_view
+  qr_guest
+}
+
+enum OrderChannel {
+  b2c
+  b2b
+}
+
+/**
+ * How the shop appears on Marketplace / QR:
+ * - b2c: retail selling only
+ * - b2b: wholesale selling only
+ * - both: retail + wholesale prices
+ * - portfolio: showcase only (no checkout)
+ */
+enum ShopListingMode {
+  b2c
+  b2b
+  both
+  portfolio
+}
+
+enum OrderStage {
+  request
+  delivery
+  pickup
+  invoiced
+  completed
+  cancelled
+}
+
+model User {
+  id           String   @id @default(cuid())
+  role         Role
+  name         String
+  phone        String?
+  email        String?
+  /**
+   * Denormalized default delivery line (mirrors default BuyerAddress.location).
+   * Same idea as Marketplace AuthUser.location
+   */
+  address      String?
+  /** Default township id (mirrors default BuyerAddress.townshipId) */
+  townshipId   String?
+  /** Password for buyers/merchants/admins; PIN for staff */
+  passwordHash String
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shopId       String?
+  shop         Shop?    @relation(fields: [shopId], references: [id])
+
+  buyerOrders  Order[]  @relation("BuyerOrders")
+  addresses    BuyerAddress[]
+  reviews      Review[]
+  guestQrsCreated GuestQr[] @relation("GuestQrCreator")
+
+  @@unique([phone])
+  @@unique([email])
+  @@index([role])
+}
+
+/**
+ * Saved buyer delivery places — matches Marketplace BuyerAddress
+ * (Account → Addresses / register).
+ */
+model BuyerAddress {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /** Home | Office | Other */
+  label      String   @default("Home")
+  street     String
+  /** FK to Admin-published Township.id (e.g. yangon-hlaing-11051) */
+  townshipId String
+  /**
+   * Full line: "street, Township, State postal"
+   * Same as Marketplace BuyerAddress.location
+   */
+  location   String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([townshipId])
+}
+
+model Shop {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  nameMy      String?
+  phone       String?
+  email       String?
+  location    String?
+  township    String?
+  status      ShopStatus @default(pending)
+  reviewNote  String?
+  listed      Boolean    @default(true)
+  tagline     String?
+  logoUrl     String?
+  coverUrl    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  users       User[]
+  products    Product[]
+  orders      Order[]
+  features    ShopFeatures?
+  delivery    ShopDelivery?
+  payments    ShopPaymentMethod[]
+  reviews     Review[]
+  coupons     Coupon[]
+  guestPhones GuestPhoneAccess[]
+  guestQrs    GuestQr[]
+  productViews ProductView[]
+  chatThreads ChatThread[]
+  portalThreads PortalThread[]
+}
+
+/** Modules + Marketplace listing mode (B2C / B2B / both / portfolio) */
+model ShopFeatures {
+  shopId                 String          @id
+  shop                   Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  purchasesEnabled       Boolean         @default(false)
+  barcodeTrackingEnabled Boolean         @default(false)
+  ratingsReviewsEnabled  Boolean         @default(false)
+  couponCodesEnabled     Boolean         @default(false)
+  bogoEnabled            Boolean         @default(false)
+  staffEnabled           Boolean         @default(false)
+  posEnabled             Boolean         @default(false)
+  deliveryModuleEnabled  Boolean         @default(false)
+  memberPointsEnabled    Boolean         @default(false)
+  /** Source of truth for mall presence + selling */
+  listingMode            ShopListingMode @default(b2c)
+  /**
+   * Legacy mirrors (kept in sync by API from listingMode).
+   * Prefer listingMode in new code.
+   */
+  b2cEnabled             Boolean         @default(true)
+  b2bEnabled             Boolean         @default(false)
+}
+
+/**
+ * Phones allowed to see B2B prices for a shop (one-time / QR buyers).
+ * Merchant marks phone "open for B2B".
+ */
+model GuestPhoneAccess {
+  id         String   @id @default(cuid())
+  shopId     String
+  shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  phone      String
+  b2bAllowed Boolean  @default(false)
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([shopId, phone])
+  @@index([phone])
+}
+
+/**
+ * One-time buyer QR — scan opens shop with phone baked in (no password / no OTP).
+ * Token is opaque; redeem via POST /api/auth/guest/qr
+ */
+model GuestQr {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  shopId      String
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  phone       String
+  /** Snapshot: also upsert GuestPhoneAccess.b2bAllowed when creating */
+  b2bAllowed  Boolean   @default(false)
+  label       String?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  createdById String?
+  createdBy   User?     @relation("GuestQrCreator", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@index([shopId, phone])
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name         String
+  /** B2C / retail price (kyats) */
+  priceKs      Int
+  /** B2B / wholesale price (kyats); null = no wholesale price */
+  priceB2bKs   Int?
+  compareAtKs  Int?
+  /** Last landed / cost (optional) */
+  costKs       Int?
+  stock        Int      @default(0)
+  categoryId   String?
+  badge        String?
+  imageUrl     String?
+  barcode      String?
+  /** piece | carton | dozen | pack */
+  uom          String   @default("piece")
+  purchaseUom  String   @default("piece")
+  uomFactor    Int      @default(1)
+  templateId   String?
+  /** JSON object e.g. {"color":"White","size":"M"} */
+  attributesJson String @default("{}")
+  active       Boolean  @default(true)
+  /**
+   * Legacy “any public surface” flag — kept in sync with sell channels.
+   * Prefer sellOnMarketplace / sellOnApp / sellOnOwnPage.
+   */
+  showOnWebsite Boolean @default(true)
+  /** Sell on QR Marketplace mall (website). */
+  sellOnMarketplace Boolean @default(true)
+  /** Sell on QR Shop Marketplace mobile app. */
+  sellOnApp Boolean @default(true)
+  /** Sell on this shop’s own page / Shop QR landing. */
+  sellOnOwnPage Boolean @default(true)
+  /** Buyer product-page opens by channel (Marketplace). */
+  viewsWebsite Int      @default(0)
+  viewsApp     Int      @default(0)
+  viewsQr      Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orderLines   OrderLine[]
+  reviews      Review[]
+  views        ProductView[]
+
+  @@index([shopId, active, showOnWebsite])
+  @@index([shopId, active, sellOnMarketplace])
+  @@index([shopId, active, sellOnApp])
+  @@index([shopId, active, sellOnOwnPage])
+  @@index([shopId, barcode])
+}
+
+/** One product page open — website / app / QR. */
+model ProductView {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  /** website | app | qr */
+  channel   String
+  createdAt DateTime @default(now())
+
+  @@index([shopId, channel, createdAt])
+  @@index([productId, createdAt])
+}
+
+model Order {
+  id              String           @id @default(cuid())
+  /**
+   * Short public number shoppers/admins see — e.g. d1214 (delivery), p12431 (pickup).
+   * CUID `id` stays the API / relation key. Null only for legacy rows until backfill.
+   */
+  code            String?          @unique
+  shopId          String
+  shop            Shop             @relation(fields: [shopId], references: [id])
+  /** null = one-time / guest buyer (no User row) */
+  buyerId         String?
+  buyer           User?            @relation("BuyerOrders", fields: [buyerId], references: [id])
+  buyerName       String
+  buyerPhone      String
+  /**
+   * Snapshot delivery line at order time
+   * (street · township label, or pickup note). Guest: optional free text.
+   */
+  address         String?
+  channel         OrderChannel     @default(b2c)
+  fulfillment     OrderFulfillment
+  payment         OrderPayment
+  source          OrderSource      @default(marketplace)
+  /**
+   * Buyer surface: website | app | qr | instore
+   * (distinct from channel = retail b2c / wholesale b2b)
+   */
+  clientSurface   String           @default("website")
+  stage           OrderStage       @default(request)
+  /** Admin township id used for fee lookup (Merchant zones) */
+  townshipId      String?
+  /** Snapshot label for merchant Orders UI */
+  townshipName    String?
+  deliveryFeeKs   Int              @default(0)
+  subtotalKs      Int
+  totalKs         Int
+  pickupReserved  Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  lines           OrderLine[]
+
+  @@index([shopId, stage])
+  @@index([buyerPhone])
+  @@index([channel])
+  @@index([townshipId])
+  @@index([code])
+}
+
+/** Atomic counters for short order codes (d… / p…). */
+model OrderCodeCounter {
+  prefix String @id
+  next   Int    @default(1000)
+}
+
+model OrderLine {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  productName String
+  qty         Int
+  unitKs      Int
+  lineTotalKs Int
+}
+
+/**
+ * Platform townships — Admin publishes (active).
+ * Same shape as Marketplace/Merchant/Admin shared-townships DeliveryTownship.
+ * Ids are stable slugs (e.g. yangon-hlaing-11051), not cuid.
+ */
+model Township {
+  id         String   @id
+  name       String
+  nameEn     String?
+  nameMm     String?
+  state      String   @default("Yangon (MM)")
+  /** Postal code — shown in Admin / Merchant / Marketplace */
+  postalCode String   @default("")
+  country    String   @default("Myanmar")
+  /** Admin publishes for merchants + marketplace checkout */
+  active     Boolean  @default(false)
+  sortOrder  Int      @default(0)
+  sequence   Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, state])
+  @@index([postalCode])
+}
+
+model ShopDelivery {
+  shopId          String  @id
+  shop            Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  pickupEnabled   Boolean @default(true)
+  deliveryEnabled Boolean @default(false)
+  /** JSON: [{ townshipId, feeKs }] */
+  zonesJson       Json    @default("[]")
+}
+
+model ShopPaymentMethod {
+  id       String  @id @default(cuid())
+  shopId   String
+  shop     Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  method   OrderPayment
+  enabled  Boolean @default(false)
+  qrUrl    String?
+
+  @@unique([shopId, method])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  buyerId     String?
+  buyer       User?    @relation(fields: [buyerId], references: [id])
+  buyerName   String
+  buyerPhone  String
+  rating      Int
+  body        String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@unique([productId, buyerPhone])
+  @@index([shopId])
+}
+
+model Coupon {
+  id            String   @id @default(cuid())
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  code          String
+  kind          String
+  percent       Int?
+  amountKs      Int?
+  minSubtotalKs Int?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@unique([shopId, code])
+}
+
+model Guide {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/** Marketplace home categories (Admin can override; seeded from mall-meta.json) */
+model Category {
+  id        String  @id
+  name      String
+  nameMy    String?
+  icon      String?
+  imageUrl  String?
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+}
+
+/** Kill-switches for Marketplace (Admin) */
+model PlatformSettings {
+  id              String   @id @default("default")
+  homePage        Boolean  @default(true)
+  shopsDirectory  Boolean  @default(true)
+  marketplace     Boolean  @default(true)
+  submissions     Boolean  @default(true)
+  publicEnquiries Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+/**
+ * Platform announcements — Admin writes; Marketplace customers + Merchant apps read.
+ * Mirrors Admin UI PlatformAnnouncement (shared-announcements).
+ */
+model Announcement {
+  id              String   @id @default(cuid())
+  title           String
+  body            String
+  /** @deprecated use sendToCustomers + merchantScope */
+  audience        String   @default("customer")
+  /** Marketplace home hero + buyer notifications */
+  sendToCustomers Boolean  @default(true)
+  /** all | selected | none — which merchants see this */
+  merchantScope   String   @default("all")
+  /** Shop ids when merchantScope === selected (JSON string array) */
+  merchantIdsJson String   @default("[]")
+  published       Boolean  @default(false)
+  authorName      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([published, sendToCustomers])
+  @@index([published, merchantScope])
+}
+
+/** Marketplace home ad carousel */
+model Ad {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String   @default("")
+  cta       String   @default("Shop")
+  imageUrl  String
+  /** In-app path or URL — Marketplace linkHref */
+  href      String?
+  active    Boolean  @default(true)
+  /** Live window — Marketplace only shows while now is within [startsAt, endsAt]. */
+  startsAt  DateTime?
+  endsAt    DateTime?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, startsAt, endsAt])
+}
+
+/** Shops directory public enquiry (Marketplace) */
+model Enquiry {
+  id           String   @id @default(cuid())
+  shopId       String?
+  shopName     String?
+  buyerName    String
+  buyerContact String?
+  message      String
+  productName  String?
+  status       String   @default("new")
+  reply        String?
+  replyAt      DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([shopId, status])
+}
+
+/** Buyer ↔ merchant chat (Marketplace Messages · Merchant Messages). */
+model ChatThread {
+  id           String        @id @default(cuid())
+  shopId       String
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  buyerId      String?
+  buyerName    String
+  buyerPhone   String
+  /** app | website */
+  channel      String        @default("app")
+  lastMessage  String?
+  lastAt       DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  messages     ChatMessage[]
+
+  @@unique([shopId, buyerPhone])
+  @@index([shopId, lastAt])
+  @@index([buyerPhone, lastAt])
+  @@index([buyerId])
+}
+
+model ChatMessage {
+  id             String     @id @default(cuid())
+  threadId       String
+  thread         ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  /** buyer | merchant */
+  from           String
+  text           String
+  productId      String?
+  productName    String?
+  productImageUrl String?
+  productPriceLabel String?
+  createdAt      DateTime   @default(now())
+
+  @@index([threadId, createdAt])
+}
+
+/** Admin ↔ Merchant portal messages (Admin Messages · Merchant Admin messages). */
+model PortalThread {
+  id                 String          @id @default(cuid())
+  shopId             String
+  shop               Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  subject            String          @default("Message")
+  unreadForAdmin     Int             @default(0)
+  unreadForMerchant  Int             @default(0)
+  lastMessage        String?
+  lastAt             DateTime        @default(now())
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  messages           PortalMessage[]
+
+  @@index([shopId, lastAt])
+  @@index([lastAt])
+}
+
+model PortalMessage {
+  id        String       @id @default(cuid())
+  threadId  String
+  thread    PortalThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  /** admin | merchant */
+  from      String
+  body      String
+  createdAt DateTime     @default(now())
+
+  @@index([threadId, createdAt])
+}
