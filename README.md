@@ -188,3 +188,12 @@ curl -s http://localhost:4100/api/uploads?kind=products \
 Save `data.url` on `Product.imageUrl`. On Hostinger set `PUBLIC_BASE_URL` to your API domain and keep `uploads/` on disk (see `raw/hostinger-disk-uploads.md`).
 
 No OTP. Guest identity is phone on the QR/order only.
+
+## Deploy stages (Preview vs Production)
+
+| Stage | Git branch | Vercel |
+|-------|------------|--------|
+| **Production** | `main` | Production Branch |
+| **Preview** | `preview` | Preview deployments |
+
+Configure Preview and Production env vars separately (separate DB recommended). Full checklist: [DEPLOY.md](./DEPLOY.md). Never commit `.env`.
