@@ -11,6 +11,10 @@ import { getDeliveryFeeForTownship } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
 import { parseStoreStyle } from "../lib/store-style.js";
+import {
+  normalizeMediaUrl,
+  withNormalizedShopMedia,
+} from "../lib/media-url.js";
 
 const router = Router();
 
@@ -62,7 +66,7 @@ router.get("/", async (req, res) => {
           name: s.name,
           nameMy: s.nameMy,
           tagline: s.tagline,
-          logoUrl: s.logoUrl,
+          logoUrl: normalizeMediaUrl(s.logoUrl, req),
           township: s.township,
           location: s.location,
           listingMode: ch.listingMode,
@@ -174,8 +178,8 @@ router.get("/:id/products", async (req, res) => {
         name: shop.name,
         nameMy: shop.nameMy,
         tagline: shop.tagline,
-        logoUrl: shop.logoUrl,
-        coverUrl: shop.coverUrl,
+        logoUrl: normalizeMediaUrl(shop.logoUrl, req),
+        coverUrl: normalizeMediaUrl(shop.coverUrl, req),
         phone: shop.phone,
         phone2: shop.phone2 ?? "",
         email: shop.email,
@@ -223,7 +227,7 @@ router.get("/:id", async (req, res) => {
   if (!shop) return fail(res, 404, "Shop not found");
   const ch = publicShopChannels(shop.features);
   return ok(res, {
-    ...shop,
+    ...withNormalizedShopMedia(shop, req),
     storeStyle: parseStoreStyle(shop.storeStyleJson),
     websitePublished: Boolean(shop.websitePublished),
     aboutText: shop.aboutText ?? "",

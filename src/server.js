@@ -40,11 +40,16 @@ import realtimeRoutes from "./routes/realtime.routes.js";
 import { ok, fail } from "./lib/response.js";
 import { realtimeClientCount } from "./lib/realtime.js";
 import { ensureUploadDirs, uploadsRoot } from "./lib/uploads.js";
+import { seedUploadsDir } from "./lib/media-url.js";
 import {
   ensurePublicBucket,
   supabaseStorageConfigured,
   storageBucketName,
 } from "./lib/supabase-storage.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const app = express();
 app.disable("x-powered-by");
@@ -73,6 +78,21 @@ app.use(
   "/uploads",
   express.static(uploadsRoot(), {
     maxAge: process.env.NODE_ENV === "production" ? "7d" : 0,
+  }),
+);
+/** Durable seed shop logo / cover (Vercel has no persistent disk uploads). */
+app.use(
+  "/seed",
+  express.static(seedUploadsDir(), {
+    maxAge: process.env.NODE_ENV === "production" ? "30d" : 0,
+  }),
+);
+/** Also try repo uploads/ when present (local + bundled). */
+app.use(
+  "/uploads",
+  express.static(path.join(__apiRoot, "uploads"), {
+    maxAge: process.env.NODE_ENV === "production" ? "7d" : 0,
+    fallthrough: true,
   }),
 );
 

@@ -6,6 +6,10 @@ import { shopIdOrFail } from "../lib/merchant-auth.js";
 import { publicShopChannels } from "../lib/shop-channels.js";
 import { parseStoreStyle, storeStyleToJson } from "../lib/store-style.js";
 import { publicMerchantProduct } from "../lib/merchant-product.js";
+import {
+  normalizeMediaUrl,
+  withNormalizedShopMedia,
+} from "../lib/media-url.js";
 
 const router = Router();
 
@@ -247,8 +251,8 @@ router.get("/overview", async (req, res) => {
         name: shop.name,
         status: shop.status,
         listed: shop.listed,
-        logoUrl: shop.logoUrl,
-        coverUrl: shop.coverUrl,
+        logoUrl: normalizeMediaUrl(shop.logoUrl, req),
+        coverUrl: normalizeMediaUrl(shop.coverUrl, req),
         listingMode: ch.listingMode,
         portfolioOnly: ch.portfolioOnly,
         canOrder: ch.canOrder,
@@ -357,7 +361,7 @@ router.get("/shop", async (req, res) => {
     const ch = publicShopChannels(shop.features);
     const storeStyle = parseStoreStyle(shop.storeStyleJson);
     return ok(res, {
-      ...shop,
+      ...withNormalizedShopMedia(shop, req),
       storeStyle,
       websitePublished: Boolean(shop.websitePublished),
       aboutText: shop.aboutText ?? "",
@@ -436,7 +440,7 @@ router.patch("/shop", async (req, res) => {
     });
     const ch = publicShopChannels(shop.features);
     return ok(res, {
-      ...shop,
+      ...withNormalizedShopMedia(shop, req),
       storeStyle: parseStoreStyle(shop.storeStyleJson),
       websitePublished: Boolean(shop.websitePublished),
       aboutText: shop.aboutText ?? "",

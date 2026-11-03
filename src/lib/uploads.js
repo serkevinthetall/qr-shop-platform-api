@@ -47,15 +47,25 @@ export function ensureUploadDirs() {
 }
 
 export function publicBaseUrl(req) {
-  const fromEnv = String(process.env.PUBLIC_BASE_URL || "").trim().replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
+  const fromEnv = String(process.env.PUBLIC_BASE_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+  const envIsLoopback = /localhost|127\.0\.0\.1/i.test(fromEnv);
+  /**
+   * Never advertise localhost in production responses — Vercel / phones cannot
+   * load Merchant logo & shop photo from the deployer's machine.
+   */
+  if (fromEnv && !envIsLoopback) return fromEnv;
   if (req) {
     const host = req.get("host");
-    if (host) {
-      const proto = String(req.get("x-forwarded-proto") || req.protocol || "http").split(",")[0].trim();
+    if (host && !/localhost|127\.0\.0\.1/i.test(host)) {
+      const proto = String(req.get("x-forwarded-proto") || req.protocol || "https")
+        .split(",")[0]
+        .trim();
       return `${proto}://${host}`;
     }
   }
+  if (fromEnv) return fromEnv;
   const port = Number(process.env.PORT) || 4100;
   return `http://localhost:${port}`;
 }
