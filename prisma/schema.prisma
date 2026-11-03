@@ -2,7 +2,9 @@
 // Postgres: Supabase (DATABASE_URL).
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  /** native = local Mac/Windows; rhel = Vercel Node serverless */
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -139,6 +141,8 @@ model Shop {
   name        String
   nameMy      String?
   phone       String?
+  /** Optional second contact number (About / shop website) */
+  phone2      String?
   email       String?
   location    String?
   township    String?
@@ -148,6 +152,15 @@ model Shop {
   tagline     String?
   logoUrl     String?
   coverUrl    String?
+  /**
+   * Merchant shop website (Marketplace /s/:id + Shop QR).
+   * Off = public visitors cannot open the storefront (personal External links still work).
+   */
+  websitePublished Boolean @default(false)
+  /** Store style presets: { phone: StoreStylePreset, website: StoreStylePreset } */
+  storeStyleJson   String  @default("{}")
+  /** About tab copy for the shop website */
+  aboutText        String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -164,6 +177,7 @@ model Shop {
   productViews ProductView[]
   chatThreads ChatThread[]
   portalThreads PortalThread[]
+  stockMoves  StockMove[]
 }
 
 /** Modules + Marketplace listing mode (B2C / B2B / both / portfolio) */
@@ -177,7 +191,8 @@ model ShopFeatures {
   bogoEnabled            Boolean         @default(false)
   staffEnabled           Boolean         @default(false)
   posEnabled             Boolean         @default(false)
-  deliveryModuleEnabled  Boolean         @default(false)
+  /** Always treated as On in apps — delivery pricing is core, not a module. */
+  deliveryModuleEnabled  Boolean         @default(true)
   memberPointsEnabled    Boolean         @default(false)
   /** Source of truth for mall presence + selling */
   listingMode            ShopListingMode @default(b2c)
@@ -208,8 +223,9 @@ model GuestPhoneAccess {
 }
 
 /**
- * One-time buyer QR — scan opens shop with phone baked in (no password / no OTP).
- * Token is opaque; redeem via POST /api/auth/guest/qr
+ * External-user personal link — long-lived token locked to Retail or Wholesale.
+ * Visitor opens link → enters phone (must match) → shop at that channel.
+ * Merchant can flip b2bAllowed on the same token. Redeem: POST /api/auth/guest/qr
  */
 model GuestQr {
   id          String    @id @default(cuid())
@@ -217,14 +233,22 @@ model GuestQr {
   shopId      String
   shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
   phone       String
-  /** Snapshot: also upsert GuestPhoneAccess.b2bAllowed when creating */
+  /** Easy checkout / remembered visitor details (not a Customer account) */
+  name        String?
+  address     String?
+  /** false = Retail link, true = Wholesale link (flip without new token) */
   b2bAllowed  Boolean   @default(false)
   label       String?
+  /** true = created when buyer used Easy checkout from Shop QR */
+  fromEasyCheckout Boolean @default(false)
   expiresAt   DateTime?
   revokedAt   DateTime?
+  /** Set when visitor first opens + verifies phone / Easy checkout */
+  activatedAt DateTime?
   createdById String?
   createdBy   User?     @relation("GuestQrCreator", fields: [createdById], references: [id])
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([shopId, phone])
 }
@@ -242,6 +266,10 @@ model Product {
   /** Last landed / cost (optional) */
   costKs       Int?
   stock        Int      @default(0)
+  /** When true, Overview / Inventory “Low” uses lowStockThreshold. */
+  lowStockAlertEnabled Boolean @default(false)
+  /** Alert when stock ≤ this (only if lowStockAlertEnabled). */
+  lowStockThreshold    Int     @default(5)
   categoryId   String?
   badge        String?
   imageUrl     String?
@@ -253,17 +281,18 @@ model Product {
   templateId   String?
   /** JSON object e.g. {"color":"White","size":"M"} */
   attributesJson String @default("{}")
+  /** Published — appears on shop website (Shop QR). Required for Marketplace/App. */
   active       Boolean  @default(true)
   /**
    * Legacy “any public surface” flag — kept in sync with sell channels.
    * Prefer sellOnMarketplace / sellOnApp / sellOnOwnPage.
    */
   showOnWebsite Boolean @default(true)
-  /** Sell on QR Marketplace mall (website). */
-  sellOnMarketplace Boolean @default(true)
-  /** Sell on QR Shop Marketplace mobile app. */
-  sellOnApp Boolean @default(true)
-  /** Sell on this shop’s own page / Shop QR landing. */
+  /** Also sell on QR Marketplace mall (requires active). */
+  sellOnMarketplace Boolean @default(false)
+  /** Also sell on QR Shop Marketplace mobile app (requires active). */
+  sellOnApp Boolean @default(false)
+  /** Synced with active — shop website / Shop QR. */
   sellOnOwnPage Boolean @default(true)
   /** Buyer product-page opens by channel (Marketplace). */
   viewsWebsite Int      @default(0)
@@ -275,12 +304,40 @@ model Product {
   orderLines   OrderLine[]
   reviews      Review[]
   views        ProductView[]
+  stockMoves   StockMove[]
 
   @@index([shopId, active, showOnWebsite])
   @@index([shopId, active, sellOnMarketplace])
   @@index([shopId, active, sellOnApp])
   @@index([shopId, active, sellOnOwnPage])
   @@index([shopId, barcode])
+}
+
+/**
+ * Inventory in/out ledger — tracks units sold or received even when
+ * a SKU has no meaningful stock count (always 0 / untracked).
+ */
+model StockMove {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  /** Snapshot name (orders may outlive product edits) */
+  productName String
+  /** Absolute qty moved (always ≥ 1) */
+  qty         Int
+  /** in = received / restock · out = sold / leave shop */
+  direction   String
+  /** sale | adjust | restock | pos | other */
+  reason      String   @default("sale")
+  orderId     String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([shopId, createdAt])
+  @@index([shopId, productId, createdAt])
+  @@index([orderId])
 }
 
 /** One product page open — website / app / QR. */
@@ -319,7 +376,8 @@ model Order {
   address         String?
   channel         OrderChannel     @default(b2c)
   fulfillment     OrderFulfillment
-  payment         OrderPayment
+  /** Matches PlatformPaymentMethod.id (cod, kpay, …) — was OrderPayment enum */
+  payment         String
   source          OrderSource      @default(marketplace)
   /**
    * Buyer surface: website | app | qr | instore
@@ -403,7 +461,8 @@ model ShopPaymentMethod {
   id       String  @id @default(cuid())
   shopId   String
   shop     Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  method   OrderPayment
+  /** Matches PlatformPaymentMethod.id (cod, kpay, wavepay, …) */
+  method   String
   enabled  Boolean @default(false)
   qrUrl    String?
 
@@ -461,6 +520,35 @@ model Category {
   imageUrl  String?
   sortOrder Int     @default(0)
   active    Boolean @default(true)
+}
+
+/** Marketplace home hero (Admin-edited; seeded from mall-meta.json) */
+model MallHero {
+  id        String   @id @default("default")
+  imageUrl  String   @default("")
+  eyebrow   String   @default("")
+  title     String   @default("")
+  subtitle  String   @default("")
+  cta       String   @default("Browse")
+  href      String?
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * Platform payment catalog — Admin adds / enables methods.
+ * ShopPaymentMethod.method + Order.payment store these ids as strings.
+ */
+model PlatformPaymentMethod {
+  id         String   @id
+  label      String
+  shortLabel String
+  subtitle   String   @default("")
+  needsQr    Boolean  @default(true)
+  active     Boolean  @default(true)
+  builtin    Boolean  @default(false)
+  sort       Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 /** Kill-switches for Marketplace (Admin) */

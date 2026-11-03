@@ -39,11 +39,12 @@ const registerBuyerSchema = z.object({
   label: z.string().optional(),
 });
 
+/** Required: name, phone, shopName. Password is set by Admin later (not by merchant). */
 const registerMerchantSchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(6),
-  email: z.string().email(),
-  password: z.string().min(4),
+  email: z.string().email().optional().or(z.literal("")),
+  password: z.string().min(4).optional().or(z.literal("")),
   shopName: z.string().min(1),
   location: z.string().optional(),
 });
@@ -175,8 +176,10 @@ router.post("/register/merchant", async (req, res) => {
     const parsed = registerMerchantSchema.safeParse(req.body);
     if (!parsed.success) return fail(res, 400, "Invalid merchant registration");
 
-    const email = parsed.data.email.trim().toLowerCase();
     const phone = normalizePhone(parsed.data.phone);
+    const emailRaw = (parsed.data.email || "").trim().toLowerCase();
+    const email =
+      emailRaw || `${phone.replace(/\D/g, "") || "shop"}@merchant.qrshop.local`;
     const exists = await prisma.user.findFirst({
       where: { OR: [{ email }, { phone }] },
     });
@@ -189,7 +192,13 @@ router.post("/register/merchant", async (req, res) => {
       .slice(0, 40);
     const slug = `${slugBase || "shop"}-${Date.now().toString(36)}`;
 
-    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+    // Merchant does not set a password — Admin assigns one later.
+    // Random unusable hash until Admin resets / creates with a real password.
+    const provisional =
+      (parsed.data.password && parsed.data.password.length >= 4
+        ? parsed.data.password
+        : `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`) ;
+    const passwordHash = await bcrypt.hash(provisional, 10);
     const shop = await prisma.shop.create({
       data: {
         slug,
@@ -219,6 +228,7 @@ router.post("/register/merchant", async (req, res) => {
       },
     });
 
+    // Do not issue a long-lived session that implies they know a password.
     return ok(res, { ...issueSession(user), shop }, { created: true });
   } catch (err) {
     console.error("register merchant error", err);

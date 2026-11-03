@@ -121,6 +121,7 @@ app.get("/api", (_req, res) => {
       "GET  /api/merchant/guest-phones",
       "POST /api/merchant/guest-qr",
       "POST /api/auth/guest/open",
+      "POST /api/auth/guest/easy-checkout",
       "GET  /api/auth/guest/products",
       "POST /api/orders/guest",
       "POST /api/catalog/:id/view",

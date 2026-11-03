@@ -23,6 +23,17 @@ const defaultSettings = {
   publicEnquiries: true,
 };
 
+/** GET /api/mall/payments — active platform payment catalog (public / merchants) */
+router.get("/payments", async (_req, res) => {
+  try {
+    const { listPlatformPayments } = await import("../lib/platform-payments.js");
+    return ok(res, await listPlatformPayments({ activeOnly: false }));
+  } catch (err) {
+    console.error("mall payments", err);
+    return fail(res, 500, "Could not load payments", "db_error");
+  }
+});
+
 /** GET /api/mall/settings — Marketplace kill-switches */
 router.get("/settings", async (_req, res) => {
   try {

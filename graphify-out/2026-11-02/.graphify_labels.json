@@ -1,0 +1,23 @@
+{
+  "0": "fail",
+  "1": "orders.routes.js",
+  "2": "server.js",
+  "3": "scripts",
+  "4": "dependencies",
+  "5": "catalog.routes.js",
+  "6": "env.js",
+  "7": "merchant-guest.routes.js",
+  "8": "admin.routes.js",
+  "9": "QR Shop Platform API",
+  "10": "auth.routes.js",
+  "11": "Merchant backend (Platform API)",
+  "12": "QR Admin — Announcements backend",
+  "13": "Marketplace → Platform API (backend)",
+  "14": "Three apps ↔ Platform API (2026-10-28)",
+  "15": "Hostinger disk uploads (product photos)",
+  "16": "vercel.json",
+  "17": "Townships + delivery fees (QR Shop only)",
+  "18": "Database: Supabase Postgres",
+  "19": "auth-hostinger-situation.md",
+  "20": "merchant-guest.routes.js"
+}

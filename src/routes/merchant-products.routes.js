@@ -8,10 +8,87 @@ import {
   productWriteData,
   publicMerchantProduct,
 } from "../lib/merchant-product.js";
+import { recordStockAdjustMove } from "../lib/stock-moves.js";
 
 const router = Router();
 
 router.use(requireAuth, requireRole("merchant", "staff"));
+
+/**
+ * GET /api/merchant/stock-moves
+ * In/out ledger linked to orders + current inventory count (may be negative).
+ * Query: ?productId=&q=name|barcode&limit=80
+ */
+router.get("/stock-moves", async (req, res) => {
+  try {
+    const shopId = shopIdOrFail(req, res);
+    if (!shopId) return;
+    const productId = String(req.query.productId || "").trim();
+    const q = String(req.query.q || "").trim();
+    const limit = Math.min(200, Math.max(1, Math.floor(Number(req.query.limit) || 80)));
+
+    const where = { shopId };
+    if (productId) {
+      where.productId = productId;
+    } else if (q) {
+      const matched = await prisma.product.findMany({
+        where: {
+          shopId,
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { barcode: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true },
+        take: 100,
+      });
+      const ids = matched.map((p) => p.id);
+      where.OR = [
+        ...(ids.length ? [{ productId: { in: ids } }] : []),
+        { productName: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const rows = await prisma.stockMove.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: {
+        product: { select: { id: true, name: true, barcode: true, stock: true } },
+      },
+    });
+
+    const outQty = rows
+      .filter((r) => r.direction === "out")
+      .reduce((s, r) => s + r.qty, 0);
+    const inQty = rows
+      .filter((r) => r.direction === "in")
+      .reduce((s, r) => s + r.qty, 0);
+
+    const moves = rows.map((r) => ({
+      id: r.id,
+      productId: r.productId,
+      productName: r.productName,
+      barcode: r.product?.barcode ?? null,
+      /** Live inventory count — negative = sold without enough IN */
+      stockNow: r.product?.stock ?? null,
+      qty: r.qty,
+      direction: r.direction,
+      reason: r.reason,
+      orderId: r.orderId,
+      note: r.note,
+      createdAt: r.createdAt,
+    }));
+
+    return ok(res, {
+      moves,
+      summary: { outQty, inQty, netOutQty: outQty - inQty },
+    });
+  } catch (err) {
+    console.error("stock-moves list", err);
+    return fail(res, 500, "Could not load stock moves", "db_error");
+  }
+});
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -20,7 +97,9 @@ const createSchema = z.object({
   compareAtKs: z.number().int().nonnegative().nullable().optional(),
   costKs: z.number().int().nonnegative().nullable().optional(),
   stock: z.number().int().nonnegative().optional(),
-  categoryId: z.string().optional(),
+  lowStockAlertEnabled: z.boolean().optional(),
+  lowStockThreshold: z.number().int().nonnegative().optional(),
+  categoryId: z.string().min(1, "Category required"),
   badge: z.string().optional(),
   imageUrl: z.string().optional(),
   barcode: z.string().optional(),
@@ -48,12 +127,11 @@ router.get("/products", async (req, res) => {
     const q = String(req.query.q || "").trim();
     const activeOnly = req.query.active === "1" || req.query.active === "true";
     const lowStock = req.query.lowStock === "1" || req.query.lowStock === "true";
-    const lowThreshold = Math.max(0, Math.floor(Number(req.query.threshold) || 5));
 
     const where = {
       shopId,
       ...(activeOnly ? { active: true } : {}),
-      ...(lowStock ? { stock: { lte: lowThreshold } } : {}),
+      ...(lowStock ? { lowStockAlertEnabled: true } : {}),
       ...(q
         ? {
             OR: [
@@ -69,7 +147,12 @@ router.get("/products", async (req, res) => {
       orderBy: [{ updatedAt: "desc" }],
       take: 500,
     });
-    return ok(res, rows.map(publicMerchantProduct));
+    const mapped = rows.map(publicMerchantProduct);
+    if (!lowStock) return ok(res, mapped);
+    return ok(
+      res,
+      mapped.filter((p) => p.stock <= (p.lowStockThreshold ?? 5)),
+    );
   } catch (err) {
     console.error("merchant products list", err);
     return fail(res, 500, "Could not load products", "db_error");
@@ -111,6 +194,27 @@ router.post("/products", async (req, res) => {
 
     const data = productWriteData(parsed.data);
     if (!data.name) return fail(res, 400, "Name required");
+    const categoryId = String(data.categoryId || "").trim();
+    if (!categoryId) {
+      return fail(res, 400, "Category required", "category_required");
+    }
+
+    const published = data.active !== false;
+    let sellOnMarketplace = published && data.sellOnMarketplace === true;
+    const sellOnApp = published && data.sellOnApp === true;
+    if (sellOnMarketplace) {
+      const settings = await prisma.platformSettings.findUnique({
+        where: { id: "default" },
+      });
+      if (settings && settings.submissions === false) {
+        return fail(
+          res,
+          403,
+          "Mall submissions are paused by platform admin",
+          "submissions_off",
+        );
+      }
+    }
 
     const row = await prisma.product.create({
       data: {
@@ -121,7 +225,7 @@ router.post("/products", async (req, res) => {
         compareAtKs: data.compareAtKs ?? null,
         costKs: data.costKs ?? null,
         stock: data.stock ?? 0,
-        categoryId: data.categoryId ?? "essentials",
+        categoryId,
         badge: data.badge ?? null,
         imageUrl: data.imageUrl ?? null,
         barcode: data.barcode ?? null,
@@ -130,11 +234,12 @@ router.post("/products", async (req, res) => {
         uomFactor: data.uomFactor ?? 1,
         templateId: data.templateId ?? null,
         attributesJson: data.attributesJson ?? "{}",
-        active: data.active !== false,
-        showOnWebsite: data.showOnWebsite !== false,
-        sellOnMarketplace: data.sellOnMarketplace !== false,
-        sellOnApp: data.sellOnApp !== false,
-        sellOnOwnPage: data.sellOnOwnPage !== false,
+        active: published,
+        /** Published → shop website; mall/app only when those flags are on. */
+        sellOnOwnPage: published,
+        sellOnMarketplace,
+        sellOnApp,
+        showOnWebsite: published || sellOnMarketplace || sellOnApp,
       },
     });
     return ok(res.status(201), publicMerchantProduct(row));
@@ -159,6 +264,62 @@ router.put("/products/:id", async (req, res) => {
     const data = productWriteData(req.body, { partial: true });
     if (Object.keys(data).length === 0) {
       return ok(res, publicMerchantProduct(existing));
+    }
+
+    const nextActive =
+      typeof data.active === "boolean" ? data.active : existing.active;
+    const nextCategory =
+      data.categoryId !== undefined
+        ? String(data.categoryId || "").trim()
+        : String(existing.categoryId || "").trim();
+    if (nextActive && !nextCategory) {
+      return fail(
+        res,
+        400,
+        "Category required to publish this product",
+        "category_required",
+      );
+    }
+    if (data.categoryId !== undefined) {
+      data.categoryId = nextCategory || null;
+    }
+    const wantMall =
+      nextActive &&
+      (data.sellOnMarketplace === true ||
+        (data.sellOnMarketplace === undefined && existing.sellOnMarketplace));
+    if (wantMall && data.sellOnMarketplace !== false) {
+      const settings = await prisma.platformSettings.findUnique({
+        where: { id: "default" },
+      });
+      if (settings && settings.submissions === false && data.sellOnMarketplace === true) {
+        return fail(
+          res,
+          403,
+          "Mall submissions are paused by platform admin",
+          "submissions_off",
+        );
+      }
+    }
+    if (!nextActive) {
+      data.active = false;
+      data.sellOnOwnPage = false;
+      data.sellOnMarketplace = false;
+      data.sellOnApp = false;
+      data.showOnWebsite = false;
+    } else {
+      data.sellOnOwnPage = true;
+      if (data.sellOnMarketplace === true || data.sellOnApp === true) {
+        data.showOnWebsite = true;
+      } else if (data.showOnWebsite == null) {
+        data.showOnWebsite = true;
+      }
+      // Marketplace / App require published — strip if client sent channels without active
+      if (typeof data.sellOnMarketplace === "boolean" && !nextActive) {
+        data.sellOnMarketplace = false;
+      }
+      if (typeof data.sellOnApp === "boolean" && !nextActive) {
+        data.sellOnApp = false;
+      }
     }
 
     const row = await prisma.product.update({
@@ -186,19 +347,34 @@ router.patch("/products/:id/stock", async (req, res) => {
     });
     if (!existing) return fail(res, 404, "Product not found");
 
-    let next = existing.stock;
+    const prev = existing.stock;
+    let next = prev;
     if (req.body.set != null) {
-      next = Math.max(0, Math.floor(Number(req.body.set)));
+      /** Allow negative counts — sold without prior stock-in */
+      next = Math.floor(Number(req.body.set));
     } else if (req.body.delta != null) {
-      next = Math.max(0, existing.stock + Math.floor(Number(req.body.delta)));
+      next = prev + Math.floor(Number(req.body.delta));
     } else {
       return fail(res, 400, "Provide set or delta");
+    }
+    if (!Number.isFinite(next)) {
+      return fail(res, 400, "Invalid stock value");
     }
 
     const row = await prisma.product.update({
       where: { id: existing.id },
       data: { stock: next },
     });
+    try {
+      await recordStockAdjustMove({
+        shopId,
+        product: row,
+        prevStock: prev,
+        nextStock: next,
+      });
+    } catch (e) {
+      console.warn("stock adjust move", e);
+    }
     return ok(res, publicMerchantProduct(row));
   } catch (err) {
     console.error("merchant product stock", err);
@@ -226,7 +402,13 @@ router.delete("/products/:id", async (req, res) => {
 
     const row = await prisma.product.update({
       where: { id: existing.id },
-      data: { active: false, showOnWebsite: false },
+      data: {
+        active: false,
+        showOnWebsite: false,
+        sellOnOwnPage: false,
+        sellOnMarketplace: false,
+        sellOnApp: false,
+      },
     });
     return ok(res, publicMerchantProduct(row));
   } catch (err) {

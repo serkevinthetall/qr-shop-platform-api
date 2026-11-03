@@ -39,11 +39,13 @@ export function isPubliclySold(p) {
 
 /**
  * Prisma where fragment for a buyer surface.
+ * - own (shop website / Shop QR): published inventory only (`active`)
+ * - marketplace / app: published + that channel flag
  * @param {"marketplace"|"app"|"own"} channel
  */
 export function sellChannelWhere(channel) {
+  if (channel === "own") return { active: true };
   if (channel === "app") return { sellOnApp: true, active: true };
-  if (channel === "own") return { sellOnOwnPage: true, active: true };
   return { sellOnMarketplace: true, active: true };
 }
 
@@ -59,7 +61,9 @@ export function publicMerchantProduct(p) {
     compareAtKs: p.compareAtKs ?? null,
     costKs: p.costKs ?? null,
     stock: p.stock,
-    categoryId: p.categoryId ?? "essentials",
+    lowStockAlertEnabled: p.lowStockAlertEnabled === true,
+    lowStockThreshold: Math.max(0, Math.floor(Number(p.lowStockThreshold) || 5)),
+    categoryId: p.categoryId ?? "",
     badge: p.badge ?? undefined,
     imageUrl: p.imageUrl ?? "",
     barcode: p.barcode ?? undefined,
@@ -120,6 +124,15 @@ export function productWriteData(body, { partial = false } = {}) {
   if (!partial || body.stock != null) {
     set("stock", Math.max(0, Math.floor(Number(body.stock) || 0)));
   }
+  if (typeof body.lowStockAlertEnabled === "boolean") {
+    set("lowStockAlertEnabled", body.lowStockAlertEnabled);
+  }
+  if (body.lowStockThreshold !== undefined) {
+    set(
+      "lowStockThreshold",
+      Math.max(0, Math.floor(Number(body.lowStockThreshold) || 0)),
+    );
+  }
   if (body.categoryId !== undefined) set("categoryId", body.categoryId || null);
   if (body.badge !== undefined) set("badge", body.badge?.trim?.() || null);
   if (body.imageUrl !== undefined) set("imageUrl", body.imageUrl?.trim?.() || null);
@@ -157,9 +170,9 @@ export function productWriteData(body, { partial = false } = {}) {
           ? body.sellOnMarketplace
           : partial
             ? undefined
-            : true;
+            : false;
       app =
-        typeof body.sellOnApp === "boolean" ? body.sellOnApp : partial ? undefined : true;
+        typeof body.sellOnApp === "boolean" ? body.sellOnApp : partial ? undefined : false;
       own =
         typeof body.sellOnOwnPage === "boolean"
           ? body.sellOnOwnPage
@@ -167,9 +180,9 @@ export function productWriteData(body, { partial = false } = {}) {
             ? undefined
             : true;
     } else {
-      // Legacy single switch → all three
-      marketplace = body.showOnWebsite;
-      app = body.showOnWebsite;
+      // Legacy single switch → website (own); mall/app stay off unless set
+      marketplace = false;
+      app = false;
       own = body.showOnWebsite;
     }
     if (marketplace !== undefined) set("sellOnMarketplace", marketplace);
@@ -177,7 +190,6 @@ export function productWriteData(body, { partial = false } = {}) {
     if (own !== undefined) set("sellOnOwnPage", own);
 
     if (partial && (marketplace === undefined || app === undefined || own === undefined)) {
-      // showOnWebsite synced by caller after load, or approximate from known bits
       const known = [marketplace, app, own].filter((v) => typeof v === "boolean");
       if (known.length === 3) {
         set("showOnWebsite", known.some(Boolean));
@@ -185,10 +197,26 @@ export function productWriteData(body, { partial = false } = {}) {
         set("showOnWebsite", body.showOnWebsite);
       }
     } else {
-      const m = marketplace !== undefined ? marketplace : true;
-      const a = app !== undefined ? app : true;
+      const m = marketplace !== undefined ? marketplace : false;
+      const a = app !== undefined ? app : false;
       const o = own !== undefined ? own : true;
       set("showOnWebsite", Boolean(m || a || o));
+    }
+  }
+
+  /**
+   * Published (`active`) = shop website.
+   * Marketplace / App flags are cleared when unpublished.
+   */
+  if (typeof data.active === "boolean") {
+    if (data.active) {
+      set("sellOnOwnPage", true);
+      set("showOnWebsite", true);
+    } else {
+      set("sellOnOwnPage", false);
+      set("sellOnMarketplace", false);
+      set("sellOnApp", false);
+      set("showOnWebsite", false);
     }
   }
 

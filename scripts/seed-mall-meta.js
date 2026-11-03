@@ -1,10 +1,10 @@
 /**
- * Seed Category rows + sample ads from data/mall-meta.json
- * (Marketplace catalog categories / hero).
+ * Seed Category + MallHero + platform payments + sample ads from mall-meta.json
  */
 import "../src/lib/env.js";
 import { prisma } from "../src/lib/prisma.js";
-import { defaultCategories } from "../src/lib/mall-meta.js";
+import { defaultCategories, defaultHero } from "../src/lib/mall-meta.js";
+import { ensureBuiltinPlatformPayments } from "../src/lib/platform-payments.js";
 
 async function main() {
   const cats = defaultCategories();
@@ -34,11 +34,28 @@ async function main() {
     n += 1;
   }
 
+  const hero = defaultHero();
+  await prisma.mallHero.upsert({
+    where: { id: "default" },
+    create: {
+      id: "default",
+      imageUrl: hero.imageUrl || "",
+      eyebrow: hero.eyebrow || "",
+      title: hero.title || "Shop Myanmar",
+      subtitle: hero.subtitle || "",
+      cta: hero.cta || "Browse",
+      href: "/products",
+    },
+    update: {},
+  });
+
   await prisma.platformSettings.upsert({
     where: { id: "default" },
     create: { id: "default" },
     update: {},
   });
+
+  await ensureBuiltinPlatformPayments();
 
   const adCount = await prisma.ad.count();
   if (adCount === 0) {
@@ -67,7 +84,9 @@ async function main() {
   }
 
   console.log(`Categories seeded: ${n}`);
+  console.log("MallHero: default");
   console.log("PlatformSettings: default");
+  console.log(`Platform payments: ${await prisma.platformPaymentMethod.count()}`);
   console.log(`Ads: ${await prisma.ad.count()}`);
 }
 

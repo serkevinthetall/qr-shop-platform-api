@@ -27,16 +27,21 @@ const IMAGE_MIME = new Set([
 
 export function uploadsRoot() {
   const fromEnv = String(process.env.UPLOAD_DIR || "").trim();
-  return fromEnv
-    ? path.resolve(fromEnv)
-    : path.join(root, "uploads");
+  if (fromEnv) return path.resolve(fromEnv);
+  /** Vercel filesystem is read-only except /tmp — prefer Supabase Storage in prod. */
+  if (process.env.VERCEL) return path.join("/tmp", "qr-shop-uploads");
+  return path.join(root, "uploads");
 }
 
 export function ensureUploadDirs() {
   const base = uploadsRoot();
-  fs.mkdirSync(base, { recursive: true });
-  for (const kind of UPLOAD_KINDS) {
-    fs.mkdirSync(path.join(base, kind), { recursive: true });
+  try {
+    fs.mkdirSync(base, { recursive: true });
+    for (const kind of UPLOAD_KINDS) {
+      fs.mkdirSync(path.join(base, kind), { recursive: true });
+    }
+  } catch (err) {
+    console.warn("[uploads] ensureUploadDirs:", err?.message || err);
   }
   return base;
 }

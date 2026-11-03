@@ -9,12 +9,20 @@ import {
 } from "../lib/shop-channels.js";
 import { getDeliveryFeeForTownship } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
+import { sellChannelWhere } from "../lib/merchant-product.js";
+import { parseStoreStyle } from "../lib/store-style.js";
 
 const router = Router();
 
 /** GET /api/shops — public directory (approved + listed) with listing mode */
 router.get("/", async (req, res) => {
   try {
+    const settings = await prisma.platformSettings.findUnique({
+      where: { id: "default" },
+    });
+    if (settings && settings.shopsDirectory === false) {
+      return ok(res, []);
+    }
     const modeFilter = normalizeListingMode(req.query.listingMode);
     const shops = await prisma.shop.findMany({
       where: {
@@ -121,7 +129,7 @@ router.get("/:id/delivery-quote", async (req, res) => {
   }
 });
 
-/** GET /api/shops/:id/products — public own-page catalog (sellOnOwnPage) */
+/** GET /api/shops/:id/products — merchant shop website (Store style + published SKUs) */
 router.get("/:id/products", async (req, res) => {
   try {
     const shop = await prisma.shop.findFirst({
@@ -134,26 +142,30 @@ router.get("/:id/products", async (req, res) => {
     });
     if (!shop) return fail(res, 404, "Shop not found");
 
-    /**
-     * Shop storefront shows every SKU the merchant sells publicly
-     * (own page · marketplace · app). Merchant-only (all channels off) stays hidden.
-     */
+    if (!shop.websitePublished) {
+      return fail(
+        res,
+        403,
+        "This shop has not published their website yet",
+        "website_not_published",
+      );
+    }
+
+    /** Shop website / Shop QR — published inventory with a category. */
     const products = await prisma.product.findMany({
       where: {
         shopId: shop.id,
-        active: true,
-        OR: [
-          { sellOnOwnPage: true },
-          { sellOnMarketplace: true },
-          { sellOnApp: true },
-          // Legacy rows before channel flags
-          { showOnWebsite: true },
+        ...sellChannelWhere("own"),
+        AND: [
+          { categoryId: { not: null } },
+          { categoryId: { not: "" } },
         ],
       },
       orderBy: { updatedAt: "desc" },
       take: 200,
     });
     const ch = publicShopChannels(shop.features);
+    const storeStyle = parseStoreStyle(shop.storeStyleJson);
 
     return ok(res, {
       shop: {
@@ -164,6 +176,14 @@ router.get("/:id/products", async (req, res) => {
         tagline: shop.tagline,
         logoUrl: shop.logoUrl,
         coverUrl: shop.coverUrl,
+        phone: shop.phone,
+        phone2: shop.phone2 ?? "",
+        email: shop.email,
+        location: shop.location,
+        township: shop.township,
+        aboutText: shop.aboutText ?? "",
+        websitePublished: true,
+        storeStyle,
         listingMode: ch.listingMode,
         portfolioOnly: ch.portfolioOnly,
         canOrder: ch.canOrder,
@@ -182,7 +202,8 @@ router.get("/:id/products", async (req, res) => {
         imageUrl: p.imageUrl || "",
         badge: p.badge || null,
         stock: p.stock,
-        canOrder: ch.canOrder && !ch.portfolioOnly,
+        categoryId: p.categoryId || "",
+        canOrder: ch.canOrder && !ch.portfolioOnly, // published SKUs only
       })),
     });
   } catch (err) {
@@ -203,6 +224,9 @@ router.get("/:id", async (req, res) => {
   const ch = publicShopChannels(shop.features);
   return ok(res, {
     ...shop,
+    storeStyle: parseStoreStyle(shop.storeStyleJson),
+    websitePublished: Boolean(shop.websitePublished),
+    aboutText: shop.aboutText ?? "",
     listingMode: ch.listingMode,
     portfolioOnly: ch.portfolioOnly,
     canOrder: ch.canOrder,
@@ -214,7 +238,19 @@ router.get("/:id", async (req, res) => {
   });
 });
 
-/** PATCH /api/shops/:id/features — Merchant Modules + listingMode */
+/** Module flags — Admin only. Merchants may still set listingMode / channels elsewhere. */
+const ADMIN_MODULE_KEYS = [
+  "barcodeTrackingEnabled",
+  "ratingsReviewsEnabled",
+  "couponCodesEnabled",
+  "bogoEnabled",
+  "staffEnabled",
+  "posEnabled",
+  /** deliveryModuleEnabled retired — delivery pricing always available */
+  "memberPointsEnabled",
+];
+
+/** PATCH /api/shops/:id/features — Admin toggles modules; merchant listingMode only */
 router.patch(
   "/:id/features",
   requireAuth,
@@ -225,24 +261,25 @@ router.patch(
       return fail(res, 403, "Not your shop");
     }
 
-    const allowed = [
-      "purchasesEnabled",
-      "barcodeTrackingEnabled",
-      "ratingsReviewsEnabled",
-      "couponCodesEnabled",
-      "bogoEnabled",
-      "staffEnabled",
-      "posEnabled",
-      "deliveryModuleEnabled",
-      "memberPointsEnabled",
-    ];
     const data = {};
-    for (const key of allowed) {
-      if (typeof req.body[key] === "boolean") data[key] = req.body[key];
+    const touchingModules = ADMIN_MODULE_KEYS.some(
+      (key) => typeof req.body?.[key] === "boolean",
+    );
+    if (touchingModules && req.user.role !== "admin") {
+      return fail(res, 403, "Only platform admin can change shop modules");
+    }
+    if (req.user.role === "admin") {
+      for (const key of ADMIN_MODULE_KEYS) {
+        if (typeof req.body[key] === "boolean") data[key] = req.body[key];
+      }
     }
 
     const mode = normalizeListingMode(req.body.listingMode);
     if (mode) Object.assign(data, featuresPayloadForMode(mode));
+
+    if (Object.keys(data).length === 0) {
+      return fail(res, 400, "No feature fields to update");
+    }
 
     const features = await prisma.shopFeatures.upsert({
       where: { shopId },

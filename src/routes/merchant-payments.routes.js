@@ -4,48 +4,55 @@ import { prisma } from "../lib/prisma.js";
 import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { shopIdOrFail, requireShopOwner } from "../lib/merchant-auth.js";
+import { listPlatformPayments } from "../lib/platform-payments.js";
 
 const router = Router();
 
 router.use(requireAuth, requireRole("merchant", "staff"));
 
-const METHODS = ["cod", "kpay", "uabpay", "ayapay", "cbpay", "mmqr", "cash"];
-
-const ALL_METHODS = METHODS;
-
-function publicPayment(row) {
+function publicPayment(row, meta) {
   return {
     id: row.id,
     shopId: row.shopId,
     method: row.method,
     enabled: Boolean(row.enabled),
     qrUrl: row.qrUrl ?? null,
+    label: meta?.label ?? row.method,
+    shortLabel: meta?.shortLabel ?? row.method,
+    subtitle: meta?.subtitle ?? "",
+    needsQr: meta?.needsQr !== false,
   };
 }
 
 /**
  * GET /api/merchant/payments
- * All wallet / COD methods for the shop (creates missing rows as disabled).
+ * Methods from Admin platform catalog (active only) + shop enable/QR rows.
  */
 router.get("/payments", async (req, res) => {
   try {
     const shopId = shopIdOrFail(req, res);
     if (!shopId) return;
 
+    const catalog = await listPlatformPayments({ activeOnly: true });
     const existing = await prisma.shopPaymentMethod.findMany({
       where: { shopId },
     });
     const byMethod = new Map(existing.map((r) => [r.method, r]));
     const out = [];
 
-    for (const method of ALL_METHODS) {
-      let row = byMethod.get(method);
+    for (const meta of catalog) {
+      let row = byMethod.get(meta.id);
       if (!row) {
         row = await prisma.shopPaymentMethod.create({
-          data: { shopId, method, enabled: method === "cod", qrUrl: null },
+          data: {
+            shopId,
+            method: meta.id,
+            enabled: meta.id === "cod",
+            qrUrl: null,
+          },
         });
       }
-      out.push(publicPayment(row));
+      out.push(publicPayment(row, meta));
     }
 
     return ok(res, out);
@@ -53,18 +60,6 @@ router.get("/payments", async (req, res) => {
     console.error("merchant payments list", err);
     return fail(res, 500, "Could not load payments", "db_error");
   }
-});
-
-const putSchema = z.object({
-  methods: z
-    .array(
-      z.object({
-        method: z.enum(METHODS),
-        enabled: z.boolean(),
-        qrUrl: z.string().nullable().optional(),
-      }),
-    )
-    .min(1),
 });
 
 /**
@@ -77,15 +72,28 @@ router.put("/payments", async (req, res) => {
     if (!shopId) return;
     if (!requireShopOwner(req, res)) return;
 
+    const catalog = await listPlatformPayments({ activeOnly: true });
+    const allowed = new Set(catalog.map((m) => m.id));
+    const putSchema = z.object({
+      methods: z
+        .array(
+          z.object({
+            method: z.string().min(1),
+            enabled: z.boolean(),
+            qrUrl: z.string().nullable().optional(),
+          }),
+        )
+        .min(1),
+    });
     const parsed = putSchema.safeParse(req.body);
     if (!parsed.success) return fail(res, 400, "Invalid payments payload");
 
     const out = [];
     for (const item of parsed.data.methods) {
+      if (!allowed.has(item.method)) continue;
+      const meta = catalog.find((m) => m.id === item.method);
       const row = await prisma.shopPaymentMethod.upsert({
-        where: {
-          shopId_method: { shopId, method: item.method },
-        },
+        where: { shopId_method: { shopId, method: item.method } },
         create: {
           shopId,
           method: item.method,
@@ -97,7 +105,7 @@ router.put("/payments", async (req, res) => {
           ...(item.qrUrl !== undefined ? { qrUrl: item.qrUrl } : {}),
         },
       });
-      out.push(publicPayment(row));
+      out.push(publicPayment(row, meta));
     }
 
     return ok(res, out);
@@ -109,7 +117,6 @@ router.put("/payments", async (req, res) => {
 
 /**
  * PATCH /api/merchant/payments/:method
- * Toggle one method or set qrUrl.
  */
 router.patch("/payments/:method", async (req, res) => {
   try {
@@ -117,17 +124,16 @@ router.patch("/payments/:method", async (req, res) => {
     if (!shopId) return;
     if (!requireShopOwner(req, res)) return;
 
-    const method = String(req.params.method || "").toLowerCase();
-    if (!METHODS.includes(method)) return fail(res, 400, "Unknown payment method");
+    const method = String(req.params.method || "")
+      .trim()
+      .toLowerCase();
+    const catalog = await listPlatformPayments({ activeOnly: true });
+    const meta = catalog.find((m) => m.id === method);
+    if (!meta) return fail(res, 400, "Unknown or inactive payment method");
 
     const data = {};
     if (typeof req.body.enabled === "boolean") data.enabled = req.body.enabled;
-    if (req.body.qrUrl !== undefined) {
-      data.qrUrl = req.body.qrUrl?.trim?.() || null;
-    }
-    if (Object.keys(data).length === 0) {
-      return fail(res, 400, "Nothing to update");
-    }
+    if ("qrUrl" in req.body) data.qrUrl = req.body.qrUrl || null;
 
     const row = await prisma.shopPaymentMethod.upsert({
       where: { shopId_method: { shopId, method } },
@@ -139,7 +145,7 @@ router.patch("/payments/:method", async (req, res) => {
       },
       update: data,
     });
-    return ok(res, publicPayment(row));
+    return ok(res, publicPayment(row, meta));
   } catch (err) {
     console.error("merchant payments patch", err);
     return fail(res, 500, "Could not update payment", "db_error");

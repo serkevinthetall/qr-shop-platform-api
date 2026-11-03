@@ -59,9 +59,31 @@ router.get("/categories", async (_req, res) => {
   }
 });
 
-/** GET /api/catalog/hero — Marketplace home hero */
+/** GET /api/catalog/hero — Marketplace home hero (DB, else mall-meta.json) */
 router.get("/hero", async (_req, res) => {
-  return ok(res, defaultHero());
+  try {
+    const settings = await prisma.platformSettings.findUnique({
+      where: { id: "default" },
+    });
+    if (settings && settings.homePage === false) {
+      return ok(res, null);
+    }
+    const row = await prisma.mallHero.findUnique({ where: { id: "default" } });
+    if (row) {
+      return ok(res, {
+        imageUrl: row.imageUrl || "",
+        eyebrow: row.eyebrow || "",
+        title: row.title || "",
+        subtitle: row.subtitle || "",
+        cta: row.cta || "Browse",
+        href: row.href || "/products",
+      });
+    }
+    return ok(res, { ...defaultHero(), href: "/products" });
+  } catch (err) {
+    console.error("catalog hero", err);
+    return ok(res, { ...defaultHero(), href: "/products" });
+  }
 });
 
 /**
@@ -70,6 +92,13 @@ router.get("/hero", async (_req, res) => {
  */
 router.get("/", async (req, res) => {
   try {
+    const settings = await prisma.platformSettings.findUnique({
+      where: { id: "default" },
+    });
+    if (settings && settings.marketplace === false) {
+      return ok(res, { products: [], total: 0, page: 1, limit: 0 });
+    }
+
     const categoryId = req.query.categoryId
       ? String(req.query.categoryId)
       : null;
@@ -85,19 +114,31 @@ router.get("/", async (req, res) => {
     const clientChannel = catalogClientChannel(req);
     const channelFilter = sellChannelWhere(clientChannel);
     const where = {
-      ...channelFilter,
-      shop: { status: "approved", listed: true },
-      ...(categoryId ? { categoryId } : {}),
-      ...(shopId ? { shopId } : {}),
-      ...(deal ? { badge: { not: null } } : {}),
-      ...(q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { badge: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      AND: [
+        { ...channelFilter },
+        /** No category → hidden from mall (merchant must assign one). */
+        categoryId
+          ? { categoryId }
+          : {
+              AND: [
+                { categoryId: { not: null } },
+                { categoryId: { not: "" } },
+              ],
+            },
+        { shop: { status: "approved", listed: true } },
+        ...(shopId ? [{ shopId }] : []),
+        ...(deal ? [{ badge: { not: null } }] : []),
+        ...(q
+          ? [
+              {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" } },
+                  { badge: { contains: q, mode: "insensitive" } },
+                ],
+              },
+            ]
+          : []),
+      ],
     };
 
     const [total, products] = await Promise.all([
@@ -208,12 +249,12 @@ router.get("/:id", async (req, res) => {
       where: {
         id: productId,
         active: true,
-        shop: { status: "approved", listed: true },
-        OR: [
-          { [channelKey]: true },
-          // Product QR / deep link may open mall PDP from own-page SKUs
-          { sellOnOwnPage: true },
+        [channelKey]: true,
+        AND: [
+          { categoryId: { not: null } },
+          { categoryId: { not: "" } },
         ],
+        shop: { status: "approved", listed: true },
       },
       include: productInclude,
     });

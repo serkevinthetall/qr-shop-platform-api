@@ -30,12 +30,32 @@ export async function resolvePricingContext(shopId, phone) {
     b2bAllowed = Boolean(access?.b2bAllowed);
   }
 
-  const viewerB2c = base.b2cEnabled;
-  // With phone (QR guest): B2B only if shop offers it AND phone is open for B2B
-  // Without phone (mall browse helpers): use shop offer flags
-  const viewerB2b = normalized
-    ? base.b2bEnabled && b2bAllowed
-    : base.b2bEnabled;
+  const shopOffersB2c = base.b2cEnabled;
+  const shopOffersB2b = base.b2bEnabled;
+
+  let viewerB2c = shopOffersB2c;
+  let viewerB2b = shopOffersB2b;
+  /** Which price list a QR guest pays — phone whitelist decides (not a picker). */
+  let activeChannel = "b2c";
+
+  if (normalized) {
+    // Wholesale-only shop → every phone pays B2B
+    if (shopOffersB2b && !shopOffersB2c) {
+      viewerB2c = false;
+      viewerB2b = true;
+      activeChannel = "b2b";
+    } else if (shopOffersB2b && b2bAllowed) {
+      // Phone on merchant B2B list → wholesale (retail still returned as fallback for SKUs without WS price)
+      viewerB2c = shopOffersB2c;
+      viewerB2b = true;
+      activeChannel = "b2b";
+    } else {
+      // Default / retail phone → retail only
+      viewerB2c = shopOffersB2c;
+      viewerB2b = false;
+      activeChannel = shopOffersB2c ? "b2c" : shopOffersB2b ? "b2b" : "b2c";
+    }
+  }
 
   return {
     shopId: shop.id,
@@ -47,10 +67,11 @@ export async function resolvePricingContext(shopId, phone) {
     canOrder: base.canOrder,
     b2cEnabled: viewerB2c,
     b2bEnabled: viewerB2b,
-    showBoth: viewerB2c && viewerB2b,
+    showBoth: false,
+    activeChannel,
     b2bAllowed,
-    shopOffersB2c: base.b2cEnabled,
-    shopOffersB2b: base.b2bEnabled,
+    shopOffersB2c,
+    shopOffersB2b,
   };
 }
 

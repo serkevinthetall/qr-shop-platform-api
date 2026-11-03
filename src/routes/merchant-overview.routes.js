@@ -4,6 +4,7 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { shopIdOrFail } from "../lib/merchant-auth.js";
 import { publicShopChannels } from "../lib/shop-channels.js";
+import { parseStoreStyle, storeStyleToJson } from "../lib/store-style.js";
 import { publicMerchantProduct } from "../lib/merchant-product.js";
 
 const router = Router();
@@ -16,9 +17,50 @@ function startOfToday() {
   return d;
 }
 
+function startOfLocalDay(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function addDays(d, n) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+
+function dayKey(d) {
+  const x = startOfLocalDay(d);
+  const y = x.getFullYear();
+  const m = String(x.getMonth() + 1).padStart(2, "0");
+  const day = String(x.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Mon-start week label Mon…Sun */
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function emptyBucket() {
+  return { salesKs: 0, costKs: 0, profitKs: 0, orderCount: 0 };
+}
+
+function accumulateOrder(bucket, order) {
+  const sales = Math.max(0, Math.floor(Number(order.totalKs) || 0));
+  let cost = 0;
+  for (const line of order.lines || []) {
+    const qty = Math.max(0, Math.floor(Number(line.qty) || 0));
+    const unitCost = Math.max(0, Math.floor(Number(line.product?.costKs) || 0));
+    cost += qty * unitCost;
+  }
+  bucket.salesKs += sales;
+  bucket.costKs += cost;
+  bucket.profitKs += sales - cost;
+  bucket.orderCount += 1;
+}
+
 /**
  * GET /api/merchant/overview
- * Dashboard: today sales, active orders, low stock, shop status.
+ * Dashboard: today sales, week/month P&L series, active orders, low stock.
  */
 router.get("/overview", async (req, res) => {
   try {
@@ -26,15 +68,16 @@ router.get("/overview", async (req, res) => {
     if (!shopId) return;
 
     const since = startOfToday();
-    const lowThreshold = Math.max(0, Math.floor(Number(req.query.threshold) || 5));
+    const monthStart = addDays(since, -29);
 
     const [
       shop,
       todayOrders,
+      periodOrders,
       activeCount,
       requestCount,
       pickupCount,
-      lowStock,
+      lowStockCandidates,
       productCount,
       recentOrders,
       viewAgg,
@@ -58,6 +101,23 @@ router.get("/overview", async (req, res) => {
           clientSurface: true,
         },
       }),
+      prisma.order.findMany({
+        where: {
+          shopId,
+          createdAt: { gte: monthStart },
+          stage: { not: "cancelled" },
+        },
+        select: {
+          totalKs: true,
+          createdAt: true,
+          lines: {
+            select: {
+              qty: true,
+              product: { select: { costKs: true } },
+            },
+          },
+        },
+      }),
       prisma.order.count({
         where: {
           shopId,
@@ -69,9 +129,9 @@ router.get("/overview", async (req, res) => {
         where: { shopId, stage: "pickup", pickupReserved: true },
       }),
       prisma.product.findMany({
-        where: { shopId, active: true, stock: { lte: lowThreshold } },
+        where: { shopId, active: true, lowStockAlertEnabled: true },
         orderBy: { stock: "asc" },
-        take: 10,
+        take: 100,
       }),
       prisma.product.count({ where: { shopId, active: true } }),
       prisma.order.findMany({
@@ -104,6 +164,13 @@ router.get("/overview", async (req, res) => {
 
     if (!shop) return fail(res, 404, "Shop not found");
 
+    const lowStock = lowStockCandidates
+      .filter(
+        (p) =>
+          p.stock <= Math.max(0, Math.floor(Number(p.lowStockThreshold) || 5)),
+      )
+      .slice(0, 10);
+
     const todaySalesKs = todayOrders.reduce((s, o) => s + (o.totalKs || 0), 0);
     const todayPosKs = todayOrders
       .filter((o) => o.source === "pos")
@@ -121,6 +188,55 @@ router.get("/overview", async (req, res) => {
       if (o.source === "qr_guest") return "qr";
       return "website";
     };
+
+    /** Last 30 local days → dayKey map */
+    const byDay = new Map();
+    for (let i = 0; i < 30; i += 1) {
+      const d = addDays(since, -(29 - i));
+      byDay.set(dayKey(d), emptyBucket());
+    }
+    for (const order of periodOrders) {
+      const key = dayKey(order.createdAt);
+      const bucket = byDay.get(key);
+      if (!bucket) continue;
+      accumulateOrder(bucket, order);
+    }
+
+    const monthSeries = [];
+    for (let i = 0; i < 30; i += 1) {
+      const d = addDays(since, -(29 - i));
+      const key = dayKey(d);
+      const b = byDay.get(key) || emptyBucket();
+      monthSeries.push({
+        key,
+        label: `${d.getDate()}/${d.getMonth() + 1}`,
+        ...b,
+      });
+    }
+
+    /** Rolling last 7 days (ending today) for week chart */
+    const weekSeries = monthSeries.slice(-7).map((row, i) => {
+      const d = addDays(since, -(6 - i));
+      return {
+        ...row,
+        label: WEEKDAY_SHORT[d.getDay()],
+      };
+    });
+
+    const sumSeries = (rows) =>
+      rows.reduce(
+        (acc, r) => {
+          acc.salesKs += r.salesKs;
+          acc.costKs += r.costKs;
+          acc.profitKs += r.profitKs;
+          acc.orderCount += r.orderCount;
+          return acc;
+        },
+        emptyBucket(),
+      );
+
+    const weekTotals = sumSeries(weekSeries);
+    const monthTotals = sumSeries(monthSeries);
 
     const ch = publicShopChannels(shop.features);
 
@@ -174,6 +290,11 @@ router.get("/overview", async (req, res) => {
             salesKs: sumBy((o) => surfaceOf(o) === "instore"),
           },
         },
+      },
+      /** Sales · COGS (unit cost × qty) · gross profit */
+      finance: {
+        week: { ...weekTotals, series: weekSeries },
+        month: { ...monthTotals, series: monthSeries },
       },
       queues: {
         activeOrders: activeCount,
@@ -234,8 +355,12 @@ router.get("/shop", async (req, res) => {
     if (!shop) return fail(res, 404, "Shop not found");
 
     const ch = publicShopChannels(shop.features);
+    const storeStyle = parseStoreStyle(shop.storeStyleJson);
     return ok(res, {
       ...shop,
+      storeStyle,
+      websitePublished: Boolean(shop.websitePublished),
+      aboutText: shop.aboutText ?? "",
       listingMode: ch.listingMode,
       portfolioOnly: ch.portfolioOnly,
       canOrder: ch.canOrder,
@@ -253,7 +378,8 @@ router.get("/shop", async (req, res) => {
 
 /**
  * PATCH /api/merchant/shop
- * Update profile fields (name, phone, tagline, logo, cover, location).
+ * Update profile fields (name, phone, tagline, logo, cover, location,
+ * websitePublished, storeStyle, aboutText).
  */
 router.patch("/shop", async (req, res) => {
   try {
@@ -267,6 +393,7 @@ router.patch("/shop", async (req, res) => {
       "name",
       "nameMy",
       "phone",
+      "phone2",
       "email",
       "location",
       "township",
@@ -274,6 +401,7 @@ router.patch("/shop", async (req, res) => {
       "logoUrl",
       "coverUrl",
       "listed",
+      "aboutText",
     ];
     const data = {};
     for (const key of allowed) {
@@ -284,6 +412,14 @@ router.patch("/shop", async (req, res) => {
       }
       const v = req.body[key];
       data[key] = v == null || v === "" ? null : String(v).trim();
+    }
+
+    if (typeof req.body.websitePublished === "boolean") {
+      data.websitePublished = req.body.websitePublished;
+    }
+
+    if (req.body.storeStyle != null) {
+      data.storeStyleJson = storeStyleToJson(req.body.storeStyle);
     }
 
     if (Object.keys(data).length === 0) {
@@ -301,6 +437,9 @@ router.patch("/shop", async (req, res) => {
     const ch = publicShopChannels(shop.features);
     return ok(res, {
       ...shop,
+      storeStyle: parseStoreStyle(shop.storeStyleJson),
+      websitePublished: Boolean(shop.websitePublished),
+      aboutText: shop.aboutText ?? "",
       listingMode: ch.listingMode,
       portfolioOnly: ch.portfolioOnly,
       canOrder: ch.canOrder,

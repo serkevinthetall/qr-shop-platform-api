@@ -94,18 +94,12 @@ router.post("/pos/charge", async (req, res) => {
     const subtotalKs = priced.reduce((s, l) => s + l.lineTotalKs, 0);
 
     const order = await prisma.$transaction(async (tx) => {
+      /** Decrement stock even below 0 — In/Out shows minus if never stocked in */
       for (const line of priced) {
-        const updated = await tx.product.updateMany({
-          where: {
-            id: line.productId,
-            shopId,
-            stock: { gte: line.qty },
-          },
+        await tx.product.updateMany({
+          where: { id: line.productId, shopId },
           data: { stock: { decrement: line.qty } },
         });
-        if (updated.count !== 1) {
-          throw new Error(`STOCK:${line.productName}`);
-        }
       }
 
       const code = await allocateOrderCode(tx, "pickup");
@@ -140,6 +134,13 @@ router.post("/pos/charge", async (req, res) => {
         include: { lines: true },
       });
     });
+
+    try {
+      const { recordOrderStockOut } = await import("../lib/stock-moves.js");
+      await recordOrderStockOut(order, { adjustStock: false });
+    } catch (e) {
+      console.warn("pos stock move", e);
+    }
 
     return ok(res.status(201), order);
   } catch (err) {

@@ -33,7 +33,7 @@ const placeSchema = z.object({
   address: z.string().optional(),
   channel: z.enum(["b2c", "b2b"]).default("b2c"),
   fulfillment: z.enum(["delivery", "pickup"]),
-  payment: z.enum(["cod", "kpay", "uabpay", "ayapay", "cbpay", "mmqr", "cash"]),
+  payment: z.string().min(2).max(24),
   lines: z.array(lineSchema).min(1),
   deliveryFeeKs: z.number().int().nonnegative().optional(),
   townshipId: z.string().optional(),
@@ -193,6 +193,12 @@ async function createOrderPayload(
     return { error: { status: 403, message: channelCheck.message } };
   }
 
+  const { isPlatformPaymentActive } = await import("../lib/platform-payments.js");
+  if (!(await isPlatformPaymentActive(b.payment))) {
+    return {
+      error: { status: 400, message: `Payment ${b.payment} is not available` },
+    };
+  }
   const paymentOk = await prisma.shopPaymentMethod.findFirst({
     where: { shopId: b.shopId, method: b.payment, enabled: true },
   });
@@ -579,7 +585,11 @@ router.patch(
   requireAuth,
   requireRole("merchant", "staff", "admin"),
   async (req, res) => {
-    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    const { recordOrderStockOut } = await import("../lib/stock-moves.js");
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { lines: true },
+    });
     if (!order) return fail(res, 404, "Order not found");
     if (
       req.user.role !== "admin" &&
@@ -589,13 +599,34 @@ router.patch(
       return fail(res, 403, "Not your shop order");
     }
 
-    const stage = req.body.stage;
-    const pickupReserved = Boolean(req.body.pickupReserved);
+    const action = String(req.body.action || "").toLowerCase();
     const data = {};
-    if (stage) data.stage = stage;
-    if (req.body.pickupReserved != null) {
-      data.pickupReserved = pickupReserved;
-      if (pickupReserved) data.stage = "pickup";
+
+    /** Option A: Accept / Deny on new requests */
+    if (action === "accept") {
+      if (order.stage === "cancelled" || order.stage === "completed") {
+        return fail(res, 400, "Order already closed");
+      }
+      if (order.fulfillment === "pickup") {
+        data.stage = "pickup";
+        data.pickupReserved = true;
+      } else {
+        data.stage = "delivery";
+      }
+    } else if (action === "deny") {
+      data.stage = "cancelled";
+    } else {
+      const stage = req.body.stage;
+      const pickupReserved = Boolean(req.body.pickupReserved);
+      if (stage) data.stage = stage;
+      if (req.body.pickupReserved != null) {
+        data.pickupReserved = pickupReserved;
+        if (pickupReserved) data.stage = "pickup";
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return fail(res, 400, "Nothing to update");
     }
 
     const updated = await prisma.order.update({
@@ -603,6 +634,22 @@ router.patch(
       data,
       include: { lines: true },
     });
+
+    /** Stock OUT when merchant accepts (or completes / reserves) — ledger even if stock was 0 */
+    const shouldOut =
+      action === "accept" ||
+      updated.stage === "delivery" ||
+      updated.stage === "pickup" ||
+      updated.stage === "completed" ||
+      updated.pickupReserved === true;
+    if (shouldOut && updated.stage !== "cancelled") {
+      try {
+        await recordOrderStockOut(updated);
+      } catch (e) {
+        console.warn("stock out", e);
+      }
+    }
+
     publishOrderEvent(updated, "updated");
     return ok(res, updated);
   },

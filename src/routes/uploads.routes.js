@@ -93,11 +93,12 @@ router.post(
       }
 
       const kind = req.uploadKind || "products";
-      const filename = makeFilename(req.file.originalname, req.file.mimetype);
       const shopId = req.user?.shopId || null;
 
       if (useSupabase) {
         try {
+          /** One filename for buffer upload — must match the public URL. */
+          const filename = makeFilename(req.file.originalname, req.file.mimetype);
           await ensurePublicBucket();
           const uploaded = await uploadImageBuffer({
             buffer: req.file.buffer,
@@ -127,17 +128,14 @@ router.post(
         }
       }
 
-      // Disk fallback (local / Hostinger)
-      const destDir = path.join(uploadsRoot(), kind);
-      const dest = path.join(destDir, filename);
-      try {
-        if (req.file.path && req.file.path !== dest) {
-          fs.renameSync(req.file.path, dest);
-        }
-      } catch {
-        /* multer already wrote with makeFilename via disk storage */
+      /**
+       * Disk fallback — multer already wrote the file with makeFilename().
+       * Do NOT generate a second random name (that renamed the file away from the URL).
+       */
+      const savedName = req.file.filename;
+      if (!savedName) {
+        return fail(res, 500, "Upload missing filename", "upload_error");
       }
-      const savedName = req.file.filename || filename;
       const relativePath = `${kind}/${savedName}`;
       const url = publicUrlFor(relativePath, req);
       return ok(res, {

@@ -58,6 +58,7 @@ async function ensureShop(def) {
         status: "approved",
         listed: true,
         tagline: def.tagline,
+        aboutText: def.aboutText || "",
         features: {
           create: {
             listingMode: "both",
@@ -87,6 +88,7 @@ async function ensureShop(def) {
         status: "approved",
         listed: true,
         tagline: def.tagline,
+        aboutText: def.aboutText || "",
       },
     });
     await prisma.shopFeatures.upsert({
@@ -155,6 +157,9 @@ async function ensureShop(def) {
         stock: p.stock ?? 30,
         active: true,
         showOnWebsite: true,
+        sellOnOwnPage: true,
+        sellOnMarketplace: true,
+        sellOnApp: true,
         imageUrl: p.imageUrl,
         categoryId: p.categoryId ?? null,
         badge: p.badge ?? null,
@@ -167,6 +172,9 @@ async function ensureShop(def) {
         stock: p.stock ?? 30,
         active: true,
         showOnWebsite: true,
+        sellOnOwnPage: true,
+        sellOnMarketplace: true,
+        sellOnApp: true,
         imageUrl: p.imageUrl,
         categoryId: p.categoryId ?? null,
         badge: p.badge ?? null,
@@ -247,6 +255,8 @@ async function main() {
       ownerName: "Nova Owner",
       location: "Hlaing, Yangon",
       tagline: "Home & living sample shop",
+      aboutText:
+        "Nova Living brings thoughtfully chosen home & living products to Yangon. From furniture and lighting to everyday household essentials, we curate quality pieces that fit real homes — with clear pricing, careful packing, and friendly local service.",
       zones,
       products: [
         {
@@ -267,6 +277,49 @@ async function main() {
           imageUrl: IMG.lamp,
           categoryId: "home",
           stock: 25,
+        },
+        {
+          id: "prod-nova-sofa",
+          name: "Nova Lounge Sofa",
+          priceKs: 450000,
+          priceB2bKs: 380000,
+          imageUrl:
+            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80",
+          categoryId: "home",
+          badge: "New",
+          stock: 8,
+        },
+        {
+          id: "prod-nova-shelf",
+          name: "Nova Oak Shelf",
+          priceKs: 125000,
+          priceB2bKs: 99000,
+          imageUrl:
+            "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=800&q=80",
+          categoryId: "home",
+          stock: 15,
+        },
+        {
+          id: "prod-nova-vase",
+          name: "Nova Ceramic Vase",
+          priceKs: 28000,
+          priceB2bKs: 22000,
+          imageUrl:
+            "https://images.unsplash.com/photo-1581783898377-1c85bf937427?auto=format&fit=crop&w=800&q=80",
+          categoryId: "home",
+          badge: "Deal",
+          stock: 30,
+        },
+        {
+          id: "prod-nova-table",
+          name: "Nova Coffee Table",
+          priceKs: 185000,
+          priceB2bKs: 149000,
+          imageUrl:
+            "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?auto=format&fit=crop&w=800&q=80",
+          categoryId: "home",
+          badge: "Popular",
+          stock: 12,
         },
       ],
     },

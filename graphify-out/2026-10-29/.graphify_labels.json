@@ -18,5 +18,6 @@
   "16": "vercel.json",
   "17": "Townships + delivery fees (QR Shop only)",
   "18": "Database: Supabase Postgres",
-  "19": "auth-hostinger-situation.md"
+  "19": "auth-hostinger-situation.md",
+  "20": "merchant-guest.routes.js"
 }
