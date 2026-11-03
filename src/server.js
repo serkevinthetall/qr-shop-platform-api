@@ -130,7 +130,7 @@ app.get("/health", async (_req, res) => {
     hasSupabaseStorage: supabaseStorageConfigured(),
     marketplacePublicOrigin: String(
       process.env.MARKETPLACE_PUBLIC_ORIGIN ||
-        "https://qr-shop-marketplace.vercel.app",
+        "https://store.qrshopmyanmar.com",
     )
       .trim()
       .replace(/\/$/, ""),
