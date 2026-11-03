@@ -101,7 +101,7 @@ app.get("/health", (_req, res) => {
     service: "qr-shop-platform-api",
     phase: "merchant-backend",
     clients: ["marketplace", "merchant", "admin"],
-    database: "supabase-postgres",
+    database: "hostinger-mysql",
     storage: supabaseStorageConfigured() ? "supabase" : "disk-uploads",
     storageBucket: supabaseStorageConfigured() ? storageBucketName() : null,
     hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
