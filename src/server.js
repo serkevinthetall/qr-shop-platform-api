@@ -37,6 +37,7 @@ import {
   merchantPortalRouter,
 } from "./routes/portal-messages.routes.js";
 import realtimeRoutes from "./routes/realtime.routes.js";
+import goRoutes from "./routes/go.routes.js";
 import { ok, fail } from "./lib/response.js";
 import { prisma } from "./lib/prisma.js";
 import { realtimeClientCount } from "./lib/realtime.js";
@@ -127,14 +128,26 @@ app.get("/health", async (_req, res) => {
     hasJwtSecret: Boolean(process.env.JWT_SECRET),
     hasPublicBaseUrl: Boolean(process.env.PUBLIC_BASE_URL),
     hasSupabaseStorage: supabaseStorageConfigured(),
+    marketplacePublicOrigin: String(
+      process.env.MARKETPLACE_PUBLIC_ORIGIN ||
+        "https://qr-shop-marketplace.vercel.app",
+    )
+      .trim()
+      .replace(/\/$/, ""),
   });
 });
+
+/** Stable QR landing — change MARKETPLACE_PUBLIC_ORIGIN when mall host moves. */
+app.use("/go", goRoutes);
 
 app.get("/api", (_req, res) => {
   ok(res, {
     name: "QR Shop Platform API",
     version: "0.6.0",
     routes: [
+      "GET  /go/s/:shopId",
+      "GET  /go/s/:shopId/p/:productId",
+      "GET  /go/product/:productId",
       "POST /api/auth/login",
       "GET  /api/merchant/overview",
       "GET  /api/merchant/shop",
