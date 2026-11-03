@@ -38,6 +38,7 @@ import {
 } from "./routes/portal-messages.routes.js";
 import realtimeRoutes from "./routes/realtime.routes.js";
 import { ok, fail } from "./lib/response.js";
+import { prisma } from "./lib/prisma.js";
 import { realtimeClientCount } from "./lib/realtime.js";
 import { ensureUploadDirs, uploadsRoot } from "./lib/uploads.js";
 import { seedUploadsDir } from "./lib/media-url.js";
@@ -96,12 +97,30 @@ app.use(
   }),
 );
 
-app.get("/health", (_req, res) => {
+app.get("/health", async (_req, res) => {
+  let dbOk = false;
+  let dbError = null;
+  const rawUrl = process.env.DATABASE_URL || "";
+  let dbProtocol = null;
+  try {
+    dbProtocol = new URL(rawUrl).protocol.replace(":", "");
+  } catch {
+    dbProtocol = rawUrl ? "invalid_url" : null;
+  }
+  try {
+    await prisma.$queryRawUnsafe("SELECT 1 AS ok");
+    dbOk = true;
+  } catch (err) {
+    dbError = String(err?.message || err).slice(0, 240);
+  }
   ok(res, {
     service: "qr-shop-platform-api",
     phase: "merchant-backend",
     clients: ["marketplace", "merchant", "admin"],
     database: "hostinger-mysql",
+    dbProtocol,
+    dbOk,
+    dbError,
     storage: supabaseStorageConfigured() ? "supabase" : "disk-uploads",
     storageBucket: supabaseStorageConfigured() ? storageBucketName() : null,
     hasDatabaseUrl: Boolean(process.env.DATABASE_URL),

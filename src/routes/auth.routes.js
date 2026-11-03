@@ -101,7 +101,13 @@ router.post("/login", async (req, res) => {
     return ok(res, issueSession(user));
   } catch (err) {
     console.error("login error", err);
-    return fail(res, 500, "Login failed — is DATABASE_URL set?", "db_error");
+    const detail = String(err?.message || err).slice(0, 180);
+    return fail(
+      res,
+      500,
+      `Login failed — database error: ${detail}`,
+      "db_error",
+    );
   }
 });
 
