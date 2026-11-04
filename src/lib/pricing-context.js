@@ -75,7 +75,12 @@ export async function resolvePricingContext(shopId, phone) {
   };
 }
 
-/** Public mall row: prices by shop listing mode (no phone gate) */
+/**
+ * Public mall row (Marketplace / App).
+ * Show Retail + Wholesale whenever the SKU has both — listingMode no longer
+ * hides a filled wholesale price on b2c shops (mall cards label both).
+ * B2B-only shops still omit retail.
+ */
 export function mallPricesForProduct(product, features) {
   const ch = channelsFromListingMode(resolveListingMode(features));
   const out = {
@@ -86,11 +91,25 @@ export function mallPricesForProduct(product, features) {
     portfolioOnly: ch.portfolioOnly,
     canOrder: ch.canOrder,
   };
-  if (ch.b2cEnabled || ch.portfolioOnly) {
-    out.priceB2cKs = product.priceKs;
+
+  const retail =
+    product.priceKs != null && Number(product.priceKs) > 0
+      ? Math.floor(Number(product.priceKs))
+      : null;
+  const wholesale =
+    product.priceB2bKs != null && Number(product.priceB2bKs) > 0
+      ? Math.floor(Number(product.priceB2bKs))
+      : null;
+
+  if (ch.listingMode === "b2b") {
+    if (wholesale != null) out.priceB2bKs = wholesale;
+  } else {
+    if (retail != null) out.priceB2cKs = retail;
+    if (wholesale != null) out.priceB2bKs = wholesale;
   }
-  if (ch.b2bEnabled && product.priceB2bKs != null) {
-    out.priceB2bKs = product.priceB2bKs;
+
+  if (out.priceB2cKs != null && out.priceB2bKs != null && ch.listingMode !== "portfolio") {
+    out.listingMode = "both";
   }
   if (ch.portfolioOnly) {
     out.displayOnly = true;

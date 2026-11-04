@@ -125,7 +125,17 @@ router.get("/", async (req, res) => {
                 { categoryId: { not: "" } },
               ],
             },
-        { shop: { status: "approved", listed: true } },
+        {
+          shop: {
+            status: "approved",
+            listed: true,
+            /** Catalog only (portfolio) → Shop QR website only, not mall/app. */
+            OR: [
+              { features: null },
+              { features: { listingMode: { not: "portfolio" } } },
+            ],
+          },
+        },
         ...(shopId ? [{ shopId }] : []),
         ...(deal ? [{ badge: { not: null } }] : []),
         ...(q
@@ -254,7 +264,14 @@ router.get("/:id", async (req, res) => {
           { categoryId: { not: null } },
           { categoryId: { not: "" } },
         ],
-        shop: { status: "approved", listed: true },
+        shop: {
+          status: "approved",
+          listed: true,
+          OR: [
+            { features: null },
+            { features: { listingMode: { not: "portfolio" } } },
+          ],
+        },
       },
       include: productInclude,
     });

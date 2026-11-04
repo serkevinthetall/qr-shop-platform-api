@@ -381,6 +381,35 @@ router.get("/shop", async (req, res) => {
 });
 
 /**
+ * PATCH /api/merchant/barcode-tracking
+ * Shop owner turns barcode tools On/Off (manual entry only — no auto codes).
+ */
+router.patch("/barcode-tracking", async (req, res) => {
+  try {
+    const shopId = shopIdOrFail(req, res);
+    if (!shopId) return;
+    if (req.user.role === "staff") {
+      return fail(res, 403, "Shop owner only");
+    }
+    if (typeof req.body?.barcodeTrackingEnabled !== "boolean") {
+      return fail(res, 400, "barcodeTrackingEnabled boolean required");
+    }
+    const enabled = req.body.barcodeTrackingEnabled;
+    const features = await prisma.shopFeatures.upsert({
+      where: { shopId },
+      create: { shopId, barcodeTrackingEnabled: enabled },
+      update: { barcodeTrackingEnabled: enabled },
+    });
+    return ok(res, {
+      barcodeTrackingEnabled: Boolean(features.barcodeTrackingEnabled),
+    });
+  } catch (err) {
+    console.error("merchant barcode-tracking patch", err);
+    return fail(res, 500, "Could not update barcode setting", "db_error");
+  }
+});
+
+/**
  * PATCH /api/merchant/shop
  * Update profile fields (name, phone, tagline, logo, cover, location,
  * websitePublished, storeStyle, aboutText).

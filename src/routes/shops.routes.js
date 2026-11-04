@@ -319,6 +319,12 @@ router.patch(
       create: { shopId, ...data },
       update: data,
     });
+    if (features.listingMode === "portfolio") {
+      await prisma.product.updateMany({
+        where: { shopId },
+        data: { sellOnMarketplace: false, sellOnApp: false },
+      });
+    }
     return ok(res, {
       ...features,
       ...publicShopChannels(features),

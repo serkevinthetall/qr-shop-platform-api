@@ -146,6 +146,7 @@ app.get("/api", (_req, res) => {
       "GET  /api/merchant/overview",
       "GET  /api/merchant/shop",
       "PATCH /api/merchant/shop",
+      "PATCH /api/merchant/barcode-tracking",
       "GET  /api/merchant/products",
       "POST /api/merchant/products",
       "PUT  /api/merchant/products/:id",

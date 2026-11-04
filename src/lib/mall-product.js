@@ -9,6 +9,12 @@ export function toMallProduct(p) {
   const priced = mallPricesForProduct(p, p.shop?.features);
   const channels = publicShopChannels(p.shop?.features);
   const priceKs = priced.priceB2cKs ?? priced.priceB2bKs ?? p.priceKs;
+  const listingMode = priced.listingMode || channels.listingMode;
+  const showBoth =
+    priced.priceB2cKs != null &&
+    priced.priceB2bKs != null &&
+    Number(priced.priceB2cKs) > 0 &&
+    Number(priced.priceB2bKs) > 0;
   return {
     id: `${p.shopId}__${p.id}`,
     productId: p.id,
@@ -31,13 +37,13 @@ export function toMallProduct(p) {
     imageUrl: p.imageUrl ?? "",
     stock: p.stock,
     active: p.active,
-    listingMode: channels.listingMode,
+    listingMode,
     portfolioOnly: channels.portfolioOnly,
     canOrder: channels.canOrder,
     channels: {
-      b2cEnabled: channels.b2cEnabled,
-      b2bEnabled: channels.b2bEnabled,
-      showBoth: channels.b2cEnabled && channels.b2bEnabled,
+      b2cEnabled: channels.b2cEnabled || showBoth,
+      b2bEnabled: channels.b2bEnabled || showBoth,
+      showBoth: (channels.b2cEnabled && channels.b2bEnabled) || showBoth,
     },
     displayOnly: Boolean(priced.displayOnly),
     updatedAt: p.updatedAt?.toISOString?.() ?? p.updatedAt,

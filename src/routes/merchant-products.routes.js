@@ -8,11 +8,17 @@ import {
   productWriteData,
   publicMerchantProduct,
 } from "../lib/merchant-product.js";
+import { resolveListingMode } from "../lib/shop-channels.js";
 import { recordStockAdjustMove } from "../lib/stock-moves.js";
 
 const router = Router();
 
 router.use(requireAuth, requireRole("merchant", "staff"));
+
+async function shopIsCatalogOnly(shopId) {
+  const features = await prisma.shopFeatures.findUnique({ where: { shopId } });
+  return resolveListingMode(features) === "portfolio";
+}
 
 /**
  * GET /api/merchant/stock-moves
@@ -211,8 +217,10 @@ router.post("/products", async (req, res) => {
     }
 
     const published = data.active !== false;
-    let sellOnMarketplace = published && data.sellOnMarketplace === true;
-    const sellOnApp = published && data.sellOnApp === true;
+    const catalogOnly = await shopIsCatalogOnly(shopId);
+    let sellOnMarketplace =
+      !catalogOnly && published && data.sellOnMarketplace === true;
+    let sellOnApp = !catalogOnly && published && data.sellOnApp === true;
     if (sellOnMarketplace) {
       const settings = await prisma.platformSettings.findUnique({
         where: { id: "default" },
@@ -329,6 +337,11 @@ router.put("/products/:id", async (req, res) => {
         data.sellOnMarketplace = false;
       }
       if (typeof data.sellOnApp === "boolean" && !nextActive) {
+        data.sellOnApp = false;
+      }
+      /** Catalog only shops cannot list on Marketplace or App. */
+      if (await shopIsCatalogOnly(shopId)) {
+        data.sellOnMarketplace = false;
         data.sellOnApp = false;
       }
     }

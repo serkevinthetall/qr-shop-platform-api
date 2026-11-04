@@ -5,7 +5,7 @@
  * - b2c       → retail prices only, can order
  * - b2b       → wholesale prices only, can order
  * - both      → B2C + B2B prices, can order
- * - portfolio → showcase only, no checkout
+ * - portfolio → shop website / Shop QR only (browse); not Marketplace or App
  */
 
 export const LISTING_MODES = ["b2c", "b2b", "both", "portfolio"];

@@ -268,6 +268,15 @@ router.patch("/channels", async (req, res) => {
     create: { shopId, ...payload },
     update: payload,
   });
+
+  /** Catalog only → remove from Marketplace + App; keep Shop QR / own page. */
+  if (mode === "portfolio") {
+    await prisma.product.updateMany({
+      where: { shopId },
+      data: { sellOnMarketplace: false, sellOnApp: false },
+    });
+  }
+
   return ok(res, publicShopChannels(features));
 });
 
