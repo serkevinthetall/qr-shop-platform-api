@@ -1,6 +1,6 @@
 /**
  * QR Shop Platform API — Marketplace · Merchant · Admin
- * DB: Supabase Postgres · Photos: Supabase Storage (or local disk fallback)
+ * DB: Hostinger MySQL · Photos: Hostinger disk (UPLOAD_DIR) or Supabase if configured
  */
 import "./lib/env.js";
 import express from "express";
@@ -128,6 +128,7 @@ app.get("/health", async (_req, res) => {
     hasJwtSecret: Boolean(process.env.JWT_SECRET),
     hasPublicBaseUrl: Boolean(process.env.PUBLIC_BASE_URL),
     hasSupabaseStorage: supabaseStorageConfigured(),
+    uploadDirSet: Boolean(String(process.env.UPLOAD_DIR || "").trim()),
     marketplacePublicOrigin: String(
       process.env.MARKETPLACE_PUBLIC_ORIGIN ||
         "https://store.qrshopmyanmar.com",
