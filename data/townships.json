@@ -1,34 +1,4 @@
 {
-  "meta": {
-    "source": "CRM Backup/delivery/Townships (x_townships).xlsx — full national catalog",
-    "sheet": "Sheet1",
-    "count": 420,
-    "columns": [
-      "sequence",
-      "name",
-      "state",
-      "postalCode",
-      "country"
-    ],
-    "seedVersion": 4,
-    "states": [
-      "Ayeyarwady (MM)",
-      "Bago (MM)",
-      "Chin (MM)",
-      "Kachin (MM)",
-      "Kayah (MM)",
-      "Kayin (MM)",
-      "Magway (MM)",
-      "Mandalay (MM)",
-      "Mon (MM)",
-      "Naypyitaw (MM)",
-      "Rakhine (MM)",
-      "Sagaing (MM)",
-      "Shan (MM)",
-      "Tanintharyi (MM)",
-      "Yangon (MM)"
-    ]
-  },
   "townships": [
     {
       "id": "ayeyarwady-ahmar-10311",
@@ -128,7 +98,7 @@
     },
     {
       "id": "ayeyarwady-kangyidaunt-10021",
-      "name": "ကန်ကြီးထောင့် (Kangyidaunt)",
+      "name": "Kangyidaunt",
       "nameEn": "Kangyidaunt",
       "nameMm": "ကန်ကြီးထောင့်",
       "state": "Ayeyarwady (MM)",
@@ -140,7 +110,7 @@
     },
     {
       "id": "ayeyarwady-kyaiklat-10241",
-      "name": "ကျိုက်လတ် (Kyaiklat)",
+      "name": "Kyaiklat",
       "nameEn": "Kyaiklat",
       "nameMm": "ကျိုက်လတ်",
       "state": "Ayeyarwady (MM)",
@@ -152,7 +122,7 @@
     },
     {
       "id": "ayeyarwady-kyonpyaw-10091",
-      "name": "ကျုံပျော် (Kyonpyaw)",
+      "name": "Kyonpyaw",
       "nameEn": "Kyonpyaw",
       "nameMm": "ကျုံပျော်",
       "state": "Ayeyarwady (MM)",
@@ -164,7 +134,7 @@
     },
     {
       "id": "ayeyarwady-kyangin-10031",
-      "name": "ကြံခင်း (Kyangin)",
+      "name": "Kyangin",
       "nameEn": "Kyangin",
       "nameMm": "ကြံခင်း",
       "state": "Ayeyarwady (MM)",
@@ -176,7 +146,7 @@
     },
     {
       "id": "ayeyarwady-ngapudaw-10131",
-      "name": "ငပုတော (Ngapudaw)",
+      "name": "Ngapudaw",
       "nameEn": "Ngapudaw",
       "nameMm": "ငပုတော",
       "state": "Ayeyarwady (MM)",
@@ -188,7 +158,7 @@
     },
     {
       "id": "ayeyarwady-zalun-10141",
-      "name": "ဇလွန် (Zalun)",
+      "name": "Zalun",
       "nameEn": "Zalun",
       "nameMm": "ဇလွန်",
       "state": "Ayeyarwady (MM)",
@@ -200,7 +170,7 @@
     },
     {
       "id": "ayeyarwady-nyaungdon-10161",
-      "name": "ညောင်တုန်း (Nyaungdon)",
+      "name": "Nyaungdon",
       "nameEn": "Nyaungdon",
       "nameMm": "ညောင်တုန်း",
       "state": "Ayeyarwady (MM)",
@@ -212,7 +182,7 @@
     },
     {
       "id": "ayeyarwady-dedaye-10261",
-      "name": "ဒေးဒရဲ (Dedaye)",
+      "name": "Dedaye",
       "nameEn": "Dedaye",
       "nameMm": "ဒေးဒရဲ",
       "state": "Ayeyarwady (MM)",
@@ -224,7 +194,7 @@
     },
     {
       "id": "ayeyarwady-danubyu-10151",
-      "name": "ဓနုဖြူ (Danubyu)",
+      "name": "Danubyu",
       "nameEn": "Danubyu",
       "nameMm": "ဓနုဖြူ",
       "state": "Ayeyarwady (MM)",
@@ -236,7 +206,7 @@
     },
     {
       "id": "ayeyarwady-pantanaw-10171",
-      "name": "ပန်းတနော် (Pantanaw)",
+      "name": "Pantanaw",
       "nameEn": "Pantanaw",
       "nameMm": "ပန်းတနော်",
       "state": "Ayeyarwady (MM)",
@@ -248,7 +218,7 @@
     },
     {
       "id": "ayeyarwady-pathein-10011",
-      "name": "ပုသိမ် (Pathein)",
+      "name": "Pathein",
       "nameEn": "Pathein",
       "nameMm": "ပုသိမ်",
       "state": "Ayeyarwady (MM)",
@@ -260,7 +230,7 @@
     },
     {
       "id": "ayeyarwady-pyapon-10251",
-      "name": "ဖျာပုံ (Pyapon)",
+      "name": "Pyapon",
       "nameEn": "Pyapon",
       "nameMm": "ဖျာပုံ",
       "state": "Ayeyarwady (MM)",
@@ -272,7 +242,7 @@
     },
     {
       "id": "ayeyarwady-bogale-10231",
-      "name": "ဘိုကလေး (Bogale)",
+      "name": "Bogale",
       "nameEn": "Bogale",
       "nameMm": "ဘိုကလေး",
       "state": "Ayeyarwady (MM)",
@@ -284,7 +254,7 @@
     },
     {
       "id": "ayeyarwady-maubin-10181",
-      "name": "မအူပင် (Maubin)",
+      "name": "Maubin",
       "nameEn": "Maubin",
       "nameMm": "မအူပင်",
       "state": "Ayeyarwady (MM)",
@@ -296,7 +266,7 @@
     },
     {
       "id": "ayeyarwady-mawlamyinegyun-10122",
-      "name": "မော်လမြိုင်ကျွန်း (Mawlamyinegyun)",
+      "name": "Mawlamyinegyun",
       "nameEn": "Mawlamyinegyun",
       "nameMm": "မော်လမြိုင်ကျွန်း",
       "state": "Ayeyarwady (MM)",
@@ -308,7 +278,7 @@
     },
     {
       "id": "ayeyarwady-myanaung-10041",
-      "name": "မြန်အောင် (Myanaung)",
+      "name": "Myanaung",
       "nameEn": "Myanaung",
       "nameMm": "မြန်အောင်",
       "state": "Ayeyarwady (MM)",
@@ -320,7 +290,7 @@
     },
     {
       "id": "ayeyarwady-myaungmya-10211",
-      "name": "မြောင်းမြ (Myaungmya)",
+      "name": "Myaungmya",
       "nameEn": "Myaungmya",
       "nameMm": "မြောင်းမြ",
       "state": "Ayeyarwady (MM)",
@@ -332,7 +302,7 @@
     },
     {
       "id": "ayeyarwady-yegyi-10081",
-      "name": "ရေကြည် (Yegyi)",
+      "name": "Yegyi",
       "nameEn": "Yegyi",
       "nameMm": "ရေကြည်",
       "state": "Ayeyarwady (MM)",
@@ -344,7 +314,7 @@
     },
     {
       "id": "ayeyarwady-labutta-10121",
-      "name": "လပွတ္တာ (Labutta)",
+      "name": "Labutta",
       "nameEn": "Labutta",
       "nameMm": "လပွတ္တာ",
       "state": "Ayeyarwady (MM)",
@@ -356,7 +326,7 @@
     },
     {
       "id": "ayeyarwady-lemyethna-10071",
-      "name": "လေးမျက်နှာ (Lemyethna)",
+      "name": "Lemyethna",
       "nameEn": "Lemyethna",
       "nameMm": "လေးမျက်နှာ",
       "state": "Ayeyarwady (MM)",
@@ -368,7 +338,7 @@
     },
     {
       "id": "ayeyarwady-wakema-10201",
-      "name": "ဝါးခယ်မ (Wakema)",
+      "name": "Wakema",
       "nameEn": "Wakema",
       "nameMm": "ဝါးခယ်မ",
       "state": "Ayeyarwady (MM)",
@@ -380,7 +350,7 @@
     },
     {
       "id": "ayeyarwady-thabaung-10111",
-      "name": "သာပေါင်း (Thabaung)",
+      "name": "Thabaung",
       "nameEn": "Thabaung",
       "nameMm": "သာပေါင်း",
       "state": "Ayeyarwady (MM)",
@@ -392,7 +362,7 @@
     },
     {
       "id": "ayeyarwady-hinthada-10061",
-      "name": "ဟင်္သာတ (Hinthada)",
+      "name": "Hinthada",
       "nameEn": "Hinthada",
       "nameMm": "ဟင်္သာတ",
       "state": "Ayeyarwady (MM)",
@@ -404,7 +374,7 @@
     },
     {
       "id": "ayeyarwady-ingapu-10051",
-      "name": "အင်္ဂပူ (Ingapu)",
+      "name": "Ingapu",
       "nameEn": "Ingapu",
       "nameMm": "အင်္ဂပူ",
       "state": "Ayeyarwady (MM)",
@@ -416,7 +386,7 @@
     },
     {
       "id": "ayeyarwady-einme-10191",
-      "name": "အိမ္မဲ (Einme)",
+      "name": "Einme",
       "nameEn": "Einme",
       "nameMm": "အိမ္မဲ",
       "state": "Ayeyarwady (MM)",
@@ -428,7 +398,7 @@
     },
     {
       "id": "bago-kawa-8091",
-      "name": "ကဝ (Kawa)",
+      "name": "Kawa",
       "nameEn": "Kawa",
       "nameMm": "ကဝ",
       "state": "Bago (MM)",
@@ -440,7 +410,7 @@
     },
     {
       "id": "bago-kyaukkyi-8041",
-      "name": "ကျောက်ကြီး (Kyaukkyi)",
+      "name": "Kyaukkyi",
       "nameEn": "Kyaukkyi",
       "nameMm": "ကျောက်ကြီး",
       "state": "Bago (MM)",
@@ -452,7 +422,7 @@
     },
     {
       "id": "bago-kyauktaga-8021",
-      "name": "ကျောက်တံခါး (Kyauktaga)",
+      "name": "Kyauktaga",
       "nameEn": "Kyauktaga",
       "nameMm": "ကျောက်တံခါး",
       "state": "Bago (MM)",
@@ -464,7 +434,7 @@
     },
     {
       "id": "bago-gyobingauk-8231",
-      "name": "ကြို့ပင်ကောက် (Gyobingauk)",
+      "name": "Gyobingauk",
       "nameEn": "Gyobingauk",
       "nameMm": "ကြို့ပင်ကောက်",
       "state": "Bago (MM)",
@@ -476,7 +446,7 @@
     },
     {
       "id": "bago-zigon-8221",
-      "name": "ဇီးကုန်း (Zigon)",
+      "name": "Zigon",
       "nameEn": "Zigon",
       "nameMm": "ဇီးကုန်း",
       "state": "Bago (MM)",
@@ -488,7 +458,7 @@
     },
     {
       "id": "bago-nyaunglebin-8031",
-      "name": "ညောင်လေးပင် (Nyaunglebin)",
+      "name": "Nyaunglebin",
       "nameEn": "Nyaunglebin",
       "nameMm": "ညောင်လေးပင်",
       "state": "Bago (MM)",
@@ -500,7 +470,7 @@
     },
     {
       "id": "bago-taungoo-8101",
-      "name": "တောင်ငူ (Taungoo)",
+      "name": "Taungoo",
       "nameEn": "Taungoo",
       "nameMm": "တောင်ငူ",
       "state": "Bago (MM)",
@@ -512,7 +482,7 @@
     },
     {
       "id": "bago-htantabin-8131",
-      "name": "ထန်းတပင် (Htantabin)",
+      "name": "Htantabin",
       "nameEn": "Htantabin",
       "nameMm": "ထန်းတပင်",
       "state": "Bago (MM)",
@@ -524,7 +494,7 @@
     },
     {
       "id": "bago-daik-u-8061",
-      "name": "ဒိုက်ဦး (Daik-U)",
+      "name": "Daik-U",
       "nameEn": "Daik-U",
       "nameMm": "ဒိုက်ဦး",
       "state": "Bago (MM)",
@@ -536,7 +506,7 @@
     },
     {
       "id": "bago-nattalin-8211",
-      "name": "နတ္တလင်း (Nattalin)",
+      "name": "Nattalin",
       "nameEn": "Nattalin",
       "nameMm": "နတ္တလင်း",
       "state": "Bago (MM)",
@@ -548,7 +518,7 @@
     },
     {
       "id": "bago-padaung-8171",
-      "name": "ပန်းတောင်း (Padaung)",
+      "name": "Padaung",
       "nameEn": "Padaung",
       "nameMm": "ပန်းတောင်း",
       "state": "Bago (MM)",
@@ -560,7 +530,7 @@
     },
     {
       "id": "bago-paukkhaung-8161",
-      "name": "ပေါက်ခေါင်း (Paukkhaung)",
+      "name": "Paukkhaung",
       "nameEn": "Paukkhaung",
       "nameMm": "ပေါက်ခေါင်း",
       "state": "Bago (MM)",
@@ -572,7 +542,7 @@
     },
     {
       "id": "bago-paungde-8201",
-      "name": "ပေါင်းတည် (Paungde)",
+      "name": "Paungde",
       "nameEn": "Paungde",
       "nameMm": "ပေါင်းတည်",
       "state": "Bago (MM)",
@@ -584,7 +554,7 @@
     },
     {
       "id": "bago-bago-8011",
-      "name": "ပဲခူး (Bago)",
+      "name": "Bago",
       "nameEn": "Bago",
       "nameMm": "ပဲခူး",
       "state": "Bago (MM)",
@@ -596,7 +566,7 @@
     },
     {
       "id": "bago-pyay-8151",
-      "name": "ပြည် (Pyay)",
+      "name": "Pyay",
       "nameEn": "Pyay",
       "nameMm": "ပြည်",
       "state": "Bago (MM)",
@@ -608,7 +578,7 @@
     },
     {
       "id": "bago-phyu-8141",
-      "name": "ဖြူး (Phyu)",
+      "name": "Phyu",
       "nameEn": "Phyu",
       "nameMm": "ဖြူး",
       "state": "Bago (MM)",
@@ -620,7 +590,7 @@
     },
     {
       "id": "bago-monyo-8241",
-      "name": "မိုးညို (Monyo)",
+      "name": "Monyo",
       "nameEn": "Monyo",
       "nameMm": "မိုးညို",
       "state": "Bago (MM)",
@@ -632,7 +602,7 @@
     },
     {
       "id": "bago-yedashe-8111",
-      "name": "ရေတာရှည် (Yedashe)",
+      "name": "Yedashe",
       "nameEn": "Yedashe",
       "nameMm": "ရေတာရှည်",
       "state": "Bago (MM)",
@@ -644,7 +614,7 @@
     },
     {
       "id": "bago-shwegyin-8033",
-      "name": "ရွှေကျင် (Shwegyin)",
+      "name": "Shwegyin",
       "nameEn": "Shwegyin",
       "nameMm": "ရွှေကျင်",
       "state": "Bago (MM)",
@@ -656,7 +626,7 @@
     },
     {
       "id": "bago-shwedaung-8181",
-      "name": "ရွှေတောင် (Shwedaung)",
+      "name": "Shwedaung",
       "nameEn": "Shwedaung",
       "nameMm": "ရွှေတောင်",
       "state": "Bago (MM)",
@@ -668,7 +638,7 @@
     },
     {
       "id": "bago-letpadan-8271",
-      "name": "လက်ပံတန်း (Letpadan)",
+      "name": "Letpadan",
       "nameEn": "Letpadan",
       "nameMm": "လက်ပံတန်း",
       "state": "Bago (MM)",
@@ -680,7 +650,7 @@
     },
     {
       "id": "bago-waw-8071",
-      "name": "ဝေါ (Waw)",
+      "name": "Waw",
       "nameEn": "Waw",
       "nameMm": "ဝေါ",
       "state": "Bago (MM)",
@@ -692,7 +662,7 @@
     },
     {
       "id": "bago-thanatpin-8081",
-      "name": "သနပ်ပင် (Thanatpin)",
+      "name": "Thanatpin",
       "nameEn": "Thanatpin",
       "nameMm": "သနပ်ပင်",
       "state": "Bago (MM)",
@@ -704,7 +674,7 @@
     },
     {
       "id": "bago-thayarwady-8232",
-      "name": "သာယာဝတီ (Thayarwady)",
+      "name": "Thayarwady",
       "nameEn": "Thayarwady",
       "nameMm": "သာယာဝတီ",
       "state": "Bago (MM)",
@@ -716,7 +686,7 @@
     },
     {
       "id": "bago-thegon-8191",
-      "name": "သဲကုန်း (Thegon)",
+      "name": "Thegon",
       "nameEn": "Thegon",
       "nameMm": "သဲကုန်း",
       "state": "Bago (MM)",
@@ -728,7 +698,7 @@
     },
     {
       "id": "bago-oktwin-8121",
-      "name": "အုတ်တွင်း (Oktwin)",
+      "name": "Oktwin",
       "nameEn": "Oktwin",
       "nameMm": "အုတ်တွင်း",
       "state": "Bago (MM)",
@@ -740,7 +710,7 @@
     },
     {
       "id": "bago-okpho-8251",
-      "name": "အုတ်ဖို (Okpho)",
+      "name": "Okpho",
       "nameEn": "Okpho",
       "nameMm": "အုတ်ဖို",
       "state": "Bago (MM)",
@@ -752,7 +722,7 @@
     },
     {
       "id": "chin-kanpetlet-3081",
-      "name": "ကန်ပက်လက် (Kanpetlet)",
+      "name": "Kanpetlet",
       "nameEn": "Kanpetlet",
       "nameMm": "ကန်ပက်လက်",
       "state": "Chin (MM)",
@@ -764,7 +734,7 @@
     },
     {
       "id": "chin-tedim-3041",
-      "name": "တီးတိန် (Tedim)",
+      "name": "Tedim",
       "nameEn": "Tedim",
       "nameMm": "တီးတိန်",
       "state": "Chin (MM)",
@@ -776,7 +746,7 @@
     },
     {
       "id": "chin-tonzang-3051",
-      "name": "တွန်းဇံ (Tonzang)",
+      "name": "Tonzang",
       "nameEn": "Tonzang",
       "nameMm": "တွန်းဇံ",
       "state": "Chin (MM)",
@@ -788,7 +758,7 @@
     },
     {
       "id": "chin-thantlang-3021",
-      "name": "ထန်တလန် (Thantlang)",
+      "name": "Thantlang",
       "nameEn": "Thantlang",
       "nameMm": "ထန်တလန်",
       "state": "Chin (MM)",
@@ -800,7 +770,7 @@
     },
     {
       "id": "chin-falam-3031",
-      "name": "ဖလမ်း (Falam)",
+      "name": "Falam",
       "nameEn": "Falam",
       "nameMm": "ဖလမ်း",
       "state": "Chin (MM)",
@@ -812,7 +782,7 @@
     },
     {
       "id": "chin-mindat-3071",
-      "name": "မင်းတပ် (Mindat)",
+      "name": "Mindat",
       "nameEn": "Mindat",
       "nameMm": "မင်းတပ်",
       "state": "Chin (MM)",
@@ -824,7 +794,7 @@
     },
     {
       "id": "chin-matupi-3061",
-      "name": "မတူပီ (Matupi)",
+      "name": "Matupi",
       "nameEn": "Matupi",
       "nameMm": "မတူပီ",
       "state": "Chin (MM)",
@@ -836,7 +806,7 @@
     },
     {
       "id": "chin-hakha-3011",
-      "name": "ဟားခါး (Hakha)",
+      "name": "Hakha",
       "nameEn": "Hakha",
       "nameMm": "ဟားခါး",
       "state": "Chin (MM)",
@@ -860,7 +830,7 @@
     },
     {
       "id": "kachin-khaunglanhpu-1181",
-      "name": "ခေါင်လန်ဖူး (Khaunglanhpu)",
+      "name": "Khaunglanhpu",
       "nameEn": "Khaunglanhpu",
       "nameMm": "ခေါင်လန်ဖူး",
       "state": "Kachin (MM)",
@@ -872,7 +842,7 @@
     },
     {
       "id": "kachin-chipwi-1071",
-      "name": "ချီဗွေ (Chipwi)",
+      "name": "Chipwi",
       "nameEn": "Chipwi",
       "nameMm": "ချီဗွေ",
       "state": "Kachin (MM)",
@@ -884,7 +854,7 @@
     },
     {
       "id": "kachin-tsawlaw-1171",
-      "name": "ဆော့လော် (Tsawlaw)",
+      "name": "Tsawlaw",
       "nameEn": "Tsawlaw",
       "nameMm": "ဆော့လော်",
       "state": "Kachin (MM)",
@@ -896,7 +866,7 @@
     },
     {
       "id": "kachin-sumprabum-1061",
-      "name": "ဆွမ်ပရာဘွမ် (Sumprabum)",
+      "name": "Sumprabum",
       "nameEn": "Sumprabum",
       "nameMm": "ဆွမ်ပရာဘွမ်",
       "state": "Kachin (MM)",
@@ -908,7 +878,7 @@
     },
     {
       "id": "kachin-tanai-1091",
-      "name": "တနိုင်း (Tanai)",
+      "name": "Tanai",
       "nameEn": "Tanai",
       "nameMm": "တနိုင်း",
       "state": "Kachin (MM)",
@@ -920,7 +890,7 @@
     },
     {
       "id": "kachin-nawngmun-1031",
-      "name": "နောင်မွန်း (Nawngmun)",
+      "name": "Nawngmun",
       "nameEn": "Nawngmun",
       "nameMm": "နောင်မွန်း",
       "state": "Kachin (MM)",
@@ -932,7 +902,7 @@
     },
     {
       "id": "kachin-puta-o-1051",
-      "name": "ပူတာအို (Puta-O)",
+      "name": "Puta-O",
       "nameEn": "Puta-O",
       "nameMm": "ပူတာအို",
       "state": "Kachin (MM)",
@@ -944,7 +914,7 @@
     },
     {
       "id": "kachin-hpakant-1161",
-      "name": "ဖားကန့် (Hpakant)",
+      "name": "Hpakant",
       "nameEn": "Hpakant",
       "nameMm": "ဖားကန့်",
       "state": "Kachin (MM)",
@@ -956,7 +926,7 @@
     },
     {
       "id": "kachin-bhamo-1131",
-      "name": "ဗန်းမော် (Bhamo)",
+      "name": "Bhamo",
       "nameEn": "Bhamo",
       "nameMm": "ဗန်းမော်",
       "state": "Kachin (MM)",
@@ -968,7 +938,7 @@
     },
     {
       "id": "kachin-machanbaw-1041",
-      "name": "မချမ်းဘော (Machanbaw)",
+      "name": "Machanbaw",
       "nameEn": "Machanbaw",
       "nameMm": "မချမ်းဘော",
       "state": "Kachin (MM)",
@@ -980,7 +950,7 @@
     },
     {
       "id": "kachin-mansi-1141",
-      "name": "မန်စီ (Mansi)",
+      "name": "Mansi",
       "nameEn": "Mansi",
       "nameMm": "မန်စီ",
       "state": "Kachin (MM)",
@@ -992,7 +962,7 @@
     },
     {
       "id": "kachin-mogaung-1101",
-      "name": "မိုးကောင်း (Mogaung)",
+      "name": "Mogaung",
       "nameEn": "Mogaung",
       "nameMm": "မိုးကောင်း",
       "state": "Kachin (MM)",
@@ -1004,7 +974,7 @@
     },
     {
       "id": "kachin-mohnyin-1111",
-      "name": "မိုးညှင်း (Mohnyin)",
+      "name": "Mohnyin",
       "nameEn": "Mohnyin",
       "nameMm": "မိုးညှင်း",
       "state": "Kachin (MM)",
@@ -1016,7 +986,7 @@
     },
     {
       "id": "kachin-momauk-1151",
-      "name": "မိုးမောက် (Momauk)",
+      "name": "Momauk",
       "nameEn": "Momauk",
       "nameMm": "မိုးမောက်",
       "state": "Kachin (MM)",
@@ -1028,7 +998,7 @@
     },
     {
       "id": "kachin-myitkyina-1011",
-      "name": "မြစ်ကြီးနား (Myitkyina)",
+      "name": "Myitkyina",
       "nameEn": "Myitkyina",
       "nameMm": "မြစ်ကြီးနား",
       "state": "Kachin (MM)",
@@ -1040,7 +1010,7 @@
     },
     {
       "id": "kachin-shwegu-1121",
-      "name": "ရွှေကူ (Shwegu)",
+      "name": "Shwegu",
       "nameEn": "Shwegu",
       "nameMm": "ရွှေကူ",
       "state": "Kachin (MM)",
@@ -1052,7 +1022,7 @@
     },
     {
       "id": "kachin-waingmaw-1081",
-      "name": "ဝိုင်းမော် (Waingmaw)",
+      "name": "Waingmaw",
       "nameEn": "Waingmaw",
       "nameMm": "ဝိုင်းမော်",
       "state": "Kachin (MM)",
@@ -1064,7 +1034,7 @@
     },
     {
       "id": "kachin-injangyang-1201",
-      "name": "အင်ဂျန်းယန် (Injangyang)",
+      "name": "Injangyang",
       "nameEn": "Injangyang",
       "nameMm": "အင်ဂျန်းယန်",
       "state": "Kachin (MM)",
@@ -1076,7 +1046,7 @@
     },
     {
       "id": "kayah-shan-9081",
-      "name": "Phiekon(Shan)",
+      "name": "Phiekon",
       "nameEn": "Shan",
       "nameMm": null,
       "state": "Kayah (MM)",
@@ -1088,7 +1058,7 @@
     },
     {
       "id": "kayah-demoso-9021",
-      "name": "ဒီမောဆို (Demoso)",
+      "name": "Demoso",
       "nameEn": "Demoso",
       "nameMm": "ဒီမောဆို",
       "state": "Kayah (MM)",
@@ -1100,7 +1070,7 @@
     },
     {
       "id": "kayah-hpruso-9031",
-      "name": "ဖရူဆို (Hpruso)",
+      "name": "Hpruso",
       "nameEn": "Hpruso",
       "nameMm": "ဖရူဆို",
       "state": "Kayah (MM)",
@@ -1112,7 +1082,7 @@
     },
     {
       "id": "kayah-hpasawng-9051",
-      "name": "ဖားဆောင်း (Hpasawng)",
+      "name": "Hpasawng",
       "nameEn": "Hpasawng",
       "nameMm": "ဖားဆောင်း",
       "state": "Kayah (MM)",
@@ -1124,7 +1094,7 @@
     },
     {
       "id": "kayah-bawlake-9041",
-      "name": "ဘောလခဲ (Bawlake)",
+      "name": "Bawlake",
       "nameEn": "Bawlake",
       "nameMm": "ဘောလခဲ",
       "state": "Kayah (MM)",
@@ -1136,7 +1106,7 @@
     },
     {
       "id": "kayah-mese-9061",
-      "name": "မယ်စဲ့ (Mese)",
+      "name": "Mese",
       "nameEn": "Mese",
       "nameMm": "မယ်စဲ့",
       "state": "Kayah (MM)",
@@ -1148,7 +1118,7 @@
     },
     {
       "id": "kayah-shadaw-9071",
-      "name": "ရှားတော (Shadaw)",
+      "name": "Shadaw",
       "nameEn": "Shadaw",
       "nameMm": "ရှားတော",
       "state": "Kayah (MM)",
@@ -1160,7 +1130,7 @@
     },
     {
       "id": "kayah-loikaw-9011",
-      "name": "လွိုင်ကော် (Loikaw)",
+      "name": "Loikaw",
       "nameEn": "Loikaw",
       "nameMm": "လွိုင်ကော်",
       "state": "Kayah (MM)",
@@ -1172,7 +1142,7 @@
     },
     {
       "id": "kayin-kawkareik-13061",
-      "name": "ကော့ကရိတ် (Kawkareik)",
+      "name": "Kawkareik",
       "nameEn": "Kawkareik",
       "nameMm": "ကော့ကရိတ်",
       "state": "Kayin (MM)",
@@ -1184,7 +1154,7 @@
     },
     {
       "id": "kayin-kyainseikgyi-13071",
-      "name": "ကြာအင်းဆိပ်ကြီး (Kyainseikgyi)",
+      "name": "Kyainseikgyi",
       "nameEn": "Kyainseikgyi",
       "nameMm": "ကြာအင်းဆိပ်ကြီး",
       "state": "Kayin (MM)",
@@ -1196,7 +1166,7 @@
     },
     {
       "id": "kayin-hpapun-13031",
-      "name": "ဖာပွန် (Hpapun)",
+      "name": "Hpapun",
       "nameEn": "Hpapun",
       "nameMm": "ဖာပွန်",
       "state": "Kayin (MM)",
@@ -1208,7 +1178,7 @@
     },
     {
       "id": "kayin-hpa-an-13011",
-      "name": "ဘားအံ (Hpa-an)",
+      "name": "Hpa-an",
       "nameEn": "Hpa-an",
       "nameMm": "ဘားအံ",
       "state": "Kayin (MM)",
@@ -1220,7 +1190,7 @@
     },
     {
       "id": "kayin-myawaddy-13051",
-      "name": "မြဝတီ (Myawaddy)",
+      "name": "Myawaddy",
       "nameEn": "Myawaddy",
       "nameMm": "မြဝတီ",
       "state": "Kayin (MM)",
@@ -1232,7 +1202,7 @@
     },
     {
       "id": "kayin-hlaingbwe-13041",
-      "name": "လှိုင်းဘွဲ့ (Hlaingbwe)",
+      "name": "Hlaingbwe",
       "nameEn": "Hlaingbwe",
       "nameMm": "လှိုင်းဘွဲ့",
       "state": "Kayin (MM)",
@@ -1244,7 +1214,7 @@
     },
     {
       "id": "kayin-thandaunggyi-13021",
-      "name": "သံတောင်ကြီး (Thandaunggyi)",
+      "name": "Thandaunggyi",
       "nameEn": "Thandaunggyi",
       "nameMm": "သံတောင်ကြီး",
       "state": "Kayin (MM)",
@@ -1256,7 +1226,7 @@
     },
     {
       "id": "magway-kamma-4111",
-      "name": "ကံမ (Kamma)",
+      "name": "Kamma",
       "nameEn": "Kamma",
       "nameMm": "ကံမ",
       "state": "Magway (MM)",
@@ -1268,7 +1238,7 @@
     },
     {
       "id": "magway-chauk-4171",
-      "name": "ချောက် (Chauk)",
+      "name": "Chauk",
       "nameEn": "Chauk",
       "nameMm": "ချောက်",
       "state": "Magway (MM)",
@@ -1280,7 +1250,7 @@
     },
     {
       "id": "magway-gangaw-4211",
-      "name": "ဂန့်ဂေါ (Gangaw)",
+      "name": "Gangaw",
       "nameEn": "Gangaw",
       "nameMm": "ဂန့်ဂေါ",
       "state": "Magway (MM)",
@@ -1292,7 +1262,7 @@
     },
     {
       "id": "magway-ngape-4061",
-      "name": "ငဖဲ (Ngape)",
+      "name": "Ngape",
       "nameEn": "Ngape",
       "nameMm": "ငဖဲ",
       "state": "Magway (MM)",
@@ -1304,7 +1274,7 @@
     },
     {
       "id": "magway-salin-4041",
-      "name": "စလင်း (Salin)",
+      "name": "Salin",
       "nameEn": "Salin",
       "nameMm": "စလင်း",
       "state": "Magway (MM)",
@@ -1316,7 +1286,7 @@
     },
     {
       "id": "magway-sidoktaya-4051",
-      "name": "စေတုတ္တရာ (Sidoktaya)",
+      "name": "Sidoktaya",
       "nameEn": "Sidoktaya",
       "nameMm": "စေတုတ္တရာ",
       "state": "Magway (MM)",
@@ -1328,7 +1298,7 @@
     },
     {
       "id": "magway-sinbaungwe-4081",
-      "name": "ဆင်ပေါင်ဝဲ (Sinbaungwe)",
+      "name": "Sinbaungwe",
       "nameEn": "Sinbaungwe",
       "nameMm": "ဆင်ပေါင်ဝဲ",
       "state": "Magway (MM)",
@@ -1340,7 +1310,7 @@
     },
     {
       "id": "magway-seikphyu-4251",
-      "name": "ဆိပ်ဖြူ (Seikphyu)",
+      "name": "Seikphyu",
       "nameEn": "Seikphyu",
       "nameMm": "ဆိပ်ဖြူ",
       "state": "Magway (MM)",
@@ -1352,7 +1322,7 @@
     },
     {
       "id": "magway-saw-4241",
-      "name": "ဆော (Saw)",
+      "name": "Saw",
       "nameEn": "Saw",
       "nameMm": "ဆော",
       "state": "Magway (MM)",
@@ -1364,7 +1334,7 @@
     },
     {
       "id": "magway-taungdwingyi-4141",
-      "name": "တောင်တွင်းကြီး (Taungdwingyi)",
+      "name": "Taungdwingyi",
       "nameEn": "Taungdwingyi",
       "nameMm": "တောင်တွင်းကြီး",
       "state": "Magway (MM)",
@@ -1376,7 +1346,7 @@
     },
     {
       "id": "magway-tilin-4221",
-      "name": "ထီးလင်း (Tilin)",
+      "name": "Tilin",
       "nameEn": "Tilin",
       "nameMm": "ထီးလင်း",
       "state": "Magway (MM)",
@@ -1388,7 +1358,7 @@
     },
     {
       "id": "magway-natmauk-4121",
-      "name": "နတ်မောက် (Natmauk)",
+      "name": "Natmauk",
       "nameEn": "Natmauk",
       "nameMm": "နတ်မောက်",
       "state": "Magway (MM)",
@@ -1400,7 +1370,7 @@
     },
     {
       "id": "magway-pakokku-4201",
-      "name": "ပခုက္ကူ (Pakokku)",
+      "name": "Pakokku",
       "nameEn": "Pakokku",
       "nameMm": "ပခုက္ကူ",
       "state": "Magway (MM)",
@@ -1412,7 +1382,7 @@
     },
     {
       "id": "magway-pauk-4231",
-      "name": "ပေါက် (Pauk)",
+      "name": "Pauk",
       "nameEn": "Pauk",
       "nameMm": "ပေါက်",
       "state": "Magway (MM)",
@@ -1424,7 +1394,7 @@
     },
     {
       "id": "magway-pwintbyu-4031",
-      "name": "ပွင့်ဖြူ (Pwintbyu)",
+      "name": "Pwintbyu",
       "nameEn": "Pwintbyu",
       "nameMm": "ပွင့်ဖြူ",
       "state": "Magway (MM)",
@@ -1436,7 +1406,7 @@
     },
     {
       "id": "magway-magway-4011",
-      "name": "မကွေး (Magway)",
+      "name": "Magway",
       "nameEn": "Magway",
       "nameMm": "မကွေး",
       "state": "Magway (MM)",
@@ -1448,7 +1418,7 @@
     },
     {
       "id": "magway-mindon-4101",
-      "name": "မင်းတုန်း (Mindon)",
+      "name": "Mindon",
       "nameEn": "Mindon",
       "nameMm": "မင်းတုန်း",
       "state": "Magway (MM)",
@@ -1460,7 +1430,7 @@
     },
     {
       "id": "magway-minbu-4021",
-      "name": "မင်းဘူး (Minbu)",
+      "name": "Minbu",
       "nameEn": "Minbu",
       "nameMm": "မင်းဘူး",
       "state": "Magway (MM)",
@@ -1472,7 +1442,7 @@
     },
     {
       "id": "magway-minhla-4071",
-      "name": "မင်းလှ (Minhla)",
+      "name": "Minhla",
       "nameEn": "Minhla",
       "nameMm": "မင်းလှ",
       "state": "Magway (MM)",
@@ -1484,7 +1454,7 @@
     },
     {
       "id": "magway-myaing-4191",
-      "name": "မြိုင် (Myaing)",
+      "name": "Myaing",
       "nameEn": "Myaing",
       "nameMm": "မြိုင်",
       "state": "Magway (MM)",
@@ -1496,7 +1466,7 @@
     },
     {
       "id": "magway-myothit-4131",
-      "name": "မြို့သစ် (Myothit)",
+      "name": "Myothit",
       "nameEn": "Myothit",
       "nameMm": "မြို့သစ်",
       "state": "Magway (MM)",
@@ -1508,7 +1478,7 @@
     },
     {
       "id": "magway-yesagyo-4181",
-      "name": "ရေစကြို (Yesagyo)",
+      "name": "Yesagyo",
       "nameEn": "Yesagyo",
       "nameMm": "ရေစကြို",
       "state": "Magway (MM)",
@@ -1520,7 +1490,7 @@
     },
     {
       "id": "magway-yenangyaung-4161",
-      "name": "ရေနံချောင်း (Yenangyaung)",
+      "name": "Yenangyaung",
       "nameEn": "Yenangyaung",
       "nameMm": "ရေနံချောင်း",
       "state": "Magway (MM)",
@@ -1532,7 +1502,7 @@
     },
     {
       "id": "magway-thayet-4091",
-      "name": "သရက် (Thayet)",
+      "name": "Thayet",
       "nameEn": "Thayet",
       "nameMm": "သရက်",
       "state": "Magway (MM)",
@@ -1544,7 +1514,7 @@
     },
     {
       "id": "magway-aunglan-4151",
-      "name": "အောင်လံ (Aunglan)",
+      "name": "Aunglan",
       "nameEn": "Aunglan",
       "nameMm": "အောင်လံ",
       "state": "Magway (MM)",
@@ -1568,7 +1538,7 @@
     },
     {
       "id": "mandalay-kyaukse-5143",
-      "name": "ကျောက်ဆည် (Kyaukse)",
+      "name": "Kyaukse",
       "nameEn": "Kyaukse",
       "nameMm": "ကျောက်ဆည်",
       "state": "Mandalay (MM)",
@@ -1580,7 +1550,7 @@
     },
     {
       "id": "mandalay-kyaukpadaung-5241",
-      "name": "ကျောက်ပန်းတောင်း (Kyaukpadaung)",
+      "name": "Kyaukpadaung",
       "nameEn": "Kyaukpadaung",
       "nameMm": "ကျောက်ပန်းတောင်း",
       "state": "Mandalay (MM)",
@@ -1592,7 +1562,7 @@
     },
     {
       "id": "mandalay-chanmyathazi-5041",
-      "name": "ချမ်းမြသာစည် (Chanmyathazi)",
+      "name": "Chanmyathazi",
       "nameEn": "Chanmyathazi",
       "nameMm": "ချမ်းမြသာစည်",
       "state": "Mandalay (MM)",
@@ -1604,7 +1574,7 @@
     },
     {
       "id": "mandalay-chanayethazan-5021",
-      "name": "ချမ်းအေးသာဇံ (Chanayethazan)",
+      "name": "Chanayethazan",
       "nameEn": "Chanayethazan",
       "nameMm": "ချမ်းအေးသာဇံ",
       "state": "Mandalay (MM)",
@@ -1616,7 +1586,7 @@
     },
     {
       "id": "mandalay-ngazun-5281",
-      "name": "ငါန်းဇွန် (Ngazun)",
+      "name": "Ngazun",
       "nameEn": "Ngazun",
       "nameMm": "ငါန်းဇွန်",
       "state": "Mandalay (MM)",
@@ -1628,7 +1598,7 @@
     },
     {
       "id": "mandalay-sintgaing-5141",
-      "name": "စဉ့်ကိုင် (Sintgaing)",
+      "name": "Sintgaing",
       "nameEn": "Sintgaing",
       "nameMm": "စဉ့်ကိုင်",
       "state": "Mandalay (MM)",
@@ -1640,7 +1610,7 @@
     },
     {
       "id": "mandalay-singu-5111",
-      "name": "စဉ့်ကူး (Singu)",
+      "name": "Singu",
       "nameEn": "Singu",
       "nameMm": "စဉ့်ကူး",
       "state": "Mandalay (MM)",
@@ -1652,7 +1622,7 @@
     },
     {
       "id": "mandalay-nyaung-u-5231",
-      "name": "ညောင်ဦး (Nyaung-U)",
+      "name": "Nyaung-U",
       "nameEn": "Nyaung-U",
       "nameMm": "ညောင်ဦး",
       "state": "Mandalay (MM)",
@@ -1664,7 +1634,7 @@
     },
     {
       "id": "mandalay-taungtha-5271",
-      "name": "တောင်သာ (Taungtha)",
+      "name": "Taungtha",
       "nameEn": "Taungtha",
       "nameMm": "တောင်သာ",
       "state": "Mandalay (MM)",
@@ -1676,7 +1646,7 @@
     },
     {
       "id": "mandalay-tada-u-5131",
-      "name": "တံတားဦး (Tada-U)",
+      "name": "Tada-U",
       "nameEn": "Tada-U",
       "nameMm": "တံတားဦး",
       "state": "Mandalay (MM)",
@@ -1688,7 +1658,7 @@
     },
     {
       "id": "mandalay-natogyi-5261",
-      "name": "နွားထိုးကြီး (Natogyi)",
+      "name": "Natogyi",
       "nameEn": "Natogyi",
       "nameMm": "နွားထိုးကြီး",
       "state": "Mandalay (MM)",
@@ -1700,7 +1670,7 @@
     },
     {
       "id": "mandalay-patheingyi-5071",
-      "name": "ပုသိမ်ကြီး (Patheingyi)",
+      "name": "Patheingyi",
       "nameEn": "Patheingyi",
       "nameMm": "ပုသိမ်ကြီး",
       "state": "Mandalay (MM)",
@@ -1712,7 +1682,7 @@
     },
     {
       "id": "mandalay-pyawbwe-5211",
-      "name": "ပျော်ဘွယ် (Pyawbwe)",
+      "name": "Pyawbwe",
       "nameEn": "Pyawbwe",
       "nameMm": "ပျော်ဘွယ်",
       "state": "Mandalay (MM)",
@@ -1724,7 +1694,7 @@
     },
     {
       "id": "mandalay-pyinoolwin-5081",
-      "name": "ပြင်ဦးလွင် (PyinOoLwin)",
+      "name": "PyinOoLwin",
       "nameEn": "PyinOoLwin",
       "nameMm": "ပြင်ဦးလွင်",
       "state": "Mandalay (MM)",
@@ -1736,7 +1706,7 @@
     },
     {
       "id": "mandalay-pyigyitagon-5051",
-      "name": "ပြည်ကြီးတံခွန် (Pyigyitagon)",
+      "name": "Pyigyitagon",
       "nameEn": "Pyigyitagon",
       "nameMm": "ပြည်ကြီးတံခွန်",
       "state": "Mandalay (MM)",
@@ -1748,7 +1718,7 @@
     },
     {
       "id": "mandalay-madaya-5121",
-      "name": "မတ္တရာ (Madaya)",
+      "name": "Madaya",
       "nameEn": "Madaya",
       "nameMm": "မတ္တရာ",
       "state": "Mandalay (MM)",
@@ -1760,7 +1730,7 @@
     },
     {
       "id": "mandalay-mahlaing-5201",
-      "name": "မလှိုင် (Mahlaing)",
+      "name": "Mahlaing",
       "nameEn": "Mahlaing",
       "nameMm": "မလှိုင်",
       "state": "Mandalay (MM)",
@@ -1772,7 +1742,7 @@
     },
     {
       "id": "mandalay-mahaaungmyay-5031",
-      "name": "မဟာအောင်မြေ (Mahaaungmyay)",
+      "name": "Mahaaungmyay",
       "nameEn": "Mahaaungmyay",
       "nameMm": "မဟာအောင်မြေ",
       "state": "Mandalay (MM)",
@@ -1784,7 +1754,7 @@
     },
     {
       "id": "mandalay-meiktila-5181",
-      "name": "မိတ္ထီလာ (Meiktila)",
+      "name": "Meiktila",
       "nameEn": "Meiktila",
       "nameMm": "မိတ္ထီလာ",
       "state": "Mandalay (MM)",
@@ -1796,7 +1766,7 @@
     },
     {
       "id": "mandalay-mogoke-5091",
-      "name": "မိုးကုတ် (Mogoke)",
+      "name": "Mogoke",
       "nameEn": "Mogoke",
       "nameMm": "မိုးကုတ်",
       "state": "Mandalay (MM)",
@@ -1808,7 +1778,7 @@
     },
     {
       "id": "mandalay-myingyan-5251",
-      "name": "မြင်းခြံ (Myingyan)",
+      "name": "Myingyan",
       "nameEn": "Myingyan",
       "nameMm": "မြင်းခြံ",
       "state": "Mandalay (MM)",
@@ -1820,7 +1790,7 @@
     },
     {
       "id": "mandalay-myittha-5161",
-      "name": "မြစ်သား (Myittha)",
+      "name": "Myittha",
       "nameEn": "Myittha",
       "nameMm": "မြစ်သား",
       "state": "Mandalay (MM)",
@@ -1832,7 +1802,7 @@
     },
     {
       "id": "mandalay-yamethin-5221",
-      "name": "ရမည်းသင်း (Yamethin)",
+      "name": "Yamethin",
       "nameEn": "Yamethin",
       "nameMm": "ရမည်းသင်း",
       "state": "Mandalay (MM)",
@@ -1844,7 +1814,7 @@
     },
     {
       "id": "mandalay-wundwin-5171",
-      "name": "ဝမ်းတွင်း (Wundwin)",
+      "name": "Wundwin",
       "nameEn": "Wundwin",
       "nameMm": "ဝမ်းတွင်း",
       "state": "Mandalay (MM)",
@@ -1856,7 +1826,7 @@
     },
     {
       "id": "mandalay-thabeikkyin-5101",
-      "name": "သပိတ်ကျဉ်း (Thabeikkyin)",
+      "name": "Thabeikkyin",
       "nameEn": "Thabeikkyin",
       "nameMm": "သပိတ်ကျဉ်း",
       "state": "Mandalay (MM)",
@@ -1868,7 +1838,7 @@
     },
     {
       "id": "mandalay-thazi-5191",
-      "name": "သာစည် (Thazi)",
+      "name": "Thazi",
       "nameEn": "Thazi",
       "nameMm": "သာစည်",
       "state": "Mandalay (MM)",
@@ -1880,7 +1850,7 @@
     },
     {
       "id": "mandalay-amarapura-5061",
-      "name": "အမရပူရ (Amarapura)",
+      "name": "Amarapura",
       "nameEn": "Amarapura",
       "nameMm": "အမရပူရ",
       "state": "Mandalay (MM)",
@@ -1892,7 +1862,7 @@
     },
     {
       "id": "mandalay-aungmyaythazan-5011",
-      "name": "အောင်မြေသာဇံ (Aungmyaythazan)",
+      "name": "Aungmyaythazan",
       "nameEn": "Aungmyaythazan",
       "nameMm": "အောင်မြေသာဇံ",
       "state": "Mandalay (MM)",
@@ -1904,7 +1874,7 @@
     },
     {
       "id": "mon-kyaikmaraw-12071",
-      "name": "ကျိုက္မရော (Kyaikmaraw)",
+      "name": "Kyaikmaraw",
       "nameEn": "Kyaikmaraw",
       "nameMm": "ကျိုက္မရော",
       "state": "Mon (MM)",
@@ -1916,7 +1886,7 @@
     },
     {
       "id": "mon-kyaikto-12021",
-      "name": "ကျိုက်ထို (Kyaikto)",
+      "name": "Kyaikto",
       "nameEn": "Kyaikto",
       "nameMm": "ကျိုက်ထို",
       "state": "Mon (MM)",
@@ -1928,7 +1898,7 @@
     },
     {
       "id": "mon-chaungzon-12061",
-      "name": "ချောင်းဆုံ (Chaungzon)",
+      "name": "Chaungzon",
       "nameEn": "Chaungzon",
       "nameMm": "ချောင်းဆုံ",
       "state": "Mon (MM)",
@@ -1940,7 +1910,7 @@
     },
     {
       "id": "mon-paung-12051",
-      "name": "ပေါင် (Paung)",
+      "name": "Paung",
       "nameEn": "Paung",
       "nameMm": "ပေါင်",
       "state": "Mon (MM)",
@@ -1952,7 +1922,7 @@
     },
     {
       "id": "mon-bilin-12031",
-      "name": "ဘီးလင်း (Bilin)",
+      "name": "Bilin",
       "nameEn": "Bilin",
       "nameMm": "ဘီးလင်း",
       "state": "Mon (MM)",
@@ -1964,7 +1934,7 @@
     },
     {
       "id": "mon-mudon-12081",
-      "name": "မုဒုံ (Mudon)",
+      "name": "Mudon",
       "nameEn": "Mudon",
       "nameMm": "မုဒုံ",
       "state": "Mon (MM)",
@@ -1976,7 +1946,7 @@
     },
     {
       "id": "mon-mawlamyine-12011",
-      "name": "မော်လမြိုင် (Mawlamyine)",
+      "name": "Mawlamyine",
       "nameEn": "Mawlamyine",
       "nameMm": "မော်လမြိုင်",
       "state": "Mon (MM)",
@@ -1988,7 +1958,7 @@
     },
     {
       "id": "mon-ye-12101",
-      "name": "ရေး (Ye)",
+      "name": "Ye",
       "nameEn": "Ye",
       "nameMm": "ရေး",
       "state": "Mon (MM)",
@@ -2000,7 +1970,7 @@
     },
     {
       "id": "mon-thaton-12041",
-      "name": "သထုံ (Thaton)",
+      "name": "Thaton",
       "nameEn": "Thaton",
       "nameMm": "သထုံ",
       "state": "Mon (MM)",
@@ -2012,7 +1982,7 @@
     },
     {
       "id": "mon-thanbyuzayat-12091",
-      "name": "သံဖြူဇရပ် (Thanbyuzayat)",
+      "name": "Thanbyuzayat",
       "nameEn": "Thanbyuzayat",
       "nameMm": "သံဖြူဇရပ်",
       "state": "Mon (MM)",
@@ -2024,7 +1994,7 @@
     },
     {
       "id": "naypyitaw-zabuthiri-15011",
-      "name": "ဇမ္ဗူသီရိ (Zabuthiri)",
+      "name": "Zabuthiri",
       "nameEn": "Zabuthiri",
       "nameMm": "ဇမ္ဗူသီရိ",
       "state": "Naypyitaw (MM)",
@@ -2036,7 +2006,7 @@
     },
     {
       "id": "naypyitaw-zeyathiri-15013",
-      "name": "ဇေယျာသီရိ (Zeyathiri)",
+      "name": "Zeyathiri",
       "nameEn": "Zeyathiri",
       "nameMm": "ဇေယျာသီရိ",
       "state": "Naypyitaw (MM)",
@@ -2048,7 +2018,7 @@
     },
     {
       "id": "naypyitaw-tatkon-15022",
-      "name": "တပ်ကုန်း (Tatkon)",
+      "name": "Tatkon",
       "nameEn": "Tatkon",
       "nameMm": "တပ်ကုန်း",
       "state": "Naypyitaw (MM)",
@@ -2060,7 +2030,7 @@
     },
     {
       "id": "naypyitaw-dekkhinathiri-15011",
-      "name": "ဒက္ခိဏသီရိ (Dekkhinathiri)",
+      "name": "Dekkhinathiri",
       "nameEn": "Dekkhinathiri",
       "nameMm": "ဒက္ခိဏသီရိ",
       "state": "Naypyitaw (MM)",
@@ -2072,7 +2042,7 @@
     },
     {
       "id": "naypyitaw-pobbathiri-15014",
-      "name": "ပုဗ္ဗသီရိ (Pobbathiri)",
+      "name": "Pobbathiri",
       "nameEn": "Pobbathiri",
       "nameMm": "ပုဗ္ဗသီရိ",
       "state": "Naypyitaw (MM)",
@@ -2084,7 +2054,7 @@
     },
     {
       "id": "naypyitaw-pyinmana-15014",
-      "name": "ပျဉ်းမနား (Pyinmana)",
+      "name": "Pyinmana",
       "nameEn": "Pyinmana",
       "nameMm": "ပျဉ်းမနား",
       "state": "Naypyitaw (MM)",
@@ -2096,7 +2066,7 @@
     },
     {
       "id": "naypyitaw-lewe-15032",
-      "name": "လယ်ဝေး (Lewe)",
+      "name": "Lewe",
       "nameEn": "Lewe",
       "nameMm": "လယ်ဝေး",
       "state": "Naypyitaw (MM)",
@@ -2108,7 +2078,7 @@
     },
     {
       "id": "naypyitaw-ottarathiri-15015",
-      "name": "ဥတ္တရသီရိ (Ottarathiri)",
+      "name": "Ottarathiri",
       "nameEn": "Ottarathiri",
       "nameMm": "ဥတ္တရသီရိ",
       "state": "Naypyitaw (MM)",
@@ -2132,7 +2102,7 @@
     },
     {
       "id": "rakhine-kyauktaw-7061",
-      "name": "ကျောက်တော် (Kyauktaw)",
+      "name": "Kyauktaw",
       "nameEn": "Kyauktaw",
       "nameMm": "ကျောက်တော်",
       "state": "Rakhine (MM)",
@@ -2144,7 +2114,7 @@
     },
     {
       "id": "rakhine-kyaukpyu-7121",
-      "name": "ကျောက်ဖြူ (Kyaukpyu)",
+      "name": "Kyaukpyu",
       "nameEn": "Kyaukpyu",
       "nameMm": "ကျောက်ဖြူ",
       "state": "Rakhine (MM)",
@@ -2156,7 +2126,7 @@
     },
     {
       "id": "rakhine-gwa-7181",
-      "name": "ဂွ (Gwa)",
+      "name": "Gwa",
       "nameEn": "Gwa",
       "nameMm": "ဂွ",
       "state": "Rakhine (MM)",
@@ -2168,7 +2138,7 @@
     },
     {
       "id": "rakhine-sittwe-7011",
-      "name": "စစ်တွေ (Sittwe)",
+      "name": "Sittwe",
       "nameEn": "Sittwe",
       "nameMm": "စစ်တွေ",
       "state": "Rakhine (MM)",
@@ -2180,7 +2150,7 @@
     },
     {
       "id": "rakhine-toungup-7161",
-      "name": "တောင်ကုတ် (Toungup)",
+      "name": "Toungup",
       "nameEn": "Toungup",
       "nameMm": "တောင်ကုတ်",
       "state": "Rakhine (MM)",
@@ -2192,7 +2162,7 @@
     },
     {
       "id": "rakhine-paletwa-7071",
-      "name": "ပလက်ဝ (Paletwa)",
+      "name": "Paletwa",
       "nameEn": "Paletwa",
       "nameMm": "ပလက်ဝ",
       "state": "Rakhine (MM)",
@@ -2204,7 +2174,7 @@
     },
     {
       "id": "rakhine-ponnagyun-7051",
-      "name": "ပုဏ္ဏားကျွန်း (Ponnagyun)",
+      "name": "Ponnagyun",
       "nameEn": "Ponnagyun",
       "nameMm": "ပုဏ္ဏားကျွန်း",
       "state": "Rakhine (MM)",
@@ -2216,7 +2186,7 @@
     },
     {
       "id": "rakhine-pauktaw-7081",
-      "name": "ပေါက်တော (Pauktaw)",
+      "name": "Pauktaw",
       "nameEn": "Pauktaw",
       "nameMm": "ပေါက်တော",
       "state": "Rakhine (MM)",
@@ -2228,7 +2198,7 @@
     },
     {
       "id": "rakhine-buthidaung-7031",
-      "name": "ဘူးသီးတောင် (Buthidaung)",
+      "name": "Buthidaung",
       "nameEn": "Buthidaung",
       "nameMm": "ဘူးသီးတောင်",
       "state": "Rakhine (MM)",
@@ -2240,7 +2210,7 @@
     },
     {
       "id": "rakhine-minbya-7091",
-      "name": "မင်းပြား (Minbya)",
+      "name": "Minbya",
       "nameEn": "Minbya",
       "nameMm": "မင်းပြား",
       "state": "Rakhine (MM)",
@@ -2252,7 +2222,7 @@
     },
     {
       "id": "rakhine-munaung-7141",
-      "name": "မာန်အောင် (Munaung)",
+      "name": "Munaung",
       "nameEn": "Munaung",
       "nameMm": "မာန်အောင်",
       "state": "Rakhine (MM)",
@@ -2264,7 +2234,7 @@
     },
     {
       "id": "rakhine-maungdaw-7021",
-      "name": "မောင်တော (Maungdaw)",
+      "name": "Maungdaw",
       "nameEn": "Maungdaw",
       "nameMm": "မောင်တော",
       "state": "Rakhine (MM)",
@@ -2276,7 +2246,7 @@
     },
     {
       "id": "rakhine-myebon-7111",
-      "name": "မြေပုံ (Myebon)",
+      "name": "Myebon",
       "nameEn": "Myebon",
       "nameMm": "မြေပုံ",
       "state": "Rakhine (MM)",
@@ -2288,7 +2258,7 @@
     },
     {
       "id": "rakhine-mrauk-u-7092",
-      "name": "မြောက်ဦး (Mrauk-U)",
+      "name": "Mrauk-U",
       "nameEn": "Mrauk-U",
       "nameMm": "မြောက်ဦး",
       "state": "Rakhine (MM)",
@@ -2300,7 +2270,7 @@
     },
     {
       "id": "rakhine-ramree-7131",
-      "name": "ရမ်းဗြဲ (Ramree)",
+      "name": "Ramree",
       "nameEn": "Ramree",
       "nameMm": "ရမ်းဗြဲ",
       "state": "Rakhine (MM)",
@@ -2312,7 +2282,7 @@
     },
     {
       "id": "rakhine-rathedaung-7032",
-      "name": "ရသေ့တောင် (Rathedaung)",
+      "name": "Rathedaung",
       "nameEn": "Rathedaung",
       "nameMm": "ရသေ့တောင်",
       "state": "Rakhine (MM)",
@@ -2324,7 +2294,7 @@
     },
     {
       "id": "rakhine-thandwe-7171",
-      "name": "သံတွဲ (Thandwe)",
+      "name": "Thandwe",
       "nameEn": "Thandwe",
       "nameMm": "သံတွဲ",
       "state": "Rakhine (MM)",
@@ -2336,7 +2306,7 @@
     },
     {
       "id": "rakhine-ann-7151",
-      "name": "အမ်း (Ann)",
+      "name": "Ann",
       "nameEn": "Ann",
       "nameMm": "အမ်း",
       "state": "Rakhine (MM)",
@@ -2348,7 +2318,7 @@
     },
     {
       "id": "sagaing-kani-2121",
-      "name": "ကနီ (Kani)",
+      "name": "Kani",
       "nameEn": "Kani",
       "nameMm": "ကနီ",
       "state": "Sagaing (MM)",
@@ -2360,7 +2330,7 @@
     },
     {
       "id": "sagaing-kanbalu-2211",
-      "name": "ကန့်ဘလူ (Kanbalu)",
+      "name": "Kanbalu",
       "nameEn": "Kanbalu",
       "nameMm": "ကန့်ဘလူ",
       "state": "Sagaing (MM)",
@@ -2372,7 +2342,7 @@
     },
     {
       "id": "sagaing-kale-2091",
-      "name": "ကလေး (Kale)",
+      "name": "Kale",
       "nameEn": "Kale",
       "nameMm": "ကလေး",
       "state": "Sagaing (MM)",
@@ -2384,7 +2354,7 @@
     },
     {
       "id": "sagaing-kalewa-2101",
-      "name": "ကလေးဝ (Kalewa)",
+      "name": "Kalewa",
       "nameEn": "Kalewa",
       "nameMm": "ကလေးဝ",
       "state": "Sagaing (MM)",
@@ -2396,7 +2366,7 @@
     },
     {
       "id": "sagaing-katha-2151",
-      "name": "ကသာ (Katha)",
+      "name": "Katha",
       "nameEn": "Katha",
       "nameMm": "ကသာ",
       "state": "Sagaing (MM)",
@@ -2408,7 +2378,7 @@
     },
     {
       "id": "sagaing-kawlin-2181",
-      "name": "ကောလင်း (Kawlin)",
+      "name": "Kawlin",
       "nameEn": "Kawlin",
       "nameMm": "ကောလင်း",
       "state": "Sagaing (MM)",
@@ -2420,7 +2390,7 @@
     },
     {
       "id": "sagaing-kyunhla-2201",
-      "name": "ကျွန်းလှ (Kyunhla)",
+      "name": "Kyunhla",
       "nameEn": "Kyunhla",
       "nameMm": "ကျွန်းလှ",
       "state": "Sagaing (MM)",
@@ -2432,7 +2402,7 @@
     },
     {
       "id": "sagaing-khin-u-2231",
-      "name": "ခင်ဦး (Khin-U)",
+      "name": "Khin-U",
       "nameEn": "Khin-U",
       "nameMm": "ခင်ဦး",
       "state": "Sagaing (MM)",
@@ -2444,7 +2414,7 @@
     },
     {
       "id": "sagaing-hkamti-2011",
-      "name": "ခန္တီး (Hkamti)",
+      "name": "Hkamti",
       "nameEn": "Hkamti",
       "nameMm": "ခန္တီး",
       "state": "Sagaing (MM)",
@@ -2456,7 +2426,7 @@
     },
     {
       "id": "sagaing-chaung-u-2331",
-      "name": "ချောင်းဦး (Chaung-U)",
+      "name": "Chaung-U",
       "nameEn": "Chaung-U",
       "nameMm": "ချောင်းဦး",
       "state": "Sagaing (MM)",
@@ -2468,7 +2438,7 @@
     },
     {
       "id": "sagaing-sagaing-2371",
-      "name": "စစ်ကိုင်း (Sagaing)",
+      "name": "Sagaing",
       "nameEn": "Sagaing",
       "nameMm": "စစ်ကိုင်း",
       "state": "Sagaing (MM)",
@@ -2480,7 +2450,7 @@
     },
     {
       "id": "sagaing-salingyi-2321",
-      "name": "ဆားလင်းကြီး (Salingyi)",
+      "name": "Salingyi",
       "nameEn": "Salingyi",
       "nameMm": "ဆားလင်းကြီး",
       "state": "Sagaing (MM)",
@@ -2492,7 +2462,7 @@
     },
     {
       "id": "sagaing-taze-2221",
-      "name": "တန့်ဆည် (Taze)",
+      "name": "Taze",
       "nameEn": "Taze",
       "nameMm": "တန့်ဆည်",
       "state": "Sagaing (MM)",
@@ -2504,7 +2474,7 @@
     },
     {
       "id": "sagaing-tamu-2071",
-      "name": "တမူး (Tamu)",
+      "name": "Tamu",
       "nameEn": "Tamu",
       "nameMm": "တမူး",
       "state": "Sagaing (MM)",
@@ -2516,7 +2486,7 @@
     },
     {
       "id": "sagaing-tigyaing-2191",
-      "name": "ထီးချိုင့် (Tigyaing)",
+      "name": "Tigyaing",
       "nameEn": "Tigyaing",
       "nameMm": "ထီးချိုင့်",
       "state": "Sagaing (MM)",
@@ -2528,7 +2498,7 @@
     },
     {
       "id": "sagaing-tabayin-2251",
-      "name": "ဒီပဲယင်း (Tabayin)",
+      "name": "Tabayin",
       "nameEn": "Tabayin",
       "nameMm": "ဒီပဲယင်း",
       "state": "Sagaing (MM)",
@@ -2540,7 +2510,7 @@
     },
     {
       "id": "sagaing-nanyun-2012",
-      "name": "နန်းယွန်း (Nanyun)",
+      "name": "Nanyun",
       "nameEn": "Nanyun",
       "nameMm": "နန်းယွန်း",
       "state": "Sagaing (MM)",
@@ -2552,7 +2522,7 @@
     },
     {
       "id": "sagaing-pinlebu-2161",
-      "name": "ပင်လည်ဘူး (Pinlebu)",
+      "name": "Pinlebu",
       "nameEn": "Pinlebu",
       "nameMm": "ပင်လည်ဘူး",
       "state": "Sagaing (MM)",
@@ -2564,7 +2534,7 @@
     },
     {
       "id": "sagaing-pale-2351",
-      "name": "ပုလဲ (Pale)",
+      "name": "Pale",
       "nameEn": "Pale",
       "nameMm": "ပုလဲ",
       "state": "Sagaing (MM)",
@@ -2576,7 +2546,7 @@
     },
     {
       "id": "sagaing-paungbyin-2061",
-      "name": "ဖေါင်းပြင် (Paungbyin)",
+      "name": "Paungbyin",
       "nameEn": "Paungbyin",
       "nameMm": "ဖေါင်းပြင်",
       "state": "Sagaing (MM)",
@@ -2588,7 +2558,7 @@
     },
     {
       "id": "sagaing-banmauk-2131",
-      "name": "ဗန်းမောက် (Banmauk)",
+      "name": "Banmauk",
       "nameEn": "Banmauk",
       "nameMm": "ဗန်းမောက်",
       "state": "Sagaing (MM)",
@@ -2600,7 +2570,7 @@
     },
     {
       "id": "sagaing-budalin-2271",
-      "name": "ဘုတလင် (Budalin)",
+      "name": "Budalin",
       "nameEn": "Budalin",
       "nameMm": "ဘုတလင်",
       "state": "Sagaing (MM)",
@@ -2612,7 +2582,7 @@
     },
     {
       "id": "sagaing-mingin-2111",
-      "name": "မင်းကင်း (Mingin)",
+      "name": "Mingin",
       "nameEn": "Mingin",
       "nameMm": "မင်းကင်း",
       "state": "Sagaing (MM)",
@@ -2624,7 +2594,7 @@
     },
     {
       "id": "sagaing-monywa-2301",
-      "name": "မုံရွာ (Monywa)",
+      "name": "Monywa",
       "nameEn": "Monywa",
       "nameMm": "မုံရွာ",
       "state": "Sagaing (MM)",
@@ -2636,7 +2606,7 @@
     },
     {
       "id": "sagaing-mawlaik-2081",
-      "name": "မော်လိုက် (Mawlaik)",
+      "name": "Mawlaik",
       "nameEn": "Mawlaik",
       "nameMm": "မော်လိုက်",
       "state": "Sagaing (MM)",
@@ -2648,7 +2618,7 @@
     },
     {
       "id": "sagaing-myinmu-2341",
-      "name": "မြင်းမူ (Myinmu)",
+      "name": "Myinmu",
       "nameEn": "Myinmu",
       "nameMm": "မြင်းမူ",
       "state": "Sagaing (MM)",
@@ -2660,7 +2630,7 @@
     },
     {
       "id": "sagaing-myaung-2381",
-      "name": "မြောင် (Myaung)",
+      "name": "Myaung",
       "nameEn": "Myaung",
       "nameMm": "မြောင်",
       "state": "Sagaing (MM)",
@@ -2672,7 +2642,7 @@
     },
     {
       "id": "sagaing-yinmarbin-2311",
-      "name": "ယင်းမာပင် (Yinmarbin)",
+      "name": "Yinmarbin",
       "nameEn": "Yinmarbin",
       "nameMm": "ယင်းမာပင်",
       "state": "Sagaing (MM)",
@@ -2684,7 +2654,7 @@
     },
     {
       "id": "sagaing-ye-u-2241",
-      "name": "ရေဦး (Ye-U)",
+      "name": "Ye-U",
       "nameEn": "Ye-U",
       "nameMm": "ရေဦး",
       "state": "Sagaing (MM)",
@@ -2696,7 +2666,7 @@
     },
     {
       "id": "sagaing-shwebo-2261",
-      "name": "ရွှေဘို (Shwebo)",
+      "name": "Shwebo",
       "nameEn": "Shwebo",
       "nameMm": "ရွှေဘို",
       "state": "Sagaing (MM)",
@@ -2708,7 +2678,7 @@
     },
     {
       "id": "sagaing-lahe-2022",
-      "name": "လဟယ် (Lahe)",
+      "name": "Lahe",
       "nameEn": "Lahe",
       "nameMm": "လဟယ်",
       "state": "Sagaing (MM)",
@@ -2720,7 +2690,7 @@
     },
     {
       "id": "sagaing-lay-shi-2142",
-      "name": "လေရှီး (Lay Shi)",
+      "name": "Lay Shi",
       "nameEn": "Lay Shi",
       "nameMm": "လေရှီး",
       "state": "Sagaing (MM)",
@@ -2732,7 +2702,7 @@
     },
     {
       "id": "sagaing-wetlet-2281",
-      "name": "ဝက်လက် (Wetlet)",
+      "name": "Wetlet",
       "nameEn": "Wetlet",
       "nameMm": "ဝက်လက်",
       "state": "Sagaing (MM)",
@@ -2744,7 +2714,7 @@
     },
     {
       "id": "sagaing-wuntho-2171",
-      "name": "ဝန်းသို (Wuntho)",
+      "name": "Wuntho",
       "nameEn": "Wuntho",
       "nameMm": "ဝန်းသို",
       "state": "Sagaing (MM)",
@@ -2756,7 +2726,7 @@
     },
     {
       "id": "sagaing-homalin-2051",
-      "name": "ဟုမ္မလင်း (Homalin)",
+      "name": "Homalin",
       "nameEn": "Homalin",
       "nameMm": "ဟုမ္မလင်း",
       "state": "Sagaing (MM)",
@@ -2768,7 +2738,7 @@
     },
     {
       "id": "sagaing-indaw-2141",
-      "name": "အင်းတော် (Indaw)",
+      "name": "Indaw",
       "nameEn": "Indaw",
       "nameMm": "အင်းတော်",
       "state": "Sagaing (MM)",
@@ -2780,7 +2750,7 @@
     },
     {
       "id": "sagaing-ayadaw-2291",
-      "name": "အရာတော် (Ayadaw)",
+      "name": "Ayadaw",
       "nameEn": "Ayadaw",
       "nameMm": "အရာတော်",
       "state": "Sagaing (MM)",
@@ -2984,7 +2954,7 @@
     },
     {
       "id": "shan-kengtung-6231",
-      "name": "ကျိုင်းတုံ (Kengtung)",
+      "name": "Kengtung",
       "nameEn": "Kengtung",
       "nameMm": "ကျိုင်းတုံ",
       "state": "Shan (MM)",
@@ -2996,7 +2966,7 @@
     },
     {
       "id": "shan-tachileik-6271",
-      "name": "တာချီလိတ် (Tachileik)",
+      "name": "Tachileik",
       "nameEn": "Tachileik",
       "nameMm": "တာချီလိတ်",
       "state": "Shan (MM)",
@@ -3008,7 +2978,7 @@
     },
     {
       "id": "shan-mongkhet-6471",
-      "name": "မိုင်းခတ် (Mongkhet)",
+      "name": "Mongkhet",
       "nameEn": "Mongkhet",
       "nameMm": "မိုင်းခတ်",
       "state": "Shan (MM)",
@@ -3020,7 +2990,7 @@
     },
     {
       "id": "shan-mongping-6221",
-      "name": "မိုင်းပျင်း (Mongping)",
+      "name": "Mongping",
       "nameEn": "Mongping",
       "nameMm": "မိုင်းပျင်း",
       "state": "Shan (MM)",
@@ -3032,7 +3002,7 @@
     },
     {
       "id": "shan-monghpyak-6251",
-      "name": "မိုင်းဖြတ် (Monghpyak)",
+      "name": "Monghpyak",
       "nameEn": "Monghpyak",
       "nameMm": "မိုင်းဖြတ်",
       "state": "Shan (MM)",
@@ -3044,7 +3014,7 @@
     },
     {
       "id": "shan-mongyang-6241",
-      "name": "မိုင်းယန်း (Mongyang)",
+      "name": "Mongyang",
       "nameEn": "Mongyang",
       "nameMm": "မိုင်းယန်း",
       "state": "Shan (MM)",
@@ -3056,7 +3026,7 @@
     },
     {
       "id": "shan-mongyawng-6261",
-      "name": "မိုင်းယောင်း (Mongyawng)",
+      "name": "Mongyawng",
       "nameEn": "Mongyawng",
       "nameMm": "မိုင်းယောင်း",
       "state": "Shan (MM)",
@@ -3068,7 +3038,7 @@
     },
     {
       "id": "shan-mongla-6232",
-      "name": "မိုင်းလား (Mongla)",
+      "name": "Mongla",
       "nameEn": "Mongla",
       "nameMm": "မိုင်းလား",
       "state": "Shan (MM)",
@@ -3081,7 +3051,7 @@
     {
       "id": "shan-ho-tawng-ho-tao-6263",
       "name": "ဟိုတောင်း (Ho Tawng (Ho Tao))",
-      "nameEn": "ဟိုတောင်း (Ho Tawng (Ho Tao))",
+      "nameEn": null,
       "nameMm": "ဟိုတောင်း (Ho Tawng (Ho Tao))",
       "state": "Shan (MM)",
       "postalCode": "6263",
@@ -3404,7 +3374,7 @@
     },
     {
       "id": "shan-konkyan-6531",
-      "name": "ကုန်းကြမ်း (Konkyan)",
+      "name": "Konkyan",
       "nameEn": "Konkyan",
       "nameMm": "ကုန်းကြမ်း",
       "state": "Shan (MM)",
@@ -3416,7 +3386,7 @@
     },
     {
       "id": "shan-kyaukme-6321",
-      "name": "ကျောက်မဲ (Kyaukme)",
+      "name": "Kyaukme",
       "nameEn": "Kyaukme",
       "nameMm": "ကျောက်မဲ",
       "state": "Shan (MM)",
@@ -3428,7 +3398,7 @@
     },
     {
       "id": "shan-kutkai-6372",
-      "name": "ကွတ်ခိုင် (Kutkai)",
+      "name": "Kutkai",
       "nameEn": "Kutkai",
       "nameMm": "ကွတ်ခိုင်",
       "state": "Shan (MM)",
@@ -3440,7 +3410,7 @@
     },
     {
       "id": "shan-kunlong-6381",
-      "name": "ကွမ်းလုံ (Kunlong)",
+      "name": "Kunlong",
       "nameEn": "Kunlong",
       "nameMm": "ကွမ်းလုံ",
       "state": "Shan (MM)",
@@ -3453,7 +3423,7 @@
     {
       "id": "shan-chinshwehaw-sub-township-kokang-saz-6482",
       "name": "ချင်းရွှေဟော်မြို့နယ်ခွဲ (အထူးဒေသ ၁) (Chinshwehaw Sub-township (Kokang SAZ))",
-      "nameEn": "ချင်းရွှေဟော်မြို့နယ်ခွဲ (အထူးဒေသ ၁) (Chinshwehaw Sub-township (Kokang SAZ))",
+      "nameEn": null,
       "nameMm": "ချင်းရွှေဟော်မြို့နယ်ခွဲ (အထူးဒေသ ၁) (Chinshwehaw Sub-township (Kokang SAZ))",
       "state": "Shan (MM)",
       "postalCode": "6482",
@@ -3464,7 +3434,7 @@
     },
     {
       "id": "shan-tangyan-6431",
-      "name": "တန့်ယန်း (Tangyan)",
+      "name": "Tangyan",
       "nameEn": "Tangyan",
       "nameMm": "တန့်ယန်း",
       "state": "Shan (MM)",
@@ -3476,7 +3446,7 @@
     },
     {
       "id": "shan-namtu-6352",
-      "name": "နမ္မတူ (Namtu)",
+      "name": "Namtu",
       "nameEn": "Namtu",
       "nameMm": "နမ္မတူ",
       "state": "Shan (MM)",
@@ -3488,7 +3458,7 @@
     },
     {
       "id": "shan-nam-tit-6392",
-      "name": "နမ့် တစ် (Nam Tit)",
+      "name": "Nam Tit",
       "nameEn": "Nam Tit",
       "nameMm": "နမ့် တစ်",
       "state": "Shan (MM)",
@@ -3500,7 +3470,7 @@
     },
     {
       "id": "shan-namhkan-6411",
-      "name": "နမ့်ခမ်း (Namhkan)",
+      "name": "Namhkan",
       "nameEn": "Namhkan",
       "nameMm": "နမ့်ခမ်း",
       "state": "Shan (MM)",
@@ -3512,7 +3482,7 @@
     },
     {
       "id": "shan-namhsan-6331",
-      "name": "နမ့်ဆန် (Namhsan)",
+      "name": "Namhsan",
       "nameEn": "Namhsan",
       "nameMm": "နမ့်ဆန်",
       "state": "Shan (MM)",
@@ -3524,7 +3494,7 @@
     },
     {
       "id": "shan-nawnghkio-6311",
-      "name": "နောင်ချို (Nawnghkio)",
+      "name": "Nawnghkio",
       "nameEn": "Nawnghkio",
       "nameMm": "နောင်ချို",
       "state": "Shan (MM)",
@@ -3536,7 +3506,7 @@
     },
     {
       "id": "shan-manton-6541",
-      "name": "မန်တုန် (Manton)",
+      "name": "Manton",
       "nameEn": "Manton",
       "nameMm": "မန်တုန်",
       "state": "Shan (MM)",
@@ -3548,7 +3518,7 @@
     },
     {
       "id": "shan-mongyai-6421",
-      "name": "မိုင်းရယ် (Mongyai)",
+      "name": "Mongyai",
       "nameEn": "Mongyai",
       "nameMm": "မိုင်းရယ်",
       "state": "Shan (MM)",
@@ -3560,7 +3530,7 @@
     },
     {
       "id": "shan-muse-6401",
-      "name": "မူဆယ် (Muse)",
+      "name": "Muse",
       "nameEn": "Muse",
       "nameMm": "မူဆယ်",
       "state": "Shan (MM)",
@@ -3572,7 +3542,7 @@
     },
     {
       "id": "shan-lashio-6301",
-      "name": "လားရှိုး (Lashio)",
+      "name": "Lashio",
       "nameEn": "Lashio",
       "nameMm": "လားရှိုး",
       "state": "Shan (MM)",
@@ -3584,7 +3554,7 @@
     },
     {
       "id": "shan-laukkaing-6481",
-      "name": "လောက်ကိုင် (Laukkaing)",
+      "name": "Laukkaing",
       "nameEn": "Laukkaing",
       "nameMm": "လောက်ကိုင်",
       "state": "Shan (MM)",
@@ -3596,7 +3566,7 @@
     },
     {
       "id": "shan-hseni-6361",
-      "name": "သိန်းနီ (Hseni)",
+      "name": "Hseni",
       "nameEn": "Hseni",
       "nameMm": "သိန်းနီ",
       "state": "Shan (MM)",
@@ -3608,7 +3578,7 @@
     },
     {
       "id": "shan-hsipaw-6341",
-      "name": "သီပေါ (Hsipaw)",
+      "name": "Hsipaw",
       "nameEn": "Hsipaw",
       "nameMm": "သီပေါ",
       "state": "Shan (MM)",
@@ -3620,7 +3590,7 @@
     },
     {
       "id": "shan-hopang-6391",
-      "name": "ဟိုပန် (Hopang)",
+      "name": "Hopang",
       "nameEn": "Hopang",
       "nameMm": "ဟိုပန်",
       "state": "Shan (MM)",
@@ -3812,7 +3782,7 @@
     },
     {
       "id": "shan-tonhone-6172",
-      "name": "Kyaingtaung(Tonhone)",
+      "name": "Kyaingtaung",
       "nameEn": "Tonhone",
       "nameMm": null,
       "state": "Shan (MM)",
@@ -4160,7 +4130,7 @@
     },
     {
       "id": "shan-kalaw-6021",
-      "name": "ကလော (Kalaw)",
+      "name": "Kalaw",
       "nameEn": "Kalaw",
       "nameMm": "ကလော",
       "state": "Shan (MM)",
@@ -4172,7 +4142,7 @@
     },
     {
       "id": "shan-kyauktan-6093",
-      "name": "ကျောက်တန်း (Kyauktan)",
+      "name": "Kyauktan",
       "nameEn": "Kyauktan",
       "nameMm": "ကျောက်တန်း",
       "state": "Shan (MM)",
@@ -4184,7 +4154,7 @@
     },
     {
       "id": "shan-kyethi-6151",
-      "name": "ကျေးသီး (Kyethi)",
+      "name": "Kyethi",
       "nameEn": "Kyethi",
       "nameMm": "ကျေးသီး",
       "state": "Shan (MM)",
@@ -4196,7 +4166,7 @@
     },
     {
       "id": "shan-kunhing-6211",
-      "name": "ကွန်ဟိန်း (Kunhing)",
+      "name": "Kunhing",
       "nameEn": "Kunhing",
       "nameMm": "ကွန်ဟိန်း",
       "state": "Shan (MM)",
@@ -4208,7 +4178,7 @@
     },
     {
       "id": "shan-hsihseng-6101",
-      "name": "ဆီဆိုင် (Hsihseng)",
+      "name": "Hsihseng",
       "nameEn": "Hsihseng",
       "nameMm": "ဆီဆိုင်",
       "state": "Shan (MM)",
@@ -4220,7 +4190,7 @@
     },
     {
       "id": "shan-nyaungshwe-6081",
-      "name": "ညောင်ရွှေ (Nyaungshwe)",
+      "name": "Nyaungshwe",
       "nameEn": "Nyaungshwe",
       "nameMm": "ညောင်ရွှေ",
       "state": "Shan (MM)",
@@ -4232,7 +4202,7 @@
     },
     {
       "id": "shan-taunggyi-6011",
-      "name": "တောင်ကြီး (Taunggyi)",
+      "name": "Taunggyi",
       "nameEn": "Taunggyi",
       "nameMm": "တောင်ကြီး",
       "state": "Shan (MM)",
@@ -4244,7 +4214,7 @@
     },
     {
       "id": "shan-nansang-6161",
-      "name": "နမ့်စန် (Nansang)",
+      "name": "Nansang",
       "nameEn": "Nansang",
       "nameMm": "နမ့်စန်",
       "state": "Shan (MM)",
@@ -4256,7 +4226,7 @@
     },
     {
       "id": "shan-pinlaung-6051",
-      "name": "ပင်လောင်း (Pinlaung)",
+      "name": "Pinlaung",
       "nameEn": "Pinlaung",
       "nameMm": "ပင်လောင်း",
       "state": "Shan (MM)",
@@ -4268,7 +4238,7 @@
     },
     {
       "id": "shan-pindaya-6031",
-      "name": "ပင်းတယ (Pindaya)",
+      "name": "Pindaya",
       "nameEn": "Pindaya",
       "nameMm": "ပင်းတယ",
       "state": "Shan (MM)",
@@ -4280,7 +4250,7 @@
     },
     {
       "id": "shan-pekon-6061",
-      "name": "ဖယ်ခုံ (Pekon)",
+      "name": "Pekon",
       "nameEn": "Pekon",
       "nameMm": "ဖယ်ခုံ",
       "state": "Shan (MM)",
@@ -4292,7 +4262,7 @@
     },
     {
       "id": "shan-mongkaing-6131",
-      "name": "မိုင်းကိုင် (Mongkaing)",
+      "name": "Mongkaing",
       "nameEn": "Mongkaing",
       "nameMm": "မိုင်းကိုင်",
       "state": "Shan (MM)",
@@ -4304,7 +4274,7 @@
     },
     {
       "id": "shan-mongpan-6201",
-      "name": "မိုင်းပန် (Mongpan)",
+      "name": "Mongpan",
       "nameEn": "Mongpan",
       "nameMm": "မိုင်းပန်",
       "state": "Shan (MM)",
@@ -4316,7 +4286,7 @@
     },
     {
       "id": "shan-monghsu-6141",
-      "name": "မိုင်းရှုး (Monghsu)",
+      "name": "Monghsu",
       "nameEn": "Monghsu",
       "nameMm": "မိုင်းရှုး",
       "state": "Shan (MM)",
@@ -4328,7 +4298,7 @@
     },
     {
       "id": "shan-mongnai-6171",
-      "name": "မိုးနဲ (Mongnai)",
+      "name": "Mongnai",
       "nameEn": "Mongnai",
       "nameMm": "မိုးနဲ",
       "state": "Shan (MM)",
@@ -4340,7 +4310,7 @@
     },
     {
       "id": "shan-mawkmai-6181",
-      "name": "မောက်မယ် (Mawkmai)",
+      "name": "Mawkmai",
       "nameEn": "Mawkmai",
       "nameMm": "မောက်မယ်",
       "state": "Shan (MM)",
@@ -4352,7 +4322,7 @@
     },
     {
       "id": "shan-lawksawk-6071",
-      "name": "ရပ်စောက် (Lawksawk)",
+      "name": "Lawksawk",
       "nameEn": "Lawksawk",
       "nameMm": "ရပ်စောက်",
       "state": "Shan (MM)",
@@ -4364,7 +4334,7 @@
     },
     {
       "id": "shan-ywangan-6041",
-      "name": "ရွာငံ (Ywangan)",
+      "name": "Ywangan",
       "nameEn": "Ywangan",
       "nameMm": "ရွာငံ",
       "state": "Shan (MM)",
@@ -4376,7 +4346,7 @@
     },
     {
       "id": "shan-langkho-6191",
-      "name": "လင်းခေး (Langkho)",
+      "name": "Langkho",
       "nameEn": "Langkho",
       "nameMm": "လင်းခေး",
       "state": "Shan (MM)",
@@ -4388,7 +4358,7 @@
     },
     {
       "id": "shan-laihka-6121",
-      "name": "လဲချား (Laihka)",
+      "name": "Laihka",
       "nameEn": "Laihka",
       "nameMm": "လဲချား",
       "state": "Shan (MM)",
@@ -4400,7 +4370,7 @@
     },
     {
       "id": "shan-loilen-6111",
-      "name": "လွိုင်လင် (Loilen)",
+      "name": "Loilen",
       "nameEn": "Loilen",
       "nameMm": "လွိုင်လင်",
       "state": "Shan (MM)",
@@ -4412,7 +4382,7 @@
     },
     {
       "id": "shan-hopong-6091",
-      "name": "ဟိုပုံး (Hopong)",
+      "name": "Hopong",
       "nameEn": "Hopong",
       "nameMm": "ဟိုပုံး",
       "state": "Shan (MM)",
@@ -4424,7 +4394,7 @@
     },
     {
       "id": "tanintharyi-kawthoung-14091",
-      "name": "ကော့သောင်း (Kawthoung)",
+      "name": "Kawthoung",
       "nameEn": "Kawthoung",
       "nameMm": "ကော့သောင်း",
       "state": "Tanintharyi (MM)",
@@ -4436,7 +4406,7 @@
     },
     {
       "id": "tanintharyi-kyunsu-14101",
-      "name": "ကျွန်းစု (Kyunsu)",
+      "name": "Kyunsu",
       "nameEn": "Kyunsu",
       "nameMm": "ကျွန်းစု",
       "state": "Tanintharyi (MM)",
@@ -4448,7 +4418,7 @@
     },
     {
       "id": "tanintharyi-tanintharyi-14071",
-      "name": "တနင်္သာရီ (Tanintharyi)",
+      "name": "Tanintharyi",
       "nameEn": "Tanintharyi",
       "nameMm": "တနင်္သာရီ",
       "state": "Tanintharyi (MM)",
@@ -4460,7 +4430,7 @@
     },
     {
       "id": "tanintharyi-dawei-14011",
-      "name": "ထားဝယ် (Dawei)",
+      "name": "Dawei",
       "nameEn": "Dawei",
       "nameMm": "ထားဝယ်",
       "state": "Tanintharyi (MM)",
@@ -4472,7 +4442,7 @@
     },
     {
       "id": "tanintharyi-palaw-14062",
-      "name": "ပုလော (Palaw)",
+      "name": "Palaw",
       "nameEn": "Palaw",
       "nameMm": "ပုလော",
       "state": "Tanintharyi (MM)",
@@ -4484,7 +4454,7 @@
     },
     {
       "id": "tanintharyi-bokpyin-14081",
-      "name": "ဘုတ်ပြင်း (Bokpyin)",
+      "name": "Bokpyin",
       "nameEn": "Bokpyin",
       "nameMm": "ဘုတ်ပြင်း",
       "state": "Tanintharyi (MM)",
@@ -4496,7 +4466,7 @@
     },
     {
       "id": "tanintharyi-myeik-14051",
-      "name": "မြိတ် (Myeik)",
+      "name": "Myeik",
       "nameEn": "Myeik",
       "nameMm": "မြိတ်",
       "state": "Tanintharyi (MM)",
@@ -4508,7 +4478,7 @@
     },
     {
       "id": "tanintharyi-yebyu-14021",
-      "name": "ရေဖြူ (Yebyu)",
+      "name": "Yebyu",
       "nameEn": "Yebyu",
       "nameMm": "ရေဖြူ",
       "state": "Tanintharyi (MM)",
@@ -4520,7 +4490,7 @@
     },
     {
       "id": "tanintharyi-launglon-14041",
-      "name": "လောင်းလုံ (Launglon)",
+      "name": "Launglon",
       "nameEn": "Launglon",
       "nameMm": "လောင်းလုံ",
       "state": "Tanintharyi (MM)",
@@ -4532,7 +4502,7 @@
     },
     {
       "id": "tanintharyi-thayetchaung-14031",
-      "name": "သရက်ချောင်း (Thayetchaung)",
+      "name": "Thayetchaung",
       "nameEn": "Thayetchaung",
       "nameMm": "သရက်ချောင်း",
       "state": "Tanintharyi (MM)",
@@ -4544,7 +4514,7 @@
     },
     {
       "id": "yangon-kamayut-11041",
-      "name": "ကမာရွတ် (Kamayut)",
+      "name": "Kamayut",
       "nameEn": "Kamayut",
       "nameMm": "ကမာရွတ်",
       "state": "Yangon (MM)",
@@ -4556,7 +4526,7 @@
     },
     {
       "id": "yangon-cocokyun-11281",
-      "name": "ကိုကိုးကျွန်း (Cocokyun)",
+      "name": "Cocokyun",
       "nameEn": "Cocokyun",
       "nameMm": "ကိုကိုးကျွန်း",
       "state": "Yangon (MM)",
@@ -4568,7 +4538,7 @@
     },
     {
       "id": "yangon-kawhmu-11351",
-      "name": "ကော့မှူး (Kawhmu)",
+      "name": "Kawhmu",
       "nameEn": "Kawhmu",
       "nameMm": "ကော့မှူး",
       "state": "Yangon (MM)",
@@ -4580,7 +4550,7 @@
     },
     {
       "id": "yangon-kyauktan-11301",
-      "name": "ကျောက်တန်း (Kyauktan)",
+      "name": "Kyauktan",
       "nameEn": "Kyauktan",
       "nameMm": "ကျောက်တန်း",
       "state": "Yangon (MM)",
@@ -4592,7 +4562,7 @@
     },
     {
       "id": "yangon-kyauktada-11182",
-      "name": "ကျောက်တံတား (Kyauktada)",
+      "name": "Kyauktada",
       "nameEn": "Kyauktada",
       "nameMm": "ကျောက်တံတား",
       "state": "Yangon (MM)",
@@ -4604,7 +4574,7 @@
     },
     {
       "id": "yangon-kyeemyindaing-11101",
-      "name": "ကြည့်မြင်တိုင် (Kyeemyindaing)",
+      "name": "Kyeemyindaing",
       "nameEn": "Kyeemyindaing",
       "nameMm": "ကြည့်မြင်တိုင်",
       "state": "Yangon (MM)",
@@ -4616,7 +4586,7 @@
     },
     {
       "id": "yangon-kungyangon-11341",
-      "name": "ကွမ်းခြံကုန်း (Kungyangon)",
+      "name": "Kungyangon",
       "nameEn": "Kungyangon",
       "nameMm": "ကွမ်းခြံကုန်း",
       "state": "Yangon (MM)",
@@ -4628,7 +4598,7 @@
     },
     {
       "id": "yangon-kayan-11321",
-      "name": "ခရမ်း (Kayan)",
+      "name": "Kayan",
       "nameEn": "Kayan",
       "nameMm": "ခရမ်း",
       "state": "Yangon (MM)",
@@ -4640,7 +4610,7 @@
     },
     {
       "id": "yangon-sanchaung-11111",
-      "name": "စမ်းချောင်း (Sanchaung)",
+      "name": "Sanchaung",
       "nameEn": "Sanchaung",
       "nameMm": "စမ်းချောင်း",
       "state": "Yangon (MM)",
@@ -4652,7 +4622,7 @@
     },
     {
       "id": "yangon-seikkyi-kanaungto-11271",
-      "name": "ဆိပ်ကြီးခနောင်တို (Seikkyi Kanaungto)",
+      "name": "Seikkyi Kanaungto",
       "nameEn": "Seikkyi Kanaungto",
       "nameMm": "ဆိပ်ကြီးခနောင်တို",
       "state": "Yangon (MM)",
@@ -4664,7 +4634,7 @@
     },
     {
       "id": "yangon-tamwe-11211",
-      "name": "တာမွေ (Tamwe)",
+      "name": "Tamwe",
       "nameEn": "Tamwe",
       "nameMm": "တာမွေ",
       "state": "Yangon (MM)",
@@ -4676,7 +4646,7 @@
     },
     {
       "id": "yangon-taikkyi-11381",
-      "name": "တိုက်ကြီး (Taikkyi)",
+      "name": "Taikkyi",
       "nameEn": "Taikkyi",
       "nameMm": "တိုက်ကြီး",
       "state": "Yangon (MM)",
@@ -4688,7 +4658,7 @@
     },
     {
       "id": "yangon-south-okkalapa-11091",
-      "name": "တောင်ဥက္ကလာပ (South Okkalapa)",
+      "name": "South Okkalapa",
       "nameEn": "South Okkalapa",
       "nameMm": "တောင်ဥက္ကလာပ",
       "state": "Yangon (MM)",
@@ -4700,7 +4670,7 @@
     },
     {
       "id": "yangon-twante-11331",
-      "name": "တွံတေး (Twante)",
+      "name": "Twante",
       "nameEn": "Twante",
       "nameMm": "တွံတေး",
       "state": "Yangon (MM)",
@@ -4712,7 +4682,7 @@
     },
     {
       "id": "yangon-htantabin-11391",
-      "name": "ထန်းတပင် (Htantabin)",
+      "name": "Htantabin",
       "nameEn": "Htantabin",
       "nameMm": "ထန်းတပင်",
       "state": "Yangon (MM)",
@@ -4724,7 +4694,7 @@
     },
     {
       "id": "yangon-dagon-11191",
-      "name": "ဒဂုံ (Dagon)",
+      "name": "Dagon",
       "nameEn": "Dagon",
       "nameMm": "ဒဂုံ",
       "state": "Yangon (MM)",
@@ -4736,7 +4706,7 @@
     },
     {
       "id": "yangon-dagon-seikkan-11441",
-      "name": "ဒဂုံဆိပ်ကမ်း (Dagon Seikkan)",
+      "name": "Dagon Seikkan",
       "nameEn": "Dagon Seikkan",
       "nameMm": "ဒဂုံဆိပ်ကမ်း",
       "state": "Yangon (MM)",
@@ -4748,7 +4718,7 @@
     },
     {
       "id": "yangon-south-dagon-11431",
-      "name": "ဒဂုံမြို့သစ်တောင်ပိုင်း (South Dagon)",
+      "name": "South Dagon",
       "nameEn": "South Dagon",
       "nameMm": "ဒဂုံမြို့သစ်တောင်ပိုင်း",
       "state": "Yangon (MM)",
@@ -4760,7 +4730,7 @@
     },
     {
       "id": "yangon-north-dagon-11421",
-      "name": "ဒဂုံမြို့သစ်မြောက်ပိုင်း (North Dagon)",
+      "name": "North Dagon",
       "nameEn": "North Dagon",
       "nameMm": "ဒဂုံမြို့သစ်မြောက်ပိုင်း",
       "state": "Yangon (MM)",
@@ -4772,7 +4742,7 @@
     },
     {
       "id": "yangon-east-dagon-11451",
-      "name": "ဒဂုံမြို့သစ်အရှေ့ပိုင်း (East Dagon)",
+      "name": "East Dagon",
       "nameEn": "East Dagon",
       "nameMm": "ဒဂုံမြို့သစ်အရှေ့ပိုင်း",
       "state": "Yangon (MM)",
@@ -4784,7 +4754,7 @@
     },
     {
       "id": "yangon-dala-11261",
-      "name": "ဒလ (Dala)",
+      "name": "Dala",
       "nameEn": "Dala",
       "nameMm": "ဒလ",
       "state": "Yangon (MM)",
@@ -4796,7 +4766,7 @@
     },
     {
       "id": "yangon-dawbon-11241",
-      "name": "ဒေါပုံ (Dawbon)",
+      "name": "Dawbon",
       "nameEn": "Dawbon",
       "nameMm": "ဒေါပုံ",
       "state": "Yangon (MM)",
@@ -4808,7 +4778,7 @@
     },
     {
       "id": "yangon-pabedan-11141",
-      "name": "ပန်းဘဲတန်း (Pabedan)",
+      "name": "Pabedan",
       "nameEn": "Pabedan",
       "nameMm": "ပန်းဘဲတန်း",
       "state": "Yangon (MM)",
@@ -4820,7 +4790,7 @@
     },
     {
       "id": "yangon-pazundaung-11171",
-      "name": "ပုဇွန်တောင် (Pazundaung)",
+      "name": "Pazundaung",
       "nameEn": "Pazundaung",
       "nameMm": "ပုဇွန်တောင်",
       "state": "Yangon (MM)",
@@ -4832,7 +4802,7 @@
     },
     {
       "id": "yangon-bahan-11201",
-      "name": "ဗဟန်း (Bahan)",
+      "name": "Bahan",
       "nameEn": "Bahan",
       "nameMm": "ဗဟန်း",
       "state": "Yangon (MM)",
@@ -4844,7 +4814,7 @@
     },
     {
       "id": "yangon-botataung-11161",
-      "name": "ဗိုလ်တထောင် (Botataung)",
+      "name": "Botataung",
       "nameEn": "Botataung",
       "nameMm": "ဗိုလ်တထောင်",
       "state": "Yangon (MM)",
@@ -4856,7 +4826,7 @@
     },
     {
       "id": "yangon-mingala-taungnyunt-11221",
-      "name": "မင်္ဂလာတောင်ညွန့် (Mingala Taungnyunt)",
+      "name": "Mingala Taungnyunt",
       "nameEn": "Mingala Taungnyunt",
       "nameMm": "မင်္ဂလာတောင်ညွန့်",
       "state": "Yangon (MM)",
@@ -4868,7 +4838,7 @@
     },
     {
       "id": "yangon-mingaladon-11021",
-      "name": "မင်္ဂလာဒုံ (Mingaladon)",
+      "name": "Mingaladon",
       "nameEn": "Mingaladon",
       "nameMm": "မင်္ဂလာဒုံ",
       "state": "Yangon (MM)",
@@ -4880,7 +4850,7 @@
     },
     {
       "id": "yangon-mayangon-11061",
-      "name": "မရမ်းကုန်း (Mayangon)",
+      "name": "Mayangon",
       "nameEn": "Mayangon",
       "nameMm": "မရမ်းကုန်း",
       "state": "Yangon (MM)",
@@ -4892,7 +4862,7 @@
     },
     {
       "id": "yangon-north-okkalapa-11031",
-      "name": "မြောက်ဥက္ကလာပ (North Okkalapa)",
+      "name": "North Okkalapa",
       "nameEn": "North Okkalapa",
       "nameMm": "မြောက်ဥက္ကလာပ",
       "state": "Yangon (MM)",
@@ -4904,7 +4874,7 @@
     },
     {
       "id": "yangon-hmawbi-11391",
-      "name": "မှော်ဘီ (Hmawbi)",
+      "name": "Hmawbi",
       "nameEn": "Hmawbi",
       "nameMm": "မှော်ဘီ",
       "state": "Yangon (MM)",
@@ -4916,7 +4886,7 @@
     },
     {
       "id": "yangon-yankin-11081",
-      "name": "ရန်ကင်း (Yankin)",
+      "name": "Yankin",
       "nameEn": "Yankin",
       "nameMm": "ရန်ကင်း",
       "state": "Yangon (MM)",
@@ -4928,7 +4898,7 @@
     },
     {
       "id": "yangon-shwepyitha-11411",
-      "name": "ရွှေပြည်သာ (Shwepyitha)",
+      "name": "Shwepyitha",
       "nameEn": "Shwepyitha",
       "nameMm": "ရွှေပြည်သာ",
       "state": "Yangon (MM)",
@@ -4940,7 +4910,7 @@
     },
     {
       "id": "yangon-lanmadaw-11131",
-      "name": "လမ်းမတော် (Lanmadaw)",
+      "name": "Lanmadaw",
       "nameEn": "Lanmadaw",
       "nameMm": "လမ်းမတော်",
       "state": "Yangon (MM)",
@@ -4952,7 +4922,7 @@
     },
     {
       "id": "yangon-latha-11181",
-      "name": "လသာ (Latha)",
+      "name": "Latha",
       "nameEn": "Latha",
       "nameMm": "လသာ",
       "state": "Yangon (MM)",
@@ -4964,7 +4934,7 @@
     },
     {
       "id": "yangon-hlegu-11392",
-      "name": "လှည်းကူး (Hlegu)",
+      "name": "Hlegu",
       "nameEn": "Hlegu",
       "nameMm": "လှည်းကူး",
       "state": "Yangon (MM)",
@@ -4976,7 +4946,7 @@
     },
     {
       "id": "yangon-hlaing-11051",
-      "name": "လှိုင် (Hlaing)",
+      "name": "Hlaing",
       "nameEn": "Hlaing",
       "nameMm": "လှိုင်",
       "state": "Yangon (MM)",
@@ -4988,7 +4958,7 @@
     },
     {
       "id": "yangon-hlaingthaya-11401",
-      "name": "လှိုင်သာယာ (Hlaingthaya)",
+      "name": "Hlaingthaya",
       "nameEn": "Hlaingthaya",
       "nameMm": "လှိုင်သာယာ",
       "state": "Yangon (MM)",
@@ -5000,7 +4970,7 @@
     },
     {
       "id": "yangon-thingangyun-11071",
-      "name": "သင်္ဃန်းကျွန်း (Thingangyun)",
+      "name": "Thingangyun",
       "nameEn": "Thingangyun",
       "nameMm": "သင်္ဃန်းကျွန်း",
       "state": "Yangon (MM)",
@@ -5012,7 +4982,7 @@
     },
     {
       "id": "yangon-thanlyin-11291",
-      "name": "သန်လျင် (Thanlyin)",
+      "name": "Thanlyin",
       "nameEn": "Thanlyin",
       "nameMm": "သန်လျင်",
       "state": "Yangon (MM)",
@@ -5024,7 +4994,7 @@
     },
     {
       "id": "yangon-thaketa-11231",
-      "name": "သာကေတ (Thaketa)",
+      "name": "Thaketa",
       "nameEn": "Thaketa",
       "nameMm": "သာကေတ",
       "state": "Yangon (MM)",
@@ -5036,7 +5006,7 @@
     },
     {
       "id": "yangon-thongwa-11072",
-      "name": "သုံးခွ (Thongwa)",
+      "name": "Thongwa",
       "nameEn": "Thongwa",
       "nameMm": "သုံးခွ",
       "state": "Yangon (MM)",
@@ -5048,7 +5018,7 @@
     },
     {
       "id": "yangon-insein-11011",
-      "name": "အင်းစိန် (Insein)",
+      "name": "Insein",
       "nameEn": "Insein",
       "nameMm": "အင်းစိန်",
       "state": "Yangon (MM)",
@@ -5060,7 +5030,7 @@
     },
     {
       "id": "yangon-ahlone-11121",
-      "name": "အလုံ (Ahlone)",
+      "name": "Ahlone",
       "nameEn": "Ahlone",
       "nameMm": "အလုံ",
       "state": "Yangon (MM)",
@@ -5070,5 +5040,7 @@
       "sortOrder": 10,
       "active": false
     }
-  ]
+  ],
+  "source": "Townships.xlsx",
+  "count": 420
 }
