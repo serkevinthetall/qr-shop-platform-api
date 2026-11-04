@@ -101,7 +101,18 @@ const createSchema = z.object({
   lowStockThreshold: z.number().int().nonnegative().optional(),
   categoryId: z.string().min(1, "Category required"),
   badge: z.string().optional(),
-  imageUrl: z.string().optional(),
+  imageUrl: z
+    .string()
+    .optional()
+    .refine(
+      (v) =>
+        v == null ||
+        v === "" ||
+        (!v.startsWith("blob:") &&
+          !v.startsWith("data:") &&
+          !v.startsWith("file:")),
+      "Product photo must be an uploaded https URL (not a browser blob)",
+    ),
   barcode: z.string().optional(),
   uom: z.string().optional(),
   purchaseUom: z.string().optional(),

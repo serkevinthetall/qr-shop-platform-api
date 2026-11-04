@@ -466,7 +466,6 @@ const MODULE_DEFS = [
   { key: "posEnabled", id: "pos", label: "POS" },
   { key: "barcodeTrackingEnabled", id: "barcode", label: "Barcode" },
   { key: "memberPointsEnabled", id: "points", label: "Member points" },
-  { key: "ratingsReviewsEnabled", id: "reviews", label: "Ratings & reviews" },
   { key: "couponCodesEnabled", id: "coupons", label: "Coupon codes" },
   { key: "bogoEnabled", id: "bogo", label: "Buy 1 Get 1" },
 ];

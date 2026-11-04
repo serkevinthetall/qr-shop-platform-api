@@ -1,6 +1,6 @@
 /**
  * QR Shop Platform API — Marketplace · Merchant · Admin
- * DB: Hostinger MySQL · Photos: Hostinger disk (UPLOAD_DIR) or Supabase if configured
+ * DB: Hostinger MySQL · Photos: Hostinger disk (UPLOAD_DIR)
  */
 import "./lib/env.js";
 import express from "express";
@@ -43,11 +43,6 @@ import { prisma } from "./lib/prisma.js";
 import { realtimeClientCount } from "./lib/realtime.js";
 import { ensureUploadDirs, uploadsRoot } from "./lib/uploads.js";
 import { seedUploadsDir } from "./lib/media-url.js";
-import {
-  ensurePublicBucket,
-  supabaseStorageConfigured,
-  storageBucketName,
-} from "./lib/supabase-storage.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -122,12 +117,10 @@ app.get("/health", async (_req, res) => {
     dbProtocol,
     dbOk,
     dbError,
-    storage: supabaseStorageConfigured() ? "supabase" : "disk-uploads",
-    storageBucket: supabaseStorageConfigured() ? storageBucketName() : null,
+    storage: "disk-uploads",
     hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
     hasJwtSecret: Boolean(process.env.JWT_SECRET),
     hasPublicBaseUrl: Boolean(process.env.PUBLIC_BASE_URL),
-    hasSupabaseStorage: supabaseStorageConfigured(),
     uploadDirSet: Boolean(String(process.env.UPLOAD_DIR || "").trim()),
     marketplacePublicOrigin: String(
       process.env.MARKETPLACE_PUBLIC_ORIGIN ||
@@ -235,15 +228,7 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
     console.log(`QR Shop Platform API → http://localhost:${port}`);
     console.log(`GET  http://localhost:${port}/health`);
     console.log(`POST http://localhost:${port}/api/auth/login`);
-    if (supabaseStorageConfigured()) {
-      console.log(`Storage → Supabase bucket "${storageBucketName()}"`);
-      void ensurePublicBucket().then((r) => {
-        if (!r.ok) console.warn("[storage] bucket check:", r.reason);
-        else if (r.created) console.log("[storage] bucket created (public)");
-      });
-    } else {
-      console.log("Storage → local disk (set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY for bucket)");
-    }
+    console.log(`Storage → disk ${uploadsRoot()}`);
   });
 }
 

@@ -245,7 +245,6 @@ router.get("/:id", async (req, res) => {
 /** Module flags — Admin only. Merchants may still set listingMode / channels elsewhere. */
 const ADMIN_MODULE_KEYS = [
   "barcodeTrackingEnabled",
-  "ratingsReviewsEnabled",
   "couponCodesEnabled",
   "bogoEnabled",
   "staffEnabled",

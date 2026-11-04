@@ -1,6 +1,6 @@
 # Hostinger disk uploads (product photos)
 
-QR Shop stores product / shop / payment-QR images on **Hostinger server disk** (File Manager), not Supabase.
+QR Shop stores product / shop / payment-QR images on **Hostinger server disk** (File Manager) only.
 
 ## Flow
 
@@ -34,12 +34,7 @@ Set (and restart Node):
 PUBLIC_BASE_URL=https://api.qrshopmyanmar.com
 UPLOAD_DIR=/home/u809131628/domains/api.qrshopmyanmar.com/public_html/uploads
 UPLOAD_MAX_BYTES=10485760
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_STORAGE_BUCKET=
 ```
-
-Leave Supabase blank so the API uses **disk** mode.
 
 ## 3) Check
 

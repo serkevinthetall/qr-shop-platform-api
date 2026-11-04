@@ -28,7 +28,7 @@ const IMAGE_MIME = new Set([
 export function uploadsRoot() {
   const fromEnv = String(process.env.UPLOAD_DIR || "").trim();
   if (fromEnv) return path.resolve(fromEnv);
-  /** Vercel filesystem is read-only except /tmp — prefer Supabase Storage in prod. */
+  /** Vercel /tmp only — Hostinger production should set UPLOAD_DIR. */
   if (process.env.VERCEL) return path.join("/tmp", "qr-shop-uploads");
   return path.join(root, "uploads");
 }

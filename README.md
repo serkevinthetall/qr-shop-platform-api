@@ -1,7 +1,7 @@
 # QR Shop Platform API
 
 Backend for **Marketplace · Merchant · Admin**.  
-**Supabase PostgreSQL** — QR Shop Marketplace · Merchant · Admin. Photos still on disk (`/uploads`).
+**Hostinger MySQL** · photos on **Hostinger disk** (`UPLOAD_DIR` → `/uploads`).
 
 Auth + mall channels: registered logins, one-time buyer QR, shop modes **b2c / b2b / both / portfolio**, marketplace prices for B2C and B2B.
 
@@ -28,12 +28,12 @@ Auth + mall channels: registered logins, one-time buyer QR, shop modes **b2c / b
 
 Sample guest phone open for B2B on shop `shop-nova`: `09998887766`.
 
-## Setup (Supabase)
+## Setup (Hostinger MySQL + disk photos)
 
 ```bash
 cd "/Users/qrmyanmar/Desktop/Odoo Backup Area/QR Shop Platform API"
-cp .env.example .env
-# Edit .env → paste Supabase DATABASE_URL (replace [YOUR-PASSWORD]) + JWT_SECRET
+cp .env.hostinger .env
+# Edit .env → DATABASE_URL (MySQL) + JWT_SECRET + UPLOAD_DIR
 
 npm install
 npm run build          # prisma generate
@@ -43,7 +43,7 @@ npm run dev
 ```
 
 API: `http://localhost:4100`  
-Supabase URI: Project Settings → Database → Connection string (URI). Use the **direct** host `db.<ref>.supabase.co:5432` for `db push`. If the password has `@` `#` etc., URL-encode it.
+Photos: see `raw/hostinger-disk-uploads.md`.
 
 ## Auth flows
 
