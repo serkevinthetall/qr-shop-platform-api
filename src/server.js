@@ -1,6 +1,6 @@
 /**
  * QR Shop Platform API — Marketplace · Merchant · Admin
- * DB: Hostinger MySQL · Photos: Hostinger disk (UPLOAD_DIR)
+ * DB: Hostinger MySQL · Photos: Hostinger disk (UPLOAD_DIR outside public_html)
  */
 import "./lib/env.js";
 import express from "express";
