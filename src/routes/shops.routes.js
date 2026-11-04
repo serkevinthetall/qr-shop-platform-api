@@ -7,7 +7,7 @@ import {
   normalizeListingMode,
   publicShopChannels,
 } from "../lib/shop-channels.js";
-import { getDeliveryFeeForTownship } from "../lib/delivery-fee.js";
+import { enrichZones, getDeliveryFeeForTownship } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
 import { parseStoreStyle } from "../lib/store-style.js";
@@ -83,6 +83,36 @@ router.get("/", async (req, res) => {
   } catch (err) {
     console.error("shops list", err);
     return fail(res, 500, "Could not load shops", "db_error");
+  }
+});
+
+/**
+ * GET /api/shops/:id/delivery
+ * Public — Marketplace checkout hydrates pickup/delivery + township fees.
+ */
+router.get("/:id/delivery", async (req, res) => {
+  try {
+    const shop = await prisma.shop.findFirst({
+      where: {
+        OR: [{ id: req.params.id }, { slug: req.params.id }],
+        status: "approved",
+      },
+      include: { delivery: true },
+    });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const delivery = shop.delivery;
+    const zones = await enrichZones(delivery?.zonesJson ?? []);
+    return ok(res, {
+      shopId: shop.id,
+      shopName: shop.name,
+      deliveryEnabled: Boolean(delivery?.deliveryEnabled),
+      pickupEnabled: delivery?.pickupEnabled !== false,
+      zones: zones.filter((z) => z.active !== false),
+    });
+  } catch (err) {
+    console.error("shop delivery get", err);
+    return fail(res, 500, "Could not load delivery", "db_error");
   }
 });
 
