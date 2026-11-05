@@ -5,11 +5,12 @@
 
 /**
  * @param {import("@prisma/client").Prisma.TransactionClient | import("@prisma/client").PrismaClient} tx
- * @param {"delivery" | "pickup"} fulfillment
+ * @param {"delivery" | "pickup" | "express"} fulfillment
  * @returns {Promise<string>}
  */
 export async function allocateOrderCode(tx, fulfillment) {
-  const prefix = fulfillment === "delivery" ? "d" : "p";
+  const prefix =
+    fulfillment === "express" ? "e" : fulfillment === "delivery" ? "d" : "p";
   await tx.orderCodeCounter.upsert({
     where: { prefix },
     create: { prefix, next: 1000 },
@@ -22,7 +23,7 @@ export async function allocateOrderCode(tx, fulfillment) {
   return `${prefix}${counter.next}`.toLowerCase();
 }
 
-/** True for short codes like d1214 / p12431 (not cuid). */
+/** True for short codes like d1214 / p12431 / e1201 (not cuid). */
 export function looksLikeOrderCode(value) {
-  return typeof value === "string" && /^[dp]\d{3,8}$/i.test(value.trim());
+  return typeof value === "string" && /^[dpe]\d{3,8}$/i.test(value.trim());
 }

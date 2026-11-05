@@ -49,6 +49,8 @@ router.get("/delivery", async (req, res) => {
       shopId,
       deliveryEnabled: Boolean(settings.deliveryEnabled),
       pickupEnabled: settings.pickupEnabled !== false,
+      expressEnabled: Boolean(settings.expressEnabled),
+      expressFeeKs: Math.max(0, Math.floor(Number(settings.expressFeeKs) || 0)),
       zones,
       availableTownships: available,
     });
@@ -61,6 +63,8 @@ router.get("/delivery", async (req, res) => {
 const saveSchema = z.object({
   deliveryEnabled: z.boolean().optional(),
   pickupEnabled: z.boolean().optional(),
+  expressEnabled: z.boolean().optional(),
+  expressFeeKs: z.number().int().nonnegative().optional(),
   zones: z
     .array(
       z.object({
@@ -112,6 +116,10 @@ router.put("/delivery", async (req, res) => {
     }
 
     const existing = await prisma.shopDelivery.findUnique({ where: { shopId } });
+    const expressFeeKs =
+      parsed.data.expressFeeKs != null
+        ? Math.max(0, Math.floor(parsed.data.expressFeeKs))
+        : undefined;
     const next = await prisma.shopDelivery.upsert({
       where: { shopId },
       create: {
@@ -120,6 +128,8 @@ router.put("/delivery", async (req, res) => {
           parsed.data.deliveryEnabled ??
           (Array.isArray(zonesJson) && zonesJson.length > 0),
         pickupEnabled: parsed.data.pickupEnabled ?? true,
+        expressEnabled: parsed.data.expressEnabled ?? false,
+        expressFeeKs: expressFeeKs ?? 0,
         zonesJson: zonesJson ?? [],
       },
       update: {
@@ -129,6 +139,10 @@ router.put("/delivery", async (req, res) => {
         ...(parsed.data.pickupEnabled != null
           ? { pickupEnabled: parsed.data.pickupEnabled }
           : {}),
+        ...(parsed.data.expressEnabled != null
+          ? { expressEnabled: parsed.data.expressEnabled }
+          : {}),
+        ...(expressFeeKs != null ? { expressFeeKs } : {}),
         ...(zonesJson != null ? { zonesJson } : {}),
       },
     });
@@ -152,6 +166,8 @@ router.put("/delivery", async (req, res) => {
       shopId,
       deliveryEnabled: Boolean(next.deliveryEnabled),
       pickupEnabled: next.pickupEnabled !== false,
+      expressEnabled: Boolean(next.expressEnabled),
+      expressFeeKs: Math.max(0, Math.floor(Number(next.expressFeeKs) || 0)),
       zones,
     });
   } catch (err) {

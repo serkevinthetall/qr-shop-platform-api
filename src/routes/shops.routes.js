@@ -7,7 +7,11 @@ import {
   normalizeListingMode,
   publicShopChannels,
 } from "../lib/shop-channels.js";
-import { enrichZones, getDeliveryFeeForTownship } from "../lib/delivery-fee.js";
+import {
+  enrichZones,
+  getShopHomeState,
+  resolveDeliveryOptions,
+} from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
 import { parseStoreStyle } from "../lib/store-style.js";
@@ -104,11 +108,15 @@ router.get("/:id/delivery", async (req, res) => {
 
     const delivery = shop.delivery;
     const zones = await enrichZones(delivery?.zonesJson ?? []);
+    const homeState = await getShopHomeState(shop.id);
     return ok(res, {
       shopId: shop.id,
       shopName: shop.name,
       deliveryEnabled: Boolean(delivery?.deliveryEnabled),
       pickupEnabled: delivery?.pickupEnabled !== false,
+      expressEnabled: Boolean(delivery?.expressEnabled),
+      expressFeeKs: Math.max(0, Math.floor(Number(delivery?.expressFeeKs) || 0)),
+      homeState,
       zones: zones.filter((z) => z.active !== false),
     });
   } catch (err) {
@@ -119,7 +127,7 @@ router.get("/:id/delivery", async (req, res) => {
 
 /**
  * GET /api/shops/:id/delivery-quote?townshipId=
- * Marketplace checkout — fee for one township (null = not served).
+ * Marketplace checkout — local delivery / Express / pickup options for one township.
  */
 router.get("/:id/delivery-quote", async (req, res) => {
   try {
@@ -140,12 +148,12 @@ router.get("/:id/delivery-quote", async (req, res) => {
       return fail(res, 400, "Township is not published");
     }
 
-    const delivery = shop.delivery;
-    const pickupEnabled = delivery?.pickupEnabled !== false;
-    const deliveryEnabled = Boolean(delivery?.deliveryEnabled);
-    const feeKs = deliveryEnabled
-      ? await getDeliveryFeeForTownship(shop.id, townshipId)
-      : null;
+    const opts = await resolveDeliveryOptions(shop.id, townshipId);
+    const feeKs = opts.canDelivery
+      ? opts.deliveryFeeKs
+      : opts.canExpress
+        ? opts.expressFeeKs
+        : null;
 
     return ok(res, {
       shopId: shop.id,
@@ -153,9 +161,20 @@ router.get("/:id/delivery-quote", async (req, res) => {
       townshipId,
       townshipName: townshipLabel(township),
       postalCode: township.postalCode,
-      deliveryEnabled,
-      pickupEnabled,
-      deliversHere: feeKs != null,
+      deliveryEnabled: opts.deliveryEnabled,
+      pickupEnabled: opts.pickupEnabled,
+      expressEnabled: opts.expressEnabled,
+      homeState: opts.homeState,
+      buyerState: opts.buyerState,
+      sameState: opts.sameState,
+      inZone: opts.inZone,
+      canDelivery: opts.canDelivery,
+      canExpress: opts.canExpress,
+      canPickup: opts.canPickup,
+      contactShop: opts.contactShop,
+      deliveryFeeKs: opts.deliveryFeeKs,
+      expressFeeKs: opts.expressFeeKs,
+      deliversHere: opts.canDelivery,
       feeKs,
     });
   } catch (err) {

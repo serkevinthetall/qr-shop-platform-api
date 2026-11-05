@@ -10,7 +10,7 @@ import {
 } from "../middlewares/auth.middleware.js";
 import { normalizePhone } from "../lib/phone.js";
 import { resolvePricingContext } from "../lib/pricing-context.js";
-import { getDeliveryFeeForTownship } from "../lib/delivery-fee.js";
+import { resolveDeliveryOptions } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
 import { unitPriceForChannel } from "../lib/mall-product.js";
 import { publishOrderEvent } from "../lib/realtime.js";
@@ -62,7 +62,7 @@ const placeSchema = z.object({
   buyerPhone: z.string().min(6).optional(),
   address: z.string().optional(),
   channel: z.enum(["b2c", "b2b"]).default("b2c"),
-  fulfillment: z.enum(["delivery", "pickup"]),
+  fulfillment: z.enum(["delivery", "pickup", "express"]),
   payment: z.string().min(2).max(24),
   /** Required for wallet methods (kpay, uabpay, …) — absolute or /uploads/… */
   paymentSlipUrl: z.string().min(8).max(2048).optional().nullable(),
@@ -270,14 +270,17 @@ async function createOrderPayload(
   let townshipName = b.townshipName ?? null;
   let address = (b.address ?? "").trim();
 
-  if (b.fulfillment === "delivery") {
+  if (b.fulfillment === "delivery" || b.fulfillment === "express") {
     // Prefer cart township; else buyer's profile / default address township
     if (!townshipId && profileTownship) townshipId = profileTownship;
     if (!townshipId) {
       return {
         error: {
           status: 400,
-          message: "Delivery needs your profile township — update Account → Addresses",
+          message:
+            b.fulfillment === "express"
+              ? "Express needs your township — update checkout location"
+              : "Delivery needs your profile township — update Account → Addresses",
         },
       };
     }
@@ -286,17 +289,31 @@ async function createOrderPayload(
       return { error: { status: 400, message: "Township is not published" } };
     }
     townshipName = townshipName || townshipLabel(township);
-    if (b.deliveryFeeKs == null) {
-      const fee = await getDeliveryFeeForTownship(b.shopId, townshipId);
-      if (fee == null) {
+    const opts = await resolveDeliveryOptions(b.shopId, townshipId);
+    if (b.fulfillment === "delivery") {
+      if (!opts.canDelivery) {
         return {
           error: {
             status: 400,
-            message: "This shop does not deliver to your area",
+            message: opts.contactShop
+              ? "This township is outside the shop’s delivery zones — message the shop or choose pickup"
+              : "This shop does not deliver to your area",
           },
         };
       }
-      deliveryFeeKs = fee;
+      deliveryFeeKs =
+        b.deliveryFeeKs != null ? b.deliveryFeeKs : opts.deliveryFeeKs ?? 0;
+    } else {
+      if (!opts.canExpress) {
+        return {
+          error: {
+            status: 400,
+            message: "Express is not available for this location",
+          },
+        };
+      }
+      deliveryFeeKs =
+        b.deliveryFeeKs != null ? b.deliveryFeeKs : opts.expressFeeKs ?? 0;
     }
     if (!address) address = profileAddressLine;
   } else if (b.fulfillment === "pickup") {

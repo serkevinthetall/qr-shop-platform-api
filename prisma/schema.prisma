@@ -30,6 +30,8 @@ enum ShopStatus {
 enum OrderFulfillment {
   delivery
   pickup
+  /** Out-of-state courier — Merchant Express fee */
+  express
 }
 
 enum OrderPayment {
@@ -465,6 +467,13 @@ model ShopDelivery {
   shop            Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
   pickupEnabled   Boolean @default(true)
   deliveryEnabled Boolean @default(false)
+  /**
+   * Out-of-state courier. Checkout shows Express when buyer township
+   * state ≠ shop home state (derived from zones / shop.township).
+   */
+  expressEnabled  Boolean @default(false)
+  /** Flat Express fee (Ks) charged when fulfillment = express */
+  expressFeeKs    Int     @default(0)
   /** JSON: [{ townshipId, feeKs }] */
   zonesJson       Json    @default("[]")
 }
