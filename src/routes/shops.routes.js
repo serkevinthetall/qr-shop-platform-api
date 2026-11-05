@@ -266,9 +266,12 @@ router.get("/:id/products", async (req, res) => {
             : null,
         imageUrl: p.imageUrl || "",
         badge: p.badge || null,
-        stock: p.stock,
+        stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
         categoryId: p.categoryId || "",
-        canOrder: ch.canOrder && !ch.portfolioOnly, // published SKUs only
+        canOrder:
+          ch.canOrder &&
+          !ch.portfolioOnly &&
+          Math.max(0, Math.floor(Number(p.stock) || 0)) > 0,
       })),
     });
   } catch (err) {

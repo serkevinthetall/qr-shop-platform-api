@@ -496,7 +496,10 @@ router.get("/products", requireGuest, async (req, res) => {
               ? Math.floor(Number(p.wholesaleMinQty))
               : null,
           imageUrl: p.imageUrl || null,
-          stock: p.stock,
+          stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
+          canOrder:
+            priced.canOrder !== false &&
+            Math.max(0, Math.floor(Number(p.stock) || 0)) > 0,
         };
       }),
     });

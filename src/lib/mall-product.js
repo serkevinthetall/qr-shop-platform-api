@@ -41,11 +41,14 @@ export function toMallProduct(p) {
     categoryId: p.categoryId ?? "essentials",
     badge: p.badge ?? undefined,
     imageUrl: p.imageUrl ?? "",
-    stock: p.stock,
+    stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
     active: p.active,
     listingMode,
     portfolioOnly: channels.portfolioOnly,
-    canOrder: channels.canOrder,
+    canOrder:
+      channels.canOrder &&
+      !channels.portfolioOnly &&
+      Math.max(0, Math.floor(Number(p.stock) || 0)) > 0,
     channels: {
       b2cEnabled: channels.b2cEnabled || showBoth,
       b2bEnabled: channels.b2bEnabled || showBoth,
