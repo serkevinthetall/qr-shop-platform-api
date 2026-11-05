@@ -38,6 +38,7 @@ import {
 } from "./routes/portal-messages.routes.js";
 import realtimeRoutes from "./routes/realtime.routes.js";
 import goRoutes from "./routes/go.routes.js";
+import appConfigRoutes from "./routes/app-config.routes.js";
 import { ok, fail } from "./lib/response.js";
 import { prisma } from "./lib/prisma.js";
 import { realtimeClientCount } from "./lib/realtime.js";
@@ -205,6 +206,7 @@ app.use("/api/shops", shopRoutes);
 app.use("/api/townships", townshipRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/mall", mallRoutes);
+app.use("/api/app-config", appConfigRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/admin", adminRoutes);
