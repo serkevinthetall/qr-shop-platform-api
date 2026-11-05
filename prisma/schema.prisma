@@ -274,6 +274,11 @@ model Product {
   priceKs      Int
   /** B2B / wholesale price (kyats); null = no wholesale price */
   priceB2bKs   Int?
+  /**
+   * Min line qty to unlock wholesale (priceB2bKs).
+   * Only set when priceB2bKs is set; null = no qty-based wholesale.
+   */
+  wholesaleMinQty Int?
   compareAtKs  Int?
   /** Last landed / cost (optional) */
   costKs       Int?

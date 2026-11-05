@@ -58,6 +58,13 @@ export function publicMerchantProduct(p) {
     name: p.name,
     priceKs: p.priceKs,
     priceB2bKs: p.priceB2bKs ?? null,
+    wholesaleMinQty:
+      p.priceB2bKs != null &&
+      Number(p.priceB2bKs) > 0 &&
+      p.wholesaleMinQty != null &&
+      Number(p.wholesaleMinQty) > 0
+        ? Math.floor(Number(p.wholesaleMinQty))
+        : null,
     compareAtKs: p.compareAtKs ?? null,
     costKs: p.costKs ?? null,
     stock: p.stock,
@@ -104,6 +111,20 @@ export function productWriteData(body, { partial = false } = {}) {
         ? null
         : Math.max(0, Math.floor(Number(body.priceB2bKs))),
     );
+  }
+  if (body.wholesaleMinQty !== undefined) {
+    set(
+      "wholesaleMinQty",
+      body.wholesaleMinQty == null || body.wholesaleMinQty === ""
+        ? null
+        : Math.max(1, Math.floor(Number(body.wholesaleMinQty) || 0)),
+    );
+  }
+  /** Wholesale cleared → clear min qty. Wholesale set with 0 min → null. */
+  if (data.priceB2bKs === null) {
+    data.wholesaleMinQty = null;
+  } else if (data.priceB2bKs != null && data.wholesaleMinQty != null && data.wholesaleMinQty < 1) {
+    data.wholesaleMinQty = null;
   }
   if (body.compareAtKs !== undefined) {
     set(

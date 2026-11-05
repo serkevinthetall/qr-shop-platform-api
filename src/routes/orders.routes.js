@@ -12,7 +12,8 @@ import { normalizePhone } from "../lib/phone.js";
 import { resolvePricingContext } from "../lib/pricing-context.js";
 import { resolveDeliveryOptions } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
-import { unitPriceForChannel } from "../lib/mall-product.js";
+import { resolveUnitPrice } from "../lib/mall-product.js";
+import { ensureWholesaleMinQtyColumn } from "../lib/ensure-schema.js";
 import { publishOrderEvent } from "../lib/realtime.js";
 import { allocateOrderCode, looksLikeOrderCode } from "../lib/order-code.js";
 import {
@@ -94,7 +95,7 @@ async function assertChannelAllowed(
   shopId,
   phone,
   channel,
-  { requirePhoneB2bGate = false } = {},
+  { requirePhoneB2bGate = false, allowQtyWholesale = false } = {},
 ) {
   const ctx = await resolvePricingContext(shopId, phone);
   if (!ctx) return { ok: false, message: "Shop not found" };
@@ -108,6 +109,10 @@ async function assertChannelAllowed(
     return { ok: false, message: "B2C is not open for this shop" };
   }
   if (channel === "b2b") {
+    /** Qty ≥ wholesaleMinQty unlocks wholesale without shop B2B listing / phone gate. */
+    if (allowQtyWholesale) {
+      return { ok: true, ctx };
+    }
     if (!ctx.shopOffersB2b) {
       return { ok: false, message: "B2B is not open for this shop" };
     }
@@ -122,6 +127,11 @@ async function assertChannelAllowed(
 }
 
 async function resolveLines(shopId, channel, rawLines) {
+  try {
+    await ensureWholesaleMinQtyColumn();
+  } catch {
+    /* logged in ensure-schema */
+  }
   const priced = [];
   for (const line of rawLines) {
     const qty = line.qty;
@@ -149,12 +159,12 @@ async function resolveLines(shopId, channel, rawLines) {
           },
         };
       }
-      const unitKs = unitPriceForChannel(product, channel);
-      if (unitKs == null) {
+      const resolved = resolveUnitPrice(product, qty, channel);
+      if (resolved.unitKs == null) {
         return {
           error: {
             status: 400,
-            message: `No ${channel.toUpperCase()} price for ${product.name}`,
+            message: `No price for ${product.name}`,
           },
         };
       }
@@ -162,8 +172,10 @@ async function resolveLines(shopId, channel, rawLines) {
         productId: product.id,
         productName: product.name,
         qty,
-        unitKs,
-        lineTotalKs: unitKs * qty,
+        unitKs: resolved.unitKs,
+        lineTotalKs: resolved.unitKs * qty,
+        channel: resolved.channel,
+        byQty: Boolean(resolved.byQty),
       });
     } else {
       if (line.unitKs == null || !line.productName) {
@@ -180,6 +192,8 @@ async function resolveLines(shopId, channel, rawLines) {
         qty,
         unitKs: line.unitKs,
         lineTotalKs: line.unitKs * qty,
+        channel: channel === "b2b" ? "b2b" : "b2c",
+        byQty: false,
       });
     }
   }
@@ -224,9 +238,22 @@ async function createOrderPayload(
     return { error: { status: 400, message: "Shop is not available for orders" } };
   }
 
-  const channelCheck = await assertChannelAllowed(b.shopId, phone, b.channel, {
-    requirePhoneB2bGate,
-  });
+  const pricedEarly = await resolveLines(b.shopId, b.channel, b.lines);
+  if (pricedEarly.error) return { error: pricedEarly.error };
+  const usedQtyWholesale = pricedEarly.lines.some((l) => l.byQty);
+  const effectiveChannel = pricedEarly.lines.some((l) => l.channel === "b2b")
+    ? "b2b"
+    : "b2c";
+
+  const channelCheck = await assertChannelAllowed(
+    b.shopId,
+    phone,
+    effectiveChannel,
+    {
+      requirePhoneB2bGate,
+      allowQtyWholesale: usedQtyWholesale,
+    },
+  );
   if (!channelCheck.ok) {
     return { error: { status: 403, message: channelCheck.message } };
   }
@@ -326,8 +353,7 @@ async function createOrderPayload(
     }
   }
 
-  const priced = await resolveLines(b.shopId, b.channel, b.lines);
-  if (priced.error) return { error: priced.error };
+  const priced = pricedEarly;
 
   const subtotalKs = priced.lines.reduce((s, l) => s + l.lineTotalKs, 0);
   const totalKs = subtotalKs + deliveryFeeKs;
@@ -352,7 +378,7 @@ async function createOrderPayload(
         buyerName: b.buyerName.trim(),
         buyerPhone: phone,
         address,
-        channel: b.channel,
+        channel: effectiveChannel,
         fulfillment: b.fulfillment,
         payment: b.payment,
         paymentSlipUrl,

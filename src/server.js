@@ -43,6 +43,7 @@ import { prisma } from "./lib/prisma.js";
 import { realtimeClientCount } from "./lib/realtime.js";
 import { ensureUploadDirs, uploadsRoot } from "./lib/uploads.js";
 import { seedUploadsDir } from "./lib/media-url.js";
+import { ensureSchemaPatches } from "./lib/ensure-schema.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -230,7 +231,10 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
     console.log(`GET  http://localhost:${port}/health`);
     console.log(`POST http://localhost:${port}/api/auth/login`);
     console.log(`Storage → disk ${uploadsRoot()}`);
+    void ensureSchemaPatches();
   });
+} else {
+  void ensureSchemaPatches();
 }
 
 export default app;

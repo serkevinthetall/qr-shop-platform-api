@@ -24,6 +24,12 @@ export function toMallProduct(p) {
     name: p.name,
     priceB2cKs: priced.priceB2cKs ?? null,
     priceB2bKs: priced.priceB2bKs ?? null,
+    wholesaleMinQty:
+      priced.priceB2bKs != null &&
+      p.wholesaleMinQty != null &&
+      Number(p.wholesaleMinQty) > 0
+        ? Math.floor(Number(p.wholesaleMinQty))
+        : null,
     priceKs,
     price: `${Number(priceKs).toLocaleString()} Ks`,
     compareAtKs: p.compareAtKs ?? undefined,
@@ -67,4 +73,51 @@ export function unitPriceForChannel(product, channel) {
     return product.priceB2bKs;
   }
   return product.priceKs;
+}
+
+/**
+ * Plan A: qty ≥ wholesaleMinQty unlocks wholesale for anyone.
+ * Below min (or no min) → retail, unless legacy channel=b2b with no min qty.
+ */
+export function resolveUnitPrice(product, qty, requestedChannel = "b2c") {
+  const q = Math.max(1, Math.floor(Number(qty) || 1));
+  const retail =
+    product.priceKs != null && Number(product.priceKs) > 0
+      ? Math.floor(Number(product.priceKs))
+      : null;
+  const wholesale =
+    product.priceB2bKs != null && Number(product.priceB2bKs) > 0
+      ? Math.floor(Number(product.priceB2bKs))
+      : null;
+  const minQty =
+    product.wholesaleMinQty != null && Number(product.wholesaleMinQty) > 0
+      ? Math.floor(Number(product.wholesaleMinQty))
+      : null;
+
+  if (wholesale != null && minQty != null && q >= minQty) {
+    return { unitKs: wholesale, channel: "b2b", byQty: true };
+  }
+
+  if (requestedChannel === "b2b" && wholesale != null && minQty == null) {
+    return { unitKs: wholesale, channel: "b2b", byQty: false };
+  }
+
+  if (requestedChannel === "b2b" && wholesale != null && minQty != null && q < minQty) {
+    if (retail == null) return { unitKs: null, channel: "b2c", byQty: false };
+    return { unitKs: retail, channel: "b2c", byQty: false };
+  }
+
+  if (requestedChannel === "b2b" && wholesale != null) {
+    return { unitKs: wholesale, channel: "b2b", byQty: false };
+  }
+
+  if (retail == null && wholesale != null) {
+    return { unitKs: wholesale, channel: "b2b", byQty: false };
+  }
+
+  return {
+    unitKs: retail,
+    channel: "b2c",
+    byQty: false,
+  };
 }

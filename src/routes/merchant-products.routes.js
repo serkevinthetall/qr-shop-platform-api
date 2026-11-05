@@ -10,10 +10,19 @@ import {
 } from "../lib/merchant-product.js";
 import { resolveListingMode } from "../lib/shop-channels.js";
 import { recordStockAdjustMove } from "../lib/stock-moves.js";
+import { ensureWholesaleMinQtyColumn } from "../lib/ensure-schema.js";
 
 const router = Router();
 
 router.use(requireAuth, requireRole("merchant", "staff"));
+router.use(async (_req, _res, next) => {
+  try {
+    await ensureWholesaleMinQtyColumn();
+  } catch {
+    /* logged in ensure-schema */
+  }
+  next();
+});
 
 async function shopIsCatalogOnly(shopId) {
   const features = await prisma.shopFeatures.findUnique({ where: { shopId } });
@@ -100,6 +109,7 @@ const createSchema = z.object({
   name: z.string().min(1),
   priceKs: z.number().int().nonnegative(),
   priceB2bKs: z.number().int().nonnegative().nullable().optional(),
+  wholesaleMinQty: z.number().int().positive().nullable().optional(),
   compareAtKs: z.number().int().nonnegative().nullable().optional(),
   costKs: z.number().int().nonnegative().nullable().optional(),
   stock: z.number().int().nonnegative().optional(),
@@ -215,6 +225,17 @@ router.post("/products", async (req, res) => {
     if (!categoryId) {
       return fail(res, 400, "Category required", "category_required");
     }
+    if (data.priceB2bKs != null && data.priceB2bKs > 0) {
+      const minQty = data.wholesaleMinQty;
+      if (minQty == null || minQty < 2) {
+        return fail(
+          res,
+          400,
+          "Set min qty for wholesale (at least 2)",
+          "wholesale_min_qty",
+        );
+      }
+    }
 
     const published = data.active !== false;
     const catalogOnly = await shopIsCatalogOnly(shopId);
@@ -241,6 +262,7 @@ router.post("/products", async (req, res) => {
         name: data.name,
         priceKs: data.priceKs ?? 0,
         priceB2bKs: data.priceB2bKs ?? null,
+        wholesaleMinQty: data.wholesaleMinQty ?? null,
         compareAtKs: data.compareAtKs ?? null,
         costKs: data.costKs ?? null,
         stock: data.stock ?? 0,
@@ -283,6 +305,23 @@ router.put("/products/:id", async (req, res) => {
     const data = productWriteData(req.body, { partial: true });
     if (Object.keys(data).length === 0) {
       return ok(res, publicMerchantProduct(existing));
+    }
+
+    const nextWs =
+      data.priceB2bKs !== undefined ? data.priceB2bKs : existing.priceB2bKs;
+    const nextMin =
+      data.wholesaleMinQty !== undefined
+        ? data.wholesaleMinQty
+        : existing.wholesaleMinQty;
+    if (nextWs != null && Number(nextWs) > 0) {
+      if (nextMin == null || Number(nextMin) < 2) {
+        return fail(
+          res,
+          400,
+          "Set min qty for wholesale (at least 2)",
+          "wholesale_min_qty",
+        );
+      }
     }
 
     const nextActive =

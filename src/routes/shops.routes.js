@@ -258,6 +258,12 @@ router.get("/:id/products", async (req, res) => {
         name: p.name,
         priceB2cKs: p.priceKs,
         priceB2bKs: p.priceB2bKs ?? null,
+        wholesaleMinQty:
+          p.priceB2bKs != null &&
+          p.wholesaleMinQty != null &&
+          Number(p.wholesaleMinQty) > 0
+            ? Math.floor(Number(p.wholesaleMinQty))
+            : null,
         imageUrl: p.imageUrl || "",
         badge: p.badge || null,
         stock: p.stock,
