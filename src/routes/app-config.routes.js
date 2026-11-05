@@ -29,7 +29,7 @@ function envStr(name, fallback = "") {
  * GET /api/app-config/merchant
  *
  * Hostinger env (optional):
- *   MERCHANT_APP_MIN_VERSION          (default 1.0.1 — forces current 1.0.0 beta)
+ *   MERCHANT_APP_MIN_VERSION          (default 0.0.2 — forces current 0.0.1 beta)
  *   MERCHANT_APP_MIN_IOS_VERSION
  *   MERCHANT_APP_MIN_ANDROID_VERSION
  *   MERCHANT_FORCE_UPDATE               (true|false — always require store update)
@@ -38,7 +38,7 @@ function envStr(name, fallback = "") {
  *   MERCHANT_UPDATE_MESSAGE
  */
 router.get("/merchant", (_req, res) => {
-  const minVersion = envStr("MERCHANT_APP_MIN_VERSION", "1.0.1");
+  const minVersion = envStr("MERCHANT_APP_MIN_VERSION", "0.0.2");
   const minIos = envStr("MERCHANT_APP_MIN_IOS_VERSION", minVersion);
   const minAndroid = envStr("MERCHANT_APP_MIN_ANDROID_VERSION", minVersion);
   const forceUpdate = envBool("MERCHANT_FORCE_UPDATE", false);
