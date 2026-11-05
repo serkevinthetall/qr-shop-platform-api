@@ -1,5 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { ok, fail } from "../lib/response.js";
@@ -37,6 +38,12 @@ const registerBuyerSchema = z.object({
   /** Legacy flat address if street/township not sent yet */
   address: z.string().min(1).optional(),
   label: z.string().optional(),
+});
+
+/** Marketplace Account — name + phone only (chat / identity, no password). */
+const oneTimeBuyerSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().min(6),
 });
 
 /** Required: name, phone, shopName. Password is set by Admin later (not by merchant). */
@@ -108,6 +115,70 @@ router.post("/login", async (req, res) => {
       `Login failed — database error: ${detail}`,
       "db_error",
     );
+  }
+});
+
+/**
+ * POST /api/auth/buyer/one-time
+ * Marketplace Account one-time login — name + phone (no password).
+ * Creates or reuses a buyer User so shop chat works (threads keyed by phone).
+ */
+router.post("/buyer/one-time", async (req, res) => {
+  try {
+    const parsed = oneTimeBuyerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return fail(res, 400, "Name and phone are required");
+    }
+
+    const phone = normalizePhone(parsed.data.phone);
+    const name = parsed.data.name.trim();
+    if (!phone || phone.replace(/\D/g, "").length < 6) {
+      return fail(res, 400, "Enter a valid phone number");
+    }
+    if (!name) return fail(res, 400, "Enter your name");
+
+    const existing = await prisma.user.findFirst({ where: { phone } });
+    if (existing && existing.role !== "buyer") {
+      return fail(
+        res,
+        409,
+        "This phone is used by a shop account — use a buyer phone",
+        "wrong_role",
+      );
+    }
+    if (existing && existing.active === false) {
+      return fail(res, 403, "This account is disabled");
+    }
+
+    let user;
+    let created = false;
+    if (existing) {
+      user = await prisma.user.update({
+        where: { id: existing.id },
+        data: { name },
+        include: { addresses: true },
+      });
+    } else {
+      const passwordHash = await bcrypt.hash(
+        crypto.randomBytes(32).toString("hex"),
+        10,
+      );
+      user = await prisma.user.create({
+        data: {
+          role: "buyer",
+          name,
+          phone,
+          passwordHash,
+        },
+        include: { addresses: true },
+      });
+      created = true;
+    }
+
+    return ok(res, issueSession(user, user.addresses), { created });
+  } catch (err) {
+    console.error("buyer one-time login error", err);
+    return fail(res, 500, "Could not start session", "db_error");
   }
 });
 
