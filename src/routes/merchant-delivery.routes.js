@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
-import { enrichZones } from "../lib/delivery-fee.js";
+import { enrichZones, parseExpressStates } from "../lib/delivery-fee.js";
 import { publicTownship } from "../lib/township.js";
 
 const router = Router();
@@ -18,9 +18,64 @@ function shopIdOrFail(req, res) {
   return req.user.shopId;
 }
 
+const zoneItemSchema = z.object({
+  townshipId: z.string().min(1),
+  feeKs: z.number().int().nonnegative(),
+});
+
+const expressStateSchema = z.object({
+  state: z.string().min(1),
+  feeKs: z.number().int().nonnegative(),
+});
+
+async function cleanZones(zones) {
+  const cleaned = [];
+  const seen = new Set();
+  for (const z of zones) {
+    if (seen.has(z.townshipId)) continue;
+    const t = await prisma.township.findUnique({ where: { id: z.townshipId } });
+    if (!t || !t.active) {
+      const err = new Error(`Township not published: ${z.townshipId}`);
+      err.code = "township_not_published";
+      throw err;
+    }
+    seen.add(z.townshipId);
+    cleaned.push({
+      townshipId: z.townshipId,
+      feeKs: Math.max(0, Math.floor(z.feeKs)),
+    });
+  }
+  return cleaned;
+}
+
+async function cleanExpressStates(rows) {
+  const published = await prisma.township.findMany({
+    where: { active: true },
+    select: { state: true },
+  });
+  const allowed = new Set(published.map((t) => t.state).filter(Boolean));
+  const cleaned = [];
+  const seen = new Set();
+  for (const row of rows) {
+    const state = String(row.state || "").trim();
+    if (!state || !allowed.has(state)) {
+      const err = new Error(`State not published: ${state || "(empty)"}`);
+      err.code = "state_not_published";
+      throw err;
+    }
+    const key = state.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    cleaned.push({
+      state,
+      feeKs: Math.max(0, Math.floor(row.feeKs)),
+    });
+  }
+  return cleaned;
+}
+
 /**
  * GET /api/merchant/delivery
- * Merchant Delivery tab — zones with fee + postal code (Admin-published townships only).
  */
 router.get("/delivery", async (req, res) => {
   try {
@@ -32,18 +87,34 @@ router.get("/delivery", async (req, res) => {
       shopId,
       deliveryEnabled: false,
       pickupEnabled: true,
+      expressEnabled: false,
       zonesJson: [],
+      expressZonesJson: [],
     };
 
     const zones = await enrichZones(settings.zonesJson);
+    const expressStates = parseExpressStates(settings.expressZonesJson ?? []);
     const published = await prisma.township.findMany({
       where: { active: true },
       orderBy: [{ state: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
     });
     const used = new Set(zones.map((z) => z.townshipId));
+    const usedExpressStates = new Set(
+      expressStates.map((s) => s.state.toLowerCase()),
+    );
     const available = published
       .filter((t) => !used.has(t.id))
       .map(publicTownship);
+    const allStates = [];
+    const stateSeen = new Set();
+    for (const t of published) {
+      if (!t.state || stateSeen.has(t.state.toLowerCase())) continue;
+      stateSeen.add(t.state.toLowerCase());
+      allStates.push(t.state);
+    }
+    const availableExpressStates = allStates.filter(
+      (s) => !usedExpressStates.has(s.toLowerCase()),
+    );
 
     return ok(res, {
       shopId,
@@ -52,7 +123,11 @@ router.get("/delivery", async (req, res) => {
       expressEnabled: Boolean(settings.expressEnabled),
       expressFeeKs: Math.max(0, Math.floor(Number(settings.expressFeeKs) || 0)),
       zones,
+      expressStates,
+      /** @deprecated township-shaped; prefer expressStates */
+      expressZones: [],
       availableTownships: available,
+      availableExpressStates,
     });
   } catch (err) {
     console.error("merchant delivery get", err);
@@ -65,20 +140,14 @@ const saveSchema = z.object({
   pickupEnabled: z.boolean().optional(),
   expressEnabled: z.boolean().optional(),
   expressFeeKs: z.number().int().nonnegative().optional(),
-  zones: z
-    .array(
-      z.object({
-        townshipId: z.string().min(1),
-        feeKs: z.number().int().nonnegative(),
-      }),
-    )
-    .optional(),
+  zones: z.array(zoneItemSchema).optional(),
+  expressStates: z.array(expressStateSchema).optional(),
+  /** Ignore legacy township express payloads */
+  expressZones: z.array(z.any()).optional(),
 });
 
 /**
  * PUT /api/merchant/delivery
- * Set pickup/delivery flags + move/reorder zones with per-township fee (Ks).
- * Only Admin-published (active) townships allowed.
  */
 router.put("/delivery", async (req, res) => {
   try {
@@ -92,27 +161,17 @@ router.put("/delivery", async (req, res) => {
     if (!parsed.success) return fail(res, 400, "Invalid delivery payload");
 
     let zonesJson;
-    if (parsed.data.zones) {
-      const cleaned = [];
-      const seen = new Set();
-      for (const z of parsed.data.zones) {
-        if (seen.has(z.townshipId)) continue;
-        const t = await prisma.township.findUnique({ where: { id: z.townshipId } });
-        if (!t || !t.active) {
-          return fail(
-            res,
-            400,
-            `Township not published: ${z.townshipId}`,
-            "township_not_published",
-          );
-        }
-        seen.add(z.townshipId);
-        cleaned.push({
-          townshipId: z.townshipId,
-          feeKs: Math.max(0, Math.floor(z.feeKs)),
-        });
+    let expressZonesJson;
+    try {
+      if (parsed.data.zones) zonesJson = await cleanZones(parsed.data.zones);
+      if (parsed.data.expressStates) {
+        expressZonesJson = await cleanExpressStates(parsed.data.expressStates);
       }
-      zonesJson = cleaned;
+    } catch (e) {
+      if (e?.code === "township_not_published" || e?.code === "state_not_published") {
+        return fail(res, 400, e.message, e.code);
+      }
+      throw e;
     }
 
     const existing = await prisma.shopDelivery.findUnique({ where: { shopId } });
@@ -128,9 +187,12 @@ router.put("/delivery", async (req, res) => {
           parsed.data.deliveryEnabled ??
           (Array.isArray(zonesJson) && zonesJson.length > 0),
         pickupEnabled: parsed.data.pickupEnabled ?? true,
-        expressEnabled: parsed.data.expressEnabled ?? false,
+        expressEnabled:
+          parsed.data.expressEnabled ??
+          (Array.isArray(expressZonesJson) && expressZonesJson.length > 0),
         expressFeeKs: expressFeeKs ?? 0,
         zonesJson: zonesJson ?? [],
+        expressZonesJson: expressZonesJson ?? [],
       },
       update: {
         ...(parsed.data.deliveryEnabled != null
@@ -144,10 +206,10 @@ router.put("/delivery", async (req, res) => {
           : {}),
         ...(expressFeeKs != null ? { expressFeeKs } : {}),
         ...(zonesJson != null ? { zonesJson } : {}),
+        ...(expressZonesJson != null ? { expressZonesJson } : {}),
       },
     });
 
-    // If zones added and delivery flag omitted, turn delivery on
     if (
       zonesJson != null &&
       zonesJson.length > 0 &&
@@ -160,8 +222,38 @@ router.put("/delivery", async (req, res) => {
       });
       next.deliveryEnabled = true;
     }
+    if (
+      expressZonesJson != null &&
+      expressZonesJson.length > 0 &&
+      parsed.data.expressEnabled === undefined &&
+      !existing?.expressEnabled
+    ) {
+      await prisma.shopDelivery.update({
+        where: { shopId },
+        data: { expressEnabled: true },
+      });
+      next.expressEnabled = true;
+    }
 
     const zones = await enrichZones(next.zonesJson);
+    const expressStates = parseExpressStates(next.expressZonesJson ?? []);
+    const published = await prisma.township.findMany({
+      where: { active: true },
+      select: { state: true },
+    });
+    const usedExpressStates = new Set(
+      expressStates.map((s) => s.state.toLowerCase()),
+    );
+    const allStates = [];
+    const stateSeen = new Set();
+    for (const t of published) {
+      if (!t.state || stateSeen.has(t.state.toLowerCase())) continue;
+      stateSeen.add(t.state.toLowerCase());
+      allStates.push(t.state);
+    }
+    const availableExpressStates = allStates.filter(
+      (s) => !usedExpressStates.has(s.toLowerCase()),
+    );
     return ok(res, {
       shopId,
       deliveryEnabled: Boolean(next.deliveryEnabled),
@@ -169,6 +261,9 @@ router.put("/delivery", async (req, res) => {
       expressEnabled: Boolean(next.expressEnabled),
       expressFeeKs: Math.max(0, Math.floor(Number(next.expressFeeKs) || 0)),
       zones,
+      expressStates,
+      expressZones: [],
+      availableExpressStates,
     });
   } catch (err) {
     console.error("merchant delivery put", err);

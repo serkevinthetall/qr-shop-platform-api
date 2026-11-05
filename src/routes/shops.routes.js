@@ -10,6 +10,7 @@ import {
 import {
   enrichZones,
   getShopHomeState,
+  parseExpressStates,
   resolveDeliveryOptions,
 } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
@@ -108,6 +109,7 @@ router.get("/:id/delivery", async (req, res) => {
 
     const delivery = shop.delivery;
     const zones = await enrichZones(delivery?.zonesJson ?? []);
+    const expressStates = parseExpressStates(delivery?.expressZonesJson ?? []);
     const homeState = await getShopHomeState(shop.id);
     return ok(res, {
       shopId: shop.id,
@@ -118,6 +120,8 @@ router.get("/:id/delivery", async (req, res) => {
       expressFeeKs: Math.max(0, Math.floor(Number(delivery?.expressFeeKs) || 0)),
       homeState,
       zones: zones.filter((z) => z.active !== false),
+      expressStates,
+      expressZones: [],
     });
   } catch (err) {
     console.error("shop delivery get", err);

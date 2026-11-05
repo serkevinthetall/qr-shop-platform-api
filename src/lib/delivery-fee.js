@@ -111,12 +111,36 @@ export async function getShopHomeState(shopId) {
   return null;
 }
 
-export async function getExpressSettings(shopId) {
+/** Normalize Express state rows: [{ state, feeKs }]. */
+export function parseExpressStates(expressZonesJson) {
+  const rows = Array.isArray(expressZonesJson) ? expressZonesJson : [];
+  const out = [];
+  const seen = new Set();
+  for (const row of rows) {
+    const state = String(row?.state || "").trim();
+    if (!state) continue;
+    const key = normalizeStateKey(state);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      state,
+      feeKs: Math.max(0, Math.floor(Number(row.feeKs) || 0)),
+    });
+  }
+  return out;
+}
+
+/**
+ * Express fee by buyer state (merchant must add that CRM state).
+ */
+export async function getExpressFeeForState(shopId, buyerState) {
+  if (!shopId || !buyerState) return null;
   const delivery = await prisma.shopDelivery.findUnique({ where: { shopId } });
-  return {
-    expressEnabled: Boolean(delivery?.expressEnabled),
-    expressFeeKs: Math.max(0, Math.floor(Number(delivery?.expressFeeKs) || 0)),
-  };
+  if (!delivery?.expressEnabled) return null;
+  const states = parseExpressStates(delivery.expressZonesJson);
+  const hit = states.find((s) => statesMatch(s.state, buyerState));
+  if (!hit) return null;
+  return hit.feeKs;
 }
 
 /**
@@ -127,14 +151,11 @@ export async function resolveDeliveryOptions(shopId, buyerTownshipId) {
   const pickupEnabled = delivery?.pickupEnabled !== false;
   const deliveryEnabled = Boolean(delivery?.deliveryEnabled);
   const expressEnabled = Boolean(delivery?.expressEnabled);
-  const expressFeeKs = Math.max(0, Math.floor(Number(delivery?.expressFeeKs) || 0));
   const homeState = await getShopHomeState(shopId);
 
   let buyerState = null;
-  let townshipActive = false;
   if (buyerTownshipId) {
     const t = await prisma.township.findUnique({ where: { id: buyerTownshipId } });
-    townshipActive = Boolean(t?.active);
     buyerState = t?.state || null;
   }
 
@@ -145,25 +166,27 @@ export async function resolveDeliveryOptions(shopId, buyerTownshipId) {
       ? await getDeliveryFeeForTownship(shopId, buyerTownshipId)
       : null;
   const inZone = zoneFee != null;
+  const expressFee =
+    expressEnabled && buyerState
+      ? await getExpressFeeForState(shopId, buyerState)
+      : null;
+  const inExpressState = expressFee != null;
 
   /** Local delivery only when same state (or home unknown) and in zone. */
   const canDelivery =
     deliveryEnabled && inZone && (sameState === true || sameState === null);
   /**
-   * Express when merchant enabled it, township published, and buyer is
-   * clearly out of the shop's home state.
+   * Express: merchant enabled + buyer state listed + out of home state.
    */
   const canExpress =
-    expressEnabled &&
-    townshipActive &&
-    Boolean(buyerTownshipId) &&
-    sameState === false;
+    expressEnabled && inExpressState && sameState === false;
 
   return {
     homeState,
     buyerState,
     sameState,
     inZone,
+    inExpressState,
     pickupEnabled,
     deliveryEnabled,
     expressEnabled,
@@ -171,7 +194,7 @@ export async function resolveDeliveryOptions(shopId, buyerTownshipId) {
     canDelivery,
     canExpress,
     deliveryFeeKs: canDelivery ? zoneFee : null,
-    expressFeeKs: canExpress ? expressFeeKs : null,
+    expressFeeKs: canExpress ? expressFee : null,
     /** Same-state but outside zones → contact shop (still offer pickup). */
     contactShop: sameState === true && deliveryEnabled && !inZone,
   };
