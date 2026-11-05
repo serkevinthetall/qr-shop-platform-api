@@ -7,7 +7,11 @@ import { Router } from "express";
 import multer from "multer";
 import path from "node:path";
 import { ok, fail } from "../lib/response.js";
-import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
+import {
+  requireAuth,
+  requireRole,
+  requireUserOrGuest,
+} from "../middlewares/auth.middleware.js";
 import {
   UPLOAD_KINDS,
   ensureUploadDirs,
@@ -25,6 +29,17 @@ function resolveKind(req, _res, next) {
   const kind = String(req.query.kind || "products").trim();
   req.uploadKind = UPLOAD_KINDS.includes(kind) ? kind : "products";
   next();
+}
+
+/** Buyers/guests may only upload payment slips; merchants upload catalog/QR/docs. */
+function gateUploadAuth(req, res, next) {
+  const kind = String(req.query.kind || "products").trim();
+  if (kind === "payment-slips") {
+    return requireUserOrGuest(req, res, next);
+  }
+  return requireAuth(req, res, () =>
+    requireRole("merchant", "staff", "admin", "super_admin")(req, res, next),
+  );
 }
 
 const disk = multer({
@@ -50,8 +65,7 @@ const disk = multer({
 
 router.post(
   "/",
-  requireAuth,
-  requireRole("merchant", "staff", "admin", "super_admin"),
+  gateUploadAuth,
   resolveKind,
   (req, res) => {
     disk.single("file")(req, res, (err) => {

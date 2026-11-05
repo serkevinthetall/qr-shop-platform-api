@@ -14,6 +14,7 @@ export const UPLOAD_KINDS = Object.freeze([
   "products",
   "shops",
   "payment-qr",
+  "payment-slips",
   "docs",
 ]);
 

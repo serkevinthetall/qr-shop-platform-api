@@ -191,7 +191,7 @@ router.get("/pos/reserved-pickups", async (req, res) => {
         shopId,
         fulfillment: "pickup",
         pickupReserved: true,
-        stage: "pickup",
+        stage: { in: ["ready_pickup", "pickup"] },
         source: { not: "pos" },
       },
       include: { lines: true },
@@ -242,7 +242,10 @@ router.post("/pos/collect/:orderId", async (req, res) => {
     if (order.source === "pos") {
       return fail(res, 400, "In-store POS sales are already completed");
     }
-    if (order.fulfillment !== "pickup" || !order.pickupReserved || order.stage !== "pickup") {
+    const ready =
+      order.stage === "ready_pickup" ||
+      (order.stage === "pickup" && order.pickupReserved);
+    if (order.fulfillment !== "pickup" || !ready) {
       return fail(res, 400, "Order is not a reserved pickup ready to collect");
     }
 

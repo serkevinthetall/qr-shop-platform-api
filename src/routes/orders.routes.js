@@ -15,8 +15,38 @@ import { townshipLabel } from "../lib/township.js";
 import { unitPriceForChannel } from "../lib/mall-product.js";
 import { publishOrderEvent } from "../lib/realtime.js";
 import { allocateOrderCode, looksLikeOrderCode } from "../lib/order-code.js";
+import {
+  normalizeOrderStage,
+  shouldStockOutForStage,
+  withNormalizedStage,
+} from "../lib/order-stage.js";
 
 const router = Router();
+
+const WRITABLE_STAGES = new Set([
+  "request",
+  "approved",
+  "out_for_delivery",
+  "ready_pickup",
+  "completed",
+  "cancelled",
+  /** legacy aliases accepted from older clients */
+  "delivery",
+  "pickup",
+  "invoiced",
+]);
+
+function expandStageFilter(stage) {
+  const s = String(stage || "").trim();
+  if (!s) return null;
+  if (s === "out_for_delivery") return { in: ["out_for_delivery", "delivery", "invoiced"] };
+  if (s === "ready_pickup") return { in: ["ready_pickup", "pickup"] };
+  if (s === "approved") return "approved";
+  if (s === "request") return "request";
+  if (s === "completed") return "completed";
+  if (s === "cancelled") return "cancelled";
+  return s;
+}
 
 const lineSchema = z.object({
   productId: z.string().optional(),
@@ -34,6 +64,8 @@ const placeSchema = z.object({
   channel: z.enum(["b2c", "b2b"]).default("b2c"),
   fulfillment: z.enum(["delivery", "pickup"]),
   payment: z.string().min(2).max(24),
+  /** Required for wallet methods (kpay, uabpay, …) — absolute or /uploads/… */
+  paymentSlipUrl: z.string().min(8).max(2048).optional().nullable(),
   lines: z.array(lineSchema).min(1),
   deliveryFeeKs: z.number().int().nonnegative().optional(),
   townshipId: z.string().optional(),
@@ -42,6 +74,12 @@ const placeSchema = z.object({
   /** website | app | qr | instore — where the buyer placed the order */
   clientSurface: z.enum(["website", "app", "qr", "instore"]).optional(),
 });
+
+const WALLET_PAYMENTS = new Set(["kpay", "uabpay", "ayapay", "cbpay", "mmqr"]);
+
+function isWalletPayment(id) {
+  return WALLET_PAYMENTS.has(String(id || "").toLowerCase());
+}
 
 const packageSchema = placeSchema.omit({ buyerName: true, buyerPhone: true }).extend({
   buyerName: z.string().min(1).optional(),
@@ -212,6 +250,18 @@ async function createOrderPayload(
     };
   }
 
+  const payId = String(b.payment || "").toLowerCase();
+  const slipUrl = String(b.paymentSlipUrl || "").trim() || null;
+  if (isWalletPayment(payId) && !slipUrl) {
+    return {
+      error: {
+        status: 400,
+        message: "Upload a payment slip for this wallet method",
+      },
+    };
+  }
+  const paymentSlipUrl = isWalletPayment(payId) ? slipUrl : null;
+
   const profileAddressLine = String(profileAddress || "").trim();
   const profileTownship = String(profileTownshipId || "").trim() || null;
 
@@ -288,6 +338,7 @@ async function createOrderPayload(
         channel: b.channel,
         fulfillment: b.fulfillment,
         payment: b.payment,
+        paymentSlipUrl,
         source: source ?? "marketplace",
         clientSurface: clientSurface ?? "website",
         stage: "request",
@@ -431,7 +482,7 @@ router.post("/guest", requireGuest, async (req, res) => {
     if (result.error) {
       return fail(res, result.error.status, result.error.message);
     }
-    return ok(res, result.order, { created: true, guest: true });
+    return ok(res, withNormalizedStage(result.order), { created: true, guest: true });
   } catch (err) {
     if (String(err.message || "").startsWith("STOCK:")) {
       return fail(res, 400, `Not enough stock for ${err.message.slice(6)}`);
@@ -490,7 +541,7 @@ router.post("/", requireAuth, async (req, res) => {
     if (result.error) {
       return fail(res, result.error.status, result.error.message);
     }
-    return ok(res, result.order, { created: true });
+    return ok(res, withNormalizedStage(result.order), { created: true });
   } catch (err) {
     if (String(err.message || "").startsWith("STOCK:")) {
       return fail(res, 400, `Not enough stock for ${err.message.slice(6)}`);
@@ -514,7 +565,7 @@ router.get("/", requireUserOrGuest, async (req, res) => {
         orderBy: { createdAt: "desc" },
         take: 50,
       });
-      return ok(res, orders);
+      return ok(res, orders.map(withNormalizedStage));
     }
 
     const { shopId, stage, source } = req.query;
@@ -532,7 +583,8 @@ router.get("/", requireUserOrGuest, async (req, res) => {
       where.shopId = String(shopId);
     }
 
-    if (stage) where.stage = String(stage);
+    const stageFilter = expandStageFilter(stage);
+    if (stageFilter) where.stage = stageFilter;
     if (source) where.source = String(source);
 
     const orders = await prisma.order.findMany({
@@ -541,7 +593,7 @@ router.get("/", requireUserOrGuest, async (req, res) => {
       orderBy: { createdAt: "desc" },
       take: 200,
     });
-    return ok(res, orders);
+    return ok(res, orders.map(withNormalizedStage));
   } catch (err) {
     console.error("list orders", err);
     return fail(res, 500, "Could not list orders", "db_error");
@@ -573,7 +625,7 @@ router.get("/:id", requireUserOrGuest, async (req, res) => {
     if (!canViewOrder(req, order)) {
       return fail(res, 403, "Not allowed to view this order");
     }
-    return ok(res, order);
+    return ok(res, withNormalizedStage(order));
   } catch (err) {
     console.error("get order", err);
     return fail(res, 500, "Could not load order", "db_error");
@@ -602,26 +654,31 @@ router.patch(
     const action = String(req.body.action || "").toLowerCase();
     const data = {};
 
-    /** Option A: Accept / Deny on new requests */
-    if (action === "accept") {
+    /** Approve / Deny on new requests — does not change fulfillment */
+    if (action === "accept" || action === "approve") {
       if (order.stage === "cancelled" || order.stage === "completed") {
         return fail(res, 400, "Order already closed");
       }
-      if (order.fulfillment === "pickup") {
-        data.stage = "pickup";
-        data.pickupReserved = true;
-      } else {
-        data.stage = "delivery";
-      }
+      data.stage = "approved";
     } else if (action === "deny") {
       data.stage = "cancelled";
     } else {
-      const stage = req.body.stage;
-      const pickupReserved = Boolean(req.body.pickupReserved);
+      let stage = req.body.stage ? String(req.body.stage) : null;
+      if (stage && !WRITABLE_STAGES.has(stage)) {
+        return fail(res, 400, `Invalid stage: ${stage}`);
+      }
+      /** Legacy client aliases → current pipeline */
+      if (stage === "delivery" || stage === "invoiced") stage = "out_for_delivery";
+      if (stage === "pickup") stage = "ready_pickup";
+
       if (stage) data.stage = stage;
+
       if (req.body.pickupReserved != null) {
-        data.pickupReserved = pickupReserved;
-        if (pickupReserved) data.stage = "pickup";
+        data.pickupReserved = Boolean(req.body.pickupReserved);
+        if (data.pickupReserved && !stage) data.stage = "ready_pickup";
+      }
+      if (data.stage === "ready_pickup") {
+        data.pickupReserved = true;
       }
     }
 
@@ -635,13 +692,11 @@ router.patch(
       include: { lines: true },
     });
 
-    /** Stock OUT when merchant accepts (or completes / reserves) — ledger even if stock was 0 */
+    /** Stock OUT when order leaves approved into out/ready/complete — not on Approve alone */
     const shouldOut =
-      action === "accept" ||
-      updated.stage === "delivery" ||
-      updated.stage === "pickup" ||
-      updated.stage === "completed" ||
-      updated.pickupReserved === true;
+      shouldStockOutForStage(updated.stage, action) ||
+      (updated.pickupReserved === true &&
+        normalizeOrderStage(updated.stage) === "ready_pickup");
     if (shouldOut && updated.stage !== "cancelled") {
       try {
         await recordOrderStockOut(updated);
@@ -651,7 +706,7 @@ router.patch(
     }
 
     publishOrderEvent(updated, "updated");
-    return ok(res, updated);
+    return ok(res, withNormalizedStage(updated));
   },
 );
 

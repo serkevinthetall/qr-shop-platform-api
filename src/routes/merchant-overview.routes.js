@@ -125,12 +125,28 @@ router.get("/overview", async (req, res) => {
       prisma.order.count({
         where: {
           shopId,
-          stage: { in: ["request", "delivery", "pickup", "invoiced"] },
+          stage: {
+            in: [
+              "request",
+              "approved",
+              "out_for_delivery",
+              "ready_pickup",
+              "delivery",
+              "pickup",
+              "invoiced",
+            ],
+          },
         },
       }),
       prisma.order.count({ where: { shopId, stage: "request" } }),
       prisma.order.count({
-        where: { shopId, stage: "pickup", pickupReserved: true },
+        where: {
+          shopId,
+          OR: [
+            { stage: "ready_pickup" },
+            { stage: "pickup", pickupReserved: true },
+          ],
+        },
       }),
       prisma.product.findMany({
         where: { shopId, active: true, lowStockAlertEnabled: true },

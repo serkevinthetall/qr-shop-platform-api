@@ -68,13 +68,23 @@ enum ShopListingMode {
   portfolio
 }
 
+/**
+ * Pipeline: request → approved → out_for_delivery | ready_pickup → completed
+ * Legacy values (delivery, pickup, invoiced) kept for old rows — normalize in API.
+ */
 enum OrderStage {
   request
-  delivery
-  pickup
-  invoiced
+  approved
+  out_for_delivery
+  ready_pickup
   completed
   cancelled
+  /** @deprecated use out_for_delivery */
+  delivery
+  /** @deprecated use ready_pickup */
+  pickup
+  /** @deprecated use out_for_delivery */
+  invoiced
 }
 
 model User {
@@ -378,6 +388,8 @@ model Order {
   fulfillment     OrderFulfillment
   /** Matches PlatformPaymentMethod.id (cod, kpay, …) — was OrderPayment enum */
   payment         String
+  /** Buyer-uploaded wallet transfer slip (required for kpay/uab/aya/cb/mmqr). */
+  paymentSlipUrl  String?          @db.VarChar(2048)
   source          OrderSource      @default(marketplace)
   /**
    * Buyer surface: website | app | qr | instore

@@ -15,6 +15,7 @@ import {
   normalizeMediaUrl,
   withNormalizedShopMedia,
 } from "../lib/media-url.js";
+import { listPlatformPayments } from "../lib/platform-payments.js";
 
 const router = Router();
 
@@ -243,6 +244,62 @@ router.get("/:id/products", async (req, res) => {
   } catch (err) {
     console.error("shop products", err);
     return fail(res, 500, "Could not load shop products", "db_error");
+  }
+});
+
+/**
+ * GET /api/shops/:id/payments
+ * Public — Marketplace checkout: enabled methods + wallet QR URLs.
+ */
+router.get("/:id/payments", async (req, res) => {
+  try {
+    const shop = await prisma.shop.findFirst({
+      where: {
+        OR: [{ id: req.params.id }, { slug: req.params.id }],
+      },
+      select: { id: true },
+    });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const catalog = await listPlatformPayments({ activeOnly: true });
+    const rows = await prisma.shopPaymentMethod.findMany({
+      where: { shopId: shop.id },
+    });
+    const byMethod = new Map(rows.map((r) => [r.method, r]));
+    const methods = [];
+
+    for (const meta of catalog) {
+      const row = byMethod.get(meta.id);
+      const enabled = Boolean(row?.enabled);
+      const qrUrl = row?.qrUrl ? normalizeMediaUrl(row.qrUrl, req) : null;
+      const needsQr = meta.needsQr !== false;
+      if (!enabled) continue;
+      if (needsQr && !qrUrl) continue;
+      methods.push({
+        id: meta.id,
+        enabled: true,
+        qrUrl,
+        label: meta.label,
+        shortLabel: meta.shortLabel,
+        needsQr,
+      });
+    }
+
+    if (methods.length === 0) {
+      methods.push({
+        id: "cod",
+        enabled: true,
+        qrUrl: null,
+        label: "Cash on delivery",
+        shortLabel: "COD",
+        needsQr: false,
+      });
+    }
+
+    return ok(res, { shopId: shop.id, methods });
+  } catch (err) {
+    console.error("shop payments get", err);
+    return fail(res, 500, "Could not load payments", "db_error");
   }
 });
 
