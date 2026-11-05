@@ -173,6 +173,8 @@ app.get("/api", (_req, res) => {
       "POST /api/auth/guest/easy-checkout",
       "GET  /api/auth/guest/products",
       "POST /api/orders/guest",
+      "POST /api/orders/track",
+      "POST /api/orders/track/:id",
       "POST /api/catalog/:id/view",
       "GET  /api/orders",
       "PATCH /api/orders/:id/stage",

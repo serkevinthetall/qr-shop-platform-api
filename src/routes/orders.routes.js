@@ -593,6 +593,105 @@ router.post("/", requireAuth, requireRole("buyer"), async (req, res) => {
   }
 });
 
+const trackPhoneSchema = z.object({
+  phone: z.string().min(6),
+});
+
+function publicTrackOrder(order) {
+  const lines = order.lines ?? [];
+  const itemCount = lines.reduce((s, l) => s + (l.qty || 0), 0) || 1;
+  const productName =
+    lines.map((l) => l.productName).filter(Boolean).join(", ") || "Order items";
+  return withNormalizedStage({
+    id: order.id,
+    code: order.code,
+    shopId: order.shopId,
+    shop: order.shop
+      ? { id: order.shop.id, name: order.shop.name }
+      : undefined,
+    buyerName: order.buyerName,
+    buyerPhone: order.buyerPhone,
+    address: order.address,
+    fulfillment: order.fulfillment,
+    payment: order.payment,
+    stage: order.stage,
+    subtotalKs: order.subtotalKs,
+    deliveryFeeKs: order.deliveryFeeKs,
+    totalKs: order.totalKs,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    lines: lines.map((l) => ({
+      productId: l.productId,
+      productName: l.productName,
+      qty: l.qty,
+      unitKs: l.unitKs,
+      lineTotalKs: l.lineTotalKs,
+    })),
+    itemCount,
+    productName,
+  });
+}
+
+/**
+ * POST /api/orders/track — public lookup by buyer phone (Marketplace Track order).
+ * Must stay before /:id so "track" is not treated as an order id.
+ */
+router.post("/track", async (req, res) => {
+  try {
+    const parsed = trackPhoneSchema.safeParse(req.body);
+    if (!parsed.success) return fail(res, 400, "Enter a valid phone number");
+    const phone = normalizePhone(parsed.data.phone);
+    if (phone.length < 6) return fail(res, 400, "Enter a valid phone number");
+
+    const orders = await prisma.order.findMany({
+      where: { buyerPhone: phone },
+      include: {
+        lines: true,
+        shop: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 40,
+    });
+    return ok(res, orders.map(publicTrackOrder));
+  } catch (err) {
+    console.error("track orders by phone", err);
+    return fail(res, 500, "Could not look up orders", "db_error");
+  }
+});
+
+/**
+ * POST /api/orders/track/:id — public order detail when phone matches the order.
+ */
+router.post("/track/:id", async (req, res) => {
+  try {
+    const parsed = trackPhoneSchema.safeParse(req.body);
+    if (!parsed.success) return fail(res, 400, "Enter a valid phone number");
+    const phone = normalizePhone(parsed.data.phone);
+    const key = String(req.params.id || "").trim();
+    if (!key) return fail(res, 404, "Order not found");
+
+    const include = {
+      lines: true,
+      shop: { select: { id: true, name: true, slug: true } },
+    };
+    let order = await prisma.order.findUnique({ where: { id: key }, include });
+    if (!order && looksLikeOrderCode(key)) {
+      order = await prisma.order.findUnique({
+        where: { code: key.toLowerCase() },
+        include,
+      });
+    }
+    if (!order) return fail(res, 404, "Order not found");
+    if (normalizePhone(order.buyerPhone) !== phone) {
+      return fail(res, 403, "Phone does not match this order");
+    }
+    return ok(res, publicTrackOrder(order));
+  } catch (err) {
+    console.error("track order detail", err);
+    return fail(res, 500, "Could not load order", "db_error");
+  }
+});
+
 /** GET /api/orders — list by role */
 router.get("/", requireUserOrGuest, async (req, res) => {
   try {
@@ -645,7 +744,11 @@ router.get("/", requireUserOrGuest, async (req, res) => {
 /** GET /api/orders/:id — order detail by cuid or short code (d1214 / p12431) */
 router.get("/:id", requireUserOrGuest, async (req, res) => {
   try {
-    if (req.params.id === "checkout" || req.params.id === "guest") {
+    if (
+      req.params.id === "checkout" ||
+      req.params.id === "guest" ||
+      req.params.id === "track"
+    ) {
       return fail(res, 404, "Not found");
     }
     const key = String(req.params.id || "").trim();
