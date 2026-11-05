@@ -162,31 +162,36 @@ router.post("/easy-checkout", async (req, res) => {
       qr = await prisma.guestQr.findUnique({
         where: { token: parsed.data.token },
       });
-      if (!qr || qr.revokedAt || qr.shopId !== shop.id) {
-        return fail(res, 404, "Link is invalid or revoked", "qr_invalid");
+      /** Stale / wrong-shop personal link → fall through to phone easy-checkout (mall /s). */
+      const tokenUsable =
+        qr &&
+        !qr.revokedAt &&
+        qr.shopId === shop.id &&
+        !(qr.expiresAt && qr.expiresAt.getTime() < Date.now());
+      if (!tokenUsable) {
+        qr = null;
+      } else {
+        const expected = normalizePhone(qr.phone);
+        if (expected && expected !== phone) {
+          return fail(
+            res,
+            403,
+            "Phone number does not match this link",
+            "phone_mismatch",
+          );
+        }
+        qr = await prisma.guestQr.update({
+          where: { id: qr.id },
+          data: {
+            phone,
+            name,
+            address,
+            activatedAt: qr.activatedAt ?? now,
+          },
+        });
       }
-      if (qr.expiresAt && qr.expiresAt.getTime() < Date.now()) {
-        return fail(res, 410, "Link has expired", "qr_expired");
-      }
-      const expected = normalizePhone(qr.phone);
-      if (expected && expected !== phone) {
-        return fail(
-          res,
-          403,
-          "Phone number does not match this link",
-          "phone_mismatch",
-        );
-      }
-      qr = await prisma.guestQr.update({
-        where: { id: qr.id },
-        data: {
-          phone,
-          name,
-          address,
-          activatedAt: qr.activatedAt ?? now,
-        },
-      });
-    } else {
+    }
+    if (!qr) {
       qr = await prisma.guestQr.findFirst({
         where: { shopId: shop.id, phone, revokedAt: null },
         orderBy: { updatedAt: "desc" },
