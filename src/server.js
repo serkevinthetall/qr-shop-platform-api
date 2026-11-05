@@ -145,6 +145,7 @@ app.get("/api", (_req, res) => {
       "GET  /go/s/:shopId/p/:productId",
       "GET  /go/product/:productId",
       "POST /api/auth/login",
+      "POST /api/auth/change-password",
       "POST /api/auth/buyer/one-time",
       "GET  /api/merchant/overview",
       "GET  /api/merchant/shop",

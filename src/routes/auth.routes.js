@@ -313,6 +313,59 @@ router.post("/register/merchant", async (req, res) => {
   }
 });
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  nextPassword: z.string().min(4),
+});
+
+/**
+ * POST /api/auth/change-password
+ * Logged-in user verifies current password, then sets a new one.
+ * Merchants use this from Account → Reset password.
+ */
+router.post("/change-password", requireAuth, async (req, res) => {
+  try {
+    const parsed = changePasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return fail(
+        res,
+        400,
+        "Enter current password and a new password (at least 4 characters)",
+      );
+    }
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.sub },
+    });
+    if (!user || user.active === false) {
+      return fail(res, 404, "User not found");
+    }
+    if (user.role === "staff") {
+      return fail(
+        res,
+        403,
+        "Staff use a PIN set by the shop owner — change it under Staff",
+        "wrong_role",
+      );
+    }
+    const match = await bcrypt.compare(
+      parsed.data.currentPassword,
+      user.passwordHash,
+    );
+    if (!match) {
+      return fail(res, 401, "Current password is incorrect");
+    }
+    const passwordHash = await bcrypt.hash(parsed.data.nextPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    });
+    return ok(res, { ok: true });
+  } catch (err) {
+    console.error("change-password error", err);
+    return fail(res, 500, "Could not change password", "db_error");
+  }
+});
+
 /** GET /api/auth/me — registered account (+ addresses for buyers) */
 router.get("/me", requireAuth, async (req, res) => {
   try {
