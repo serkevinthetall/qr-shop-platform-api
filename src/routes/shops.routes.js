@@ -13,6 +13,7 @@ import {
   parseExpressStates,
   resolveDeliveryOptions,
 } from "../lib/delivery-fee.js";
+import { ensureExpressZonesColumn } from "../lib/ensure-schema.js";
 import { townshipLabel } from "../lib/township.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
 import { parseStoreStyle } from "../lib/store-style.js";
@@ -98,6 +99,7 @@ router.get("/", async (req, res) => {
  */
 router.get("/:id/delivery", async (req, res) => {
   try {
+    await ensureExpressZonesColumn();
     const shop = await prisma.shop.findFirst({
       where: {
         OR: [{ id: req.params.id }, { slug: req.params.id }],
@@ -135,12 +137,12 @@ router.get("/:id/delivery", async (req, res) => {
  */
 router.get("/:id/delivery-quote", async (req, res) => {
   try {
+    await ensureExpressZonesColumn();
     const shop = await prisma.shop.findFirst({
       where: {
         OR: [{ id: req.params.id }, { slug: req.params.id }],
         status: "approved",
       },
-      include: { delivery: true },
     });
     if (!shop) return fail(res, 404, "Shop not found");
 

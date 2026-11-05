@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma.js";
 import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { enrichZones, parseExpressStates } from "../lib/delivery-fee.js";
+import { ensureExpressZonesColumn } from "../lib/ensure-schema.js";
 import { publicTownship } from "../lib/township.js";
 
 const router = Router();
@@ -82,6 +83,7 @@ router.get("/delivery", async (req, res) => {
     const shopId = shopIdOrFail(req, res);
     if (!shopId) return;
 
+    await ensureExpressZonesColumn();
     const delivery = await prisma.shopDelivery.findUnique({ where: { shopId } });
     const settings = delivery ?? {
       shopId,
@@ -157,6 +159,7 @@ router.put("/delivery", async (req, res) => {
       return fail(res, 403, "Staff cannot change delivery zones");
     }
 
+    await ensureExpressZonesColumn();
     const parsed = saveSchema.safeParse(req.body);
     if (!parsed.success) return fail(res, 400, "Invalid delivery payload");
 

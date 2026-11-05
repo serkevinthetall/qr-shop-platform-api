@@ -1,4 +1,5 @@
 import { prisma } from "./prisma.js";
+import { ensureExpressZonesColumn } from "./ensure-schema.js";
 import { townshipLabel } from "./township.js";
 
 /**
@@ -135,6 +136,7 @@ export function parseExpressStates(expressZonesJson) {
  */
 export async function getExpressFeeForState(shopId, buyerState) {
   if (!shopId || !buyerState) return null;
+  await ensureExpressZonesColumn();
   const delivery = await prisma.shopDelivery.findUnique({ where: { shopId } });
   if (!delivery?.expressEnabled) return null;
   const states = parseExpressStates(delivery.expressZonesJson);
@@ -147,6 +149,7 @@ export async function getExpressFeeForState(shopId, buyerState) {
  * Resolve what Marketplace may offer for a buyer township.
  */
 export async function resolveDeliveryOptions(shopId, buyerTownshipId) {
+  await ensureExpressZonesColumn();
   const delivery = await prisma.shopDelivery.findUnique({ where: { shopId } });
   const pickupEnabled = delivery?.pickupEnabled !== false;
   const deliveryEnabled = Boolean(delivery?.deliveryEnabled);
