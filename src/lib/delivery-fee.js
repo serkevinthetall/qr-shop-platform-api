@@ -204,10 +204,13 @@ export async function resolveDeliveryOptions(shopId, buyerTownshipId) {
   const canDelivery =
     deliveryEnabled && inZone && (sameState === true || sameState === null);
   /**
-   * Express: merchant enabled + buyer state listed + out of home state.
+   * Express: merchant enabled + buyer state listed + out of home state
+   * (or home unknown and not in a local zone).
    */
   const canExpress =
-    expressEnabled && inExpressState && sameState === false;
+    expressEnabled &&
+    inExpressState &&
+    (sameState === false || (sameState === null && !inZone));
 
   return {
     homeState,
