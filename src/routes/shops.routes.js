@@ -12,8 +12,8 @@ import {
   getShopHomeState,
   parseExpressStates,
   resolveDeliveryOptions,
+  unpackZonesJson,
 } from "../lib/delivery-fee.js";
-import { ensureExpressZonesColumn } from "../lib/ensure-schema.js";
 import { townshipLabel } from "../lib/township.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
 import { parseStoreStyle } from "../lib/store-style.js";
@@ -99,7 +99,6 @@ router.get("/", async (req, res) => {
  */
 router.get("/:id/delivery", async (req, res) => {
   try {
-    await ensureExpressZonesColumn();
     const shop = await prisma.shop.findFirst({
       where: {
         OR: [{ id: req.params.id }, { slug: req.params.id }],
@@ -110,8 +109,9 @@ router.get("/:id/delivery", async (req, res) => {
     if (!shop) return fail(res, 404, "Shop not found");
 
     const delivery = shop.delivery;
-    const zones = await enrichZones(delivery?.zonesJson ?? []);
-    const expressStates = parseExpressStates(delivery?.expressZonesJson ?? []);
+    const packed = unpackZonesJson(delivery?.zonesJson);
+    const zones = await enrichZones(packed.zones);
+    const expressStates = parseExpressStates(packed.expressStates);
     const homeState = await getShopHomeState(shop.id);
     return ok(res, {
       shopId: shop.id,
@@ -137,7 +137,6 @@ router.get("/:id/delivery", async (req, res) => {
  */
 router.get("/:id/delivery-quote", async (req, res) => {
   try {
-    await ensureExpressZonesColumn();
     const shop = await prisma.shop.findFirst({
       where: {
         OR: [{ id: req.params.id }, { slug: req.params.id }],

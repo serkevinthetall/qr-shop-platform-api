@@ -1,6 +1,30 @@
 import { prisma } from "./prisma.js";
-import { ensureExpressZonesColumn } from "./ensure-schema.js";
 import { townshipLabel } from "./township.js";
+
+/**
+ * Unpack ShopDelivery.zonesJson (legacy array or { zones, expressStates }).
+ */
+export function unpackZonesJson(zonesJson) {
+  if (Array.isArray(zonesJson)) {
+    return { zones: zonesJson.filter(Boolean), expressStates: [] };
+  }
+  if (zonesJson && typeof zonesJson === "object") {
+    const zones = Array.isArray(zonesJson.zones) ? zonesJson.zones.filter(Boolean) : [];
+    const expressStates = Array.isArray(zonesJson.expressStates)
+      ? zonesJson.expressStates.filter(Boolean)
+      : [];
+    return { zones, expressStates };
+  }
+  return { zones: [], expressStates: [] };
+}
+
+/** Pack for DB write — always object shape so Express states survive. */
+export function packZonesJson(zones, expressStates) {
+  return {
+    zones: Array.isArray(zones) ? zones : [],
+    expressStates: Array.isArray(expressStates) ? expressStates : [],
+  };
+}
 
 /**
  * Merchant zone fee for a published township.
@@ -10,7 +34,7 @@ export async function getDeliveryFeeForTownship(shopId, townshipId) {
   if (!shopId || !townshipId) return null;
   const delivery = await prisma.shopDelivery.findUnique({ where: { shopId } });
   if (!delivery?.deliveryEnabled) return null;
-  const zones = Array.isArray(delivery.zonesJson) ? delivery.zonesJson : [];
+  const { zones } = unpackZonesJson(delivery.zonesJson);
   const hit = zones.find((z) => z && z.townshipId === townshipId);
   if (!hit) return null;
   const township = await prisma.township.findUnique({ where: { id: townshipId } });
@@ -18,8 +42,10 @@ export async function getDeliveryFeeForTownship(shopId, townshipId) {
   return Math.max(0, Math.floor(Number(hit.feeKs) || 0));
 }
 
-export async function enrichZones(zonesJson) {
-  const zones = Array.isArray(zonesJson) ? zonesJson : [];
+export async function enrichZones(zonesOrJson) {
+  const zones = Array.isArray(zonesOrJson)
+    ? zonesOrJson
+    : unpackZonesJson(zonesOrJson).zones;
   const out = [];
   for (const z of zones) {
     if (!z?.townshipId) continue;
@@ -66,7 +92,7 @@ export async function getShopHomeState(shopId) {
   });
   if (!shop) return null;
 
-  const zones = Array.isArray(shop.delivery?.zonesJson) ? shop.delivery.zonesJson : [];
+  const { zones } = unpackZonesJson(shop.delivery?.zonesJson);
   const counts = new Map();
   for (const z of zones) {
     if (!z?.townshipId) continue;
@@ -113,11 +139,11 @@ export async function getShopHomeState(shopId) {
 }
 
 /** Normalize Express state rows: [{ state, feeKs }]. */
-export function parseExpressStates(expressZonesJson) {
-  const rows = Array.isArray(expressZonesJson) ? expressZonesJson : [];
+export function parseExpressStates(rows) {
+  const list = Array.isArray(rows) ? rows : [];
   const out = [];
   const seen = new Set();
-  for (const row of rows) {
+  for (const row of list) {
     const state = String(row?.state || "").trim();
     if (!state) continue;
     const key = normalizeStateKey(state);
@@ -136,10 +162,10 @@ export function parseExpressStates(expressZonesJson) {
  */
 export async function getExpressFeeForState(shopId, buyerState) {
   if (!shopId || !buyerState) return null;
-  await ensureExpressZonesColumn();
   const delivery = await prisma.shopDelivery.findUnique({ where: { shopId } });
   if (!delivery?.expressEnabled) return null;
-  const states = parseExpressStates(delivery.expressZonesJson);
+  const { expressStates } = unpackZonesJson(delivery.zonesJson);
+  const states = parseExpressStates(expressStates);
   const hit = states.find((s) => statesMatch(s.state, buyerState));
   if (!hit) return null;
   return hit.feeKs;
@@ -149,7 +175,6 @@ export async function getExpressFeeForState(shopId, buyerState) {
  * Resolve what Marketplace may offer for a buyer township.
  */
 export async function resolveDeliveryOptions(shopId, buyerTownshipId) {
-  await ensureExpressZonesColumn();
   const delivery = await prisma.shopDelivery.findUnique({ where: { shopId } });
   const pickupEnabled = delivery?.pickupEnabled !== false;
   const deliveryEnabled = Boolean(delivery?.deliveryEnabled);

@@ -469,15 +469,17 @@ model ShopDelivery {
   deliveryEnabled Boolean @default(false)
   /**
    * Out-of-state courier. Checkout shows Express when buyer township
-   * state is listed in expressZonesJson and ≠ shop home state.
+   * state is listed in zonesJson.expressStates and ≠ shop home state.
    */
   expressEnabled  Boolean @default(false)
-  /** @deprecated Prefer expressZonesJson state fees */
+  /** @deprecated Prefer zonesJson.expressStates */
   expressFeeKs    Int     @default(0)
-  /** Local delivery: [{ townshipId, feeKs }] */
+  /**
+   * Local zones + Express state fees (no extra column — Hostinger-safe).
+   * Legacy: [{ townshipId, feeKs }]
+   * Current: { zones: [{ townshipId, feeKs }], expressStates: [{ state, feeKs }] }
+   */
   zonesJson       Json    @default("[]")
-  /** Express by CRM state: [{ state, feeKs }] e.g. "Mandalay (MM)" */
-  expressZonesJson Json   @default("[]")
 }
 
 model ShopPaymentMethod {

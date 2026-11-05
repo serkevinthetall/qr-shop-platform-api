@@ -40,7 +40,6 @@ import realtimeRoutes from "./routes/realtime.routes.js";
 import goRoutes from "./routes/go.routes.js";
 import { ok, fail } from "./lib/response.js";
 import { prisma } from "./lib/prisma.js";
-import { ensureExpressZonesColumn } from "./lib/ensure-schema.js";
 import { realtimeClientCount } from "./lib/realtime.js";
 import { ensureUploadDirs, uploadsRoot } from "./lib/uploads.js";
 import { seedUploadsDir } from "./lib/media-url.js";
@@ -48,11 +47,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-/** Best-effort schema sync for Hostinger (Express state fees column). */
-void ensureExpressZonesColumn().catch((err) => {
-  console.warn("boot ensureExpressZonesColumn", err?.message || err);
-});
 
 const app = express();
 app.disable("x-powered-by");
