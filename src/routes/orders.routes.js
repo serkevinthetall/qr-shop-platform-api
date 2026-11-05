@@ -328,8 +328,8 @@ async function createOrderPayload(
           },
         };
       }
-      deliveryFeeKs =
-        b.deliveryFeeKs != null ? b.deliveryFeeKs : opts.deliveryFeeKs ?? 0;
+      /** Server-authoritative — never trust client deliveryFeeKs. */
+      deliveryFeeKs = opts.deliveryFeeKs ?? 0;
     } else {
       if (!opts.canExpress) {
         return {
@@ -339,8 +339,8 @@ async function createOrderPayload(
           },
         };
       }
-      deliveryFeeKs =
-        b.deliveryFeeKs != null ? b.deliveryFeeKs : opts.expressFeeKs ?? 0;
+      /** Server-authoritative — never trust client deliveryFeeKs. */
+      deliveryFeeKs = opts.expressFeeKs ?? 0;
     }
     if (!address) address = profileAddressLine;
   } else if (b.fulfillment === "pickup") {
@@ -536,9 +536,10 @@ router.post("/guest", requireGuest, async (req, res) => {
 });
 
 /**
- * POST /api/orders — registered buyer (single shop)
+ * POST /api/orders — registered buyer only (single shop).
+ * Guests use POST /api/orders/guest. Merchants/staff/admin cannot place marketplace orders here.
  */
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, requireRole("buyer"), async (req, res) => {
   try {
     const parsed = placeSchema.safeParse(req.body);
     if (!parsed.success) return fail(res, 400, "Invalid order payload");
@@ -549,19 +550,17 @@ router.post("/", requireAuth, async (req, res) => {
     let profileAddress = null;
     let profileTownshipId = null;
 
-    if (req.user.role === "buyer") {
-      const user = await prisma.user.findUnique({
-        where: { id: req.user.sub },
-        include: { addresses: { orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] } },
-      });
-      if (!user) return fail(res, 404, "User not found");
-      buyerId = user.id;
-      buyerPhone = user.phone || buyerPhone;
-      const defAddr = user.addresses.find((a) => a.isDefault) ?? user.addresses[0];
-      profileAddress = defAddr?.location || user.address || null;
-      profileTownshipId = defAddr?.townshipId || user.townshipId || null;
-      if (!address) address = profileAddress;
-    }
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.sub },
+      include: { addresses: { orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }] } },
+    });
+    if (!user) return fail(res, 404, "User not found");
+    buyerId = user.id;
+    buyerPhone = user.phone || buyerPhone;
+    const defAddr = user.addresses.find((a) => a.isDefault) ?? user.addresses[0];
+    profileAddress = defAddr?.location || user.address || null;
+    profileTownshipId = defAddr?.townshipId || user.townshipId || null;
+    if (!address) address = profileAddress;
 
     if (!buyerPhone) return fail(res, 400, "buyerPhone required");
 

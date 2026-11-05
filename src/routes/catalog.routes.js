@@ -108,7 +108,8 @@ router.get("/", async (req, res) => {
       String(req.query.deal || "").toLowerCase(),
     );
     const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 48));
+    /** Allow larger pages for Marketplace hydrate (was capped at 100). */
+    const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 48));
     const skip = (page - 1) * limit;
 
     const clientChannel = catalogClientChannel(req);

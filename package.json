@@ -19,6 +19,7 @@
     "db:seed:mall": "node scripts/seed-mall-meta.js",
     "db:seed:announcements": "node scripts/seed-announcements.js",
     "db:seed:merchants": "node scripts/seed-three-merchants.js",
+    "db:import:odoo-qr-app": "node scripts/import-odoo-qr-app-to-sample-shop.js",
     "db:studio": "prisma studio"
   },
   "dependencies": {

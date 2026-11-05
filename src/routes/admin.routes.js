@@ -158,6 +158,49 @@ router.post("/merchants", async (req, res) => {
   }
 });
 
+const resetPasswordSchema = z.object({
+  password: z.string().min(4),
+});
+
+/**
+ * PATCH /api/admin/merchants/:shopId/password
+ * Set / reset the shop owner's login password (Merchant app).
+ */
+router.patch("/merchants/:shopId/password", async (req, res) => {
+  try {
+    const shopId = String(req.params.shopId || "").trim();
+    if (!shopId) return fail(res, 400, "shopId required");
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) return fail(res, 400, "Password must be at least 4 characters");
+
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const owner = await prisma.user.findFirst({
+      where: { shopId, role: "merchant" },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!owner) return fail(res, 404, "Shop owner account not found");
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+    await prisma.user.update({
+      where: { id: owner.id },
+      data: { passwordHash },
+    });
+
+    return ok(res, {
+      shopId,
+      userId: owner.id,
+      email: owner.email,
+      phone: owner.phone,
+      updated: true,
+    });
+  } catch (err) {
+    console.error("admin reset merchant password", err);
+    return fail(res, 500, "Could not reset password", "db_error");
+  }
+});
+
 /* ─── Announcements (Admin → Marketplace / Merchant) ─── */
 
 const announcementBody = z.object({
@@ -459,11 +502,12 @@ router.delete("/guides/:id", async (req, res) => {
   }
 });
 
-/** Merchant Modules hub toggles (ShopFeatures). Purchases retired — not listed. */
+/**
+ * Merchant Modules hub toggles (ShopFeatures).
+ * Staff + POS are not offered (platform holds them back) — Purchases retired.
+ * Delivery pricing is always on — not a module.
+ */
 const MODULE_DEFS = [
-  { key: "staffEnabled", id: "staff", label: "Staff" },
-  /** Delivery pricing is always on for every shop — not a toggleable module. */
-  { key: "posEnabled", id: "pos", label: "POS" },
   { key: "barcodeTrackingEnabled", id: "barcode", label: "Barcode" },
   { key: "memberPointsEnabled", id: "points", label: "Member points" },
   { key: "couponCodesEnabled", id: "coupons", label: "Coupon codes" },
