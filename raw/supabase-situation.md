@@ -1,8 +1,16 @@
-# Database: Supabase Postgres
+# Database: Supabase Postgres (LEGACY)
 
-Platform API uses **Supabase PostgreSQL** via `DATABASE_URL` (Prisma).
+**Status (2026-11):** Production uses **Hostinger MySQL** via `DATABASE_URL` (Prisma). Supabase Postgres / Storage are **not** configured for live API.
 
-## Connectivity notes (2026-10-28)
+Do not set `SUPABASE_*` env vars on Hostinger or Vercel Production unless intentionally reviving this path.
+
+Photos: **Hostinger disk** (`UPLOAD_DIR` + `POST /api/uploads`) — see `raw/hostinger-disk-uploads.md`.
+
+Deploy checklist: [DEPLOY.md](../DEPLOY.md).
+
+---
+
+## Historical notes (2026-10-28)
 
 Project ref tried: `miheoecmcmujlvwxdcfe`
 
@@ -14,13 +22,3 @@ Project ref tried: `miheoecmcmujlvwxdcfe`
 | HTTPS `https://<ref>.supabase.co/rest/v1/` | Project answers (“No API key found”) — HTTP project exists |
 
 **Do not use** the raw password with `#` unencoded — use `%23`.
-
-**Fix:** Use **Transaction** pooler URI (`…pooler.supabase.com:6543/…?pgbouncer=true&connection_limit=1`). `src/lib/prisma.js` rewrites Session `:5432` → Transaction `:6543` at runtime. Confirm project is **not paused**.
-
-```bash
-node scripts/check-db.js
-npx prisma db push
-npm run db:seed
-```
-
-Photos remain on **local / Hostinger disk** (`POST /api/uploads`), not Supabase Storage.

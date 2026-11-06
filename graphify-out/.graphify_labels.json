@@ -6,6 +6,7 @@
   "4": "dependencies",
   "5": "catalog.routes.js",
   "6": "env.js",
+  "7": "import-odoo-qr-app-to-sample-shop.js",
   "8": "admin.routes.js",
   "9": "QR Shop Platform API",
   "10": "auth.routes.js",
@@ -20,5 +21,6 @@
   "19": "auth-hostinger-situation.md",
   "20": "merchant-guest.routes.js",
   "21": "merchant-overview.routes.js",
-  "22": "Postman — QR Shop Platform API"
+  "22": "Postman — QR Shop Platform API",
+  "23": "seed-sample-shop-messages.js"
 }

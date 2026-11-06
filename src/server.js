@@ -95,9 +95,46 @@ app.use(
   }),
 );
 
-app.get("/health", async (_req, res) => {
+function isProductionRuntime() {
+  const env = String(process.env.NODE_ENV || "").toLowerCase();
+  if (env === "development" || env === "test") return false;
+  /** Vercel Preview/Production, or NODE_ENV=production (Hostinger). */
+  if (process.env.VERCEL || process.env.VERCEL_ENV) return true;
+  return env === "production";
+}
+
+/** Public health is liveness only. Diagnostics need HEALTH_DIAGNOSTICS_KEY. */
+function healthDiagnosticsAllowed(req) {
+  if (!isProductionRuntime()) return true;
+  const expected = String(process.env.HEALTH_DIAGNOSTICS_KEY || "").trim();
+  if (!expected) return false;
+  const provided = String(
+    req.get("x-health-key") || req.query.key || "",
+  ).trim();
+  return provided.length > 0 && provided === expected;
+}
+
+app.get("/health", async (req, res) => {
   let dbOk = false;
   let dbError = null;
+  try {
+    await prisma.$queryRawUnsafe("SELECT 1 AS ok");
+    dbOk = true;
+  } catch (err) {
+    dbError = String(err?.message || err).slice(0, 240);
+    console.error("[health] database check failed:", dbError);
+  }
+
+  const status = dbOk ? "ok" : "degraded";
+  const publicPayload = {
+    service: "qr-shop-platform-api",
+    status,
+  };
+
+  if (!healthDiagnosticsAllowed(req)) {
+    return ok(res, publicPayload);
+  }
+
   const rawUrl = process.env.DATABASE_URL || "";
   let dbProtocol = null;
   try {
@@ -105,20 +142,16 @@ app.get("/health", async (_req, res) => {
   } catch {
     dbProtocol = rawUrl ? "invalid_url" : null;
   }
-  try {
-    await prisma.$queryRawUnsafe("SELECT 1 AS ok");
-    dbOk = true;
-  } catch (err) {
-    dbError = String(err?.message || err).slice(0, 240);
-  }
-  ok(res, {
-    service: "qr-shop-platform-api",
+
+  return ok(res, {
+    ...publicPayload,
     phase: "merchant-backend",
     clients: ["marketplace", "merchant", "admin"],
     database: "hostinger-mysql",
     dbProtocol,
     dbOk,
-    dbError,
+    /** Full driver text only with diagnostics key / non-prod — never on public /health. */
+    dbError: dbOk ? null : dbError,
     storage: "disk-uploads",
     hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
     hasJwtSecret: Boolean(process.env.JWT_SECRET),
@@ -223,10 +256,15 @@ app.use((req, res) => {
 
 app.use((err, _req, res, _next) => {
   console.error(err);
-  res.status(500).json({
+  const body = {
     ok: false,
-    error: { message: "Server error", detail: err?.message },
-  });
+    error: { message: "Server error" },
+  };
+  /** Never leak stack / driver messages on public production. */
+  if (!isProductionRuntime() && err?.message) {
+    body.error.detail = String(err.message).slice(0, 240);
+  }
+  res.status(500).json(body);
 });
 
 const port = Number(process.env.PORT) || 4100;

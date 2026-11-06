@@ -49,10 +49,13 @@ URLs stay the same shape: `https://api.qrshopmyanmar.com/uploads/products/….jp
 
 ## 3) Check
 
-1. `GET https://api.qrshopmyanmar.com/health` → `"storage":"disk-uploads"`, `"uploadDirSet":true`
-2. Merchant → upload a product photo
-3. File Manager → `qrshop-uploads/products/` shows the new file
-4. Open the returned URL in the browser
+1. `GET https://api.qrshopmyanmar.com/health` → `"status":"ok"` (public; no env flags)
+2. Optional diagnostics (set `HEALTH_DIAGNOSTICS_KEY` on Hostinger):  
+   `curl -H "x-health-key: $HEALTH_DIAGNOSTICS_KEY" https://api.qrshopmyanmar.com/health`  
+   → `"storage":"disk-uploads"`, `"uploadDirSet":true`
+3. Merchant → upload a product photo
+4. File Manager → `qrshop-uploads/products/` shows the new file
+5. Open the returned URL in the browser
 
 ## Limits
 

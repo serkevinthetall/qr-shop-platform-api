@@ -144,7 +144,7 @@ Mall catalog: `GET /api/catalog` returns `priceB2cKs`, `priceB2bKs`, `listingMod
 | POST | `/api/orders` | Single-shop order |
 | GET | `/api/orders` · `GET /api/orders/:id` | Buyer/merchant lists + detail |
 | POST | `/api/uploads?kind=products` | Hostinger disk → `imageUrl` |
-| GET | `/health` | Liveness |
+| GET | `/health` | Liveness (`status` only; diagnostics need `HEALTH_DIAGNOSTICS_KEY`) |
 
 ## Merchant routes
 
