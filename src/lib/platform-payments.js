@@ -16,9 +16,9 @@ export const BUILTIN_PLATFORM_PAYMENTS = [
   },
   {
     id: "kpay",
-    label: "KPay",
-    shortLabel: "KPay",
-    subtitle: "KBZPay — merchants upload their shop QR",
+    label: "KBZ Pay",
+    shortLabel: "KBZ Pay",
+    subtitle: "KBZ Pay — merchants upload their shop QR",
     needsQr: true,
     active: true,
     builtin: true,

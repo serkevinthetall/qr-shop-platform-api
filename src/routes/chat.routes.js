@@ -86,6 +86,7 @@ async function upsertThread({ shopId, buyer, channel }) {
       data: {
         buyerId: buyer.id,
         buyerName: buyer.name,
+        buyerHiddenAt: null,
         ...(channel ? { channel } : {}),
       },
       include: { shop: { select: { id: true, name: true } } },
@@ -114,6 +115,7 @@ router.get("/threads", requireAuth, requireRole("buyer"), async (req, res) => {
 
     const list = await prisma.chatThread.findMany({
       where: {
+        buyerHiddenAt: null,
         OR: [{ buyerId: buyer.id }, { buyerPhone: buyer.phone }],
       },
       include: { shop: { select: { id: true, name: true } } },
@@ -208,7 +210,12 @@ router.post(
         });
         await tx.chatThread.update({
           where: { id: result.thread.id },
-          data: { lastMessage: text.slice(0, 240), lastAt: new Date() },
+          data: {
+            lastMessage: text.slice(0, 240),
+            lastAt: new Date(),
+            buyerHiddenAt: null,
+            merchantHiddenAt: null,
+          },
         });
         return created;
       });
@@ -248,6 +255,7 @@ router.get("/threads/:id", requireAuth, requireRole("buyer"), async (req, res) =
     const thread = await prisma.chatThread.findFirst({
       where: {
         id: req.params.id,
+        buyerHiddenAt: null,
         OR: [{ buyerId: buyer.id }, { buyerPhone: buyer.phone }],
       },
       include: {
@@ -260,6 +268,27 @@ router.get("/threads/:id", requireAuth, requireRole("buyer"), async (req, res) =
   } catch (err) {
     console.error("chat thread get", err);
     return fail(res, 500, "Could not load chat", "db_error");
+  }
+});
+
+/** DELETE /api/chat/threads/:id — hide conversation from buyer inbox */
+router.delete("/threads/:id", requireAuth, requireRole("buyer"), async (req, res) => {
+  try {
+    const buyer = await loadBuyer(req);
+    if (!buyer) return fail(res, 400, "Buyer phone required");
+
+    const result = await prisma.chatThread.updateMany({
+      where: {
+        id: req.params.id,
+        OR: [{ buyerId: buyer.id }, { buyerPhone: buyer.phone }],
+      },
+      data: { buyerHiddenAt: new Date() },
+    });
+    if (result.count === 0) return fail(res, 404, "Chat not found");
+    return ok(res, { deleted: true });
+  } catch (err) {
+    console.error("chat thread delete", err);
+    return fail(res, 500, "Could not delete conversation", "db_error");
   }
 });
 

@@ -666,6 +666,10 @@ model ChatThread {
   channel      String        @default("app")
   lastMessage  String?
   lastAt       DateTime      @default(now())
+  /** Soft-hide from buyer inbox (merchant side unaffected). */
+  buyerHiddenAt    DateTime?
+  /** Soft-hide from merchant inbox (buyer side unaffected). */
+  merchantHiddenAt DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   messages     ChatMessage[]

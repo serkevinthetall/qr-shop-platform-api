@@ -52,7 +52,7 @@ router.get("/chat/threads", async (req, res) => {
     if (!shopId) return;
 
     const list = await prisma.chatThread.findMany({
-      where: { shopId },
+      where: { shopId, merchantHiddenAt: null },
       orderBy: { lastAt: "desc" },
       take: 200,
     });
@@ -70,7 +70,7 @@ router.get("/chat/threads/:id", async (req, res) => {
     if (!shopId) return;
 
     const thread = await prisma.chatThread.findFirst({
-      where: { id: req.params.id, shopId },
+      where: { id: req.params.id, shopId, merchantHiddenAt: null },
       include: {
         messages: { orderBy: { createdAt: "asc" }, take: 300 },
       },
@@ -108,7 +108,12 @@ router.post("/chat/threads/:id/messages", async (req, res) => {
       });
       await tx.chatThread.update({
         where: { id: thread.id },
-        data: { lastMessage: text.slice(0, 240), lastAt: new Date() },
+        data: {
+          lastMessage: text.slice(0, 240),
+          lastAt: new Date(),
+          buyerHiddenAt: null,
+          merchantHiddenAt: null,
+        },
       });
       return created;
     });
@@ -143,6 +148,24 @@ router.post("/chat/threads/:id/messages", async (req, res) => {
   } catch (err) {
     console.error("merchant chat send", err);
     return fail(res, 500, "Could not send reply", "db_error");
+  }
+});
+
+/** DELETE /api/merchant/chat/threads/:id — hide conversation from merchant inbox */
+router.delete("/chat/threads/:id", async (req, res) => {
+  try {
+    const shopId = shopIdOrFail(req, res);
+    if (!shopId) return;
+
+    const result = await prisma.chatThread.updateMany({
+      where: { id: req.params.id, shopId },
+      data: { merchantHiddenAt: new Date() },
+    });
+    if (result.count === 0) return fail(res, 404, "Chat not found");
+    return ok(res, { deleted: true });
+  } catch (err) {
+    console.error("merchant chat delete", err);
+    return fail(res, 500, "Could not delete conversation", "db_error");
   }
 });
 
