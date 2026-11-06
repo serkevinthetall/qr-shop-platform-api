@@ -252,27 +252,40 @@ router.get("/:id/products", async (req, res) => {
           showBoth: ch.b2cEnabled && ch.b2bEnabled,
         },
       },
-      products: products.map((p) => ({
-        id: p.id,
-        productId: p.id,
-        name: p.name,
-        priceB2cKs: p.priceKs,
-        priceB2bKs: p.priceB2bKs ?? null,
-        wholesaleMinQty:
-          p.priceB2bKs != null &&
-          p.wholesaleMinQty != null &&
-          Number(p.wholesaleMinQty) > 0
-            ? Math.floor(Number(p.wholesaleMinQty))
-            : null,
-        imageUrl: p.imageUrl || "",
-        badge: p.badge || null,
-        stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
-        categoryId: p.categoryId || "",
-        canOrder:
-          ch.canOrder &&
-          !ch.portfolioOnly &&
-          Math.max(0, Math.floor(Number(p.stock) || 0)) > 0,
-      })),
+      products: products.map((p) => {
+        let attributes = {};
+        if (typeof p.attributesJson === "string") {
+          try {
+            const o = JSON.parse(p.attributesJson || "{}");
+            if (o && typeof o === "object" && !Array.isArray(o)) attributes = o;
+          } catch {
+            /* ignore */
+          }
+        }
+        return {
+          id: p.id,
+          productId: p.id,
+          name: p.name,
+          priceB2cKs: p.priceKs,
+          priceB2bKs: p.priceB2bKs ?? null,
+          wholesaleMinQty:
+            p.priceB2bKs != null &&
+            p.wholesaleMinQty != null &&
+            Number(p.wholesaleMinQty) > 0
+              ? Math.floor(Number(p.wholesaleMinQty))
+              : null,
+          imageUrl: p.imageUrl || "",
+          badge: p.badge || null,
+          stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
+          categoryId: p.categoryId || "",
+          templateId: p.templateId ? String(p.templateId) : undefined,
+          attributes,
+          canOrder:
+            ch.canOrder &&
+            !ch.portfolioOnly &&
+            Math.max(0, Math.floor(Number(p.stock) || 0)) > 0,
+        };
+      }),
     });
   } catch (err) {
     console.error("shop products", err);

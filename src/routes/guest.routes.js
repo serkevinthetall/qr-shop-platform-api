@@ -487,6 +487,15 @@ router.get("/products", requireGuest, async (req, res) => {
         if (p.priceB2bKs != null && priced.priceB2bKs == null) {
           priced.priceB2bKs = p.priceB2bKs;
         }
+        let attributes = {};
+        if (typeof p.attributesJson === "string") {
+          try {
+            const o = JSON.parse(p.attributesJson || "{}");
+            if (o && typeof o === "object" && !Array.isArray(o)) attributes = o;
+          } catch {
+            /* ignore */
+          }
+        }
         return {
           ...priced,
           wholesaleMinQty:
@@ -497,6 +506,8 @@ router.get("/products", requireGuest, async (req, res) => {
               : null,
           imageUrl: p.imageUrl || null,
           stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
+          templateId: p.templateId ? String(p.templateId) : undefined,
+          attributes,
           canOrder:
             priced.canOrder !== false &&
             Math.max(0, Math.floor(Number(p.stock) || 0)) > 0,

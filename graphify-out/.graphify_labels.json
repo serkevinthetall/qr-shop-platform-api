@@ -6,7 +6,6 @@
   "4": "dependencies",
   "5": "catalog.routes.js",
   "6": "env.js",
-  "7": "merchant-guest.routes.js",
   "8": "admin.routes.js",
   "9": "QR Shop Platform API",
   "10": "auth.routes.js",
@@ -20,5 +19,6 @@
   "18": "Database: Supabase Postgres",
   "19": "auth-hostinger-situation.md",
   "20": "merchant-guest.routes.js",
-  "21": "merchant-overview.routes.js"
+  "21": "merchant-overview.routes.js",
+  "22": "Postman — QR Shop Platform API"
 }

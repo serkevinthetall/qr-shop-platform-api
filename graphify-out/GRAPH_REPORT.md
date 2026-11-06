@@ -1,16 +1,16 @@
-# Graph Report - QR Shop Platform API  (2026-11-02)
+# Graph Report - QR Shop Platform API  (2026-11-05)
 
 ## Corpus Check
-- 70 files · ~45,204 words
+- 77 files · ~54,767 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 374 nodes · 832 edges · 22 communities (20 shown, 2 thin omitted)
+- 414 nodes · 887 edges · 22 communities (20 shown, 2 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2bd37632`
+- Built from commit: `8cef8435`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -22,7 +22,6 @@
 - dependencies
 - catalog.routes.js
 - env.js
-- merchant-guest.routes.js
 - admin.routes.js
 - QR Shop Platform API
 - auth.routes.js
@@ -37,6 +36,7 @@
 - auth-hostinger-situation.md
 - merchant-guest.routes.js
 - merchant-overview.routes.js
+- Postman — QR Shop Platform API
 
 ## God Nodes (most connected - your core abstractions)
 1. `fail()` - 40 edges
@@ -44,7 +44,7 @@
 3. `requireAuth()` - 26 edges
 4. `requireRole()` - 24 edges
 5. `normalizePhone()` - 19 edges
-6. `scripts` - 12 edges
+6. `scripts` - 13 edges
 7. `shopIdOrFail()` - 11 edges
 8. `createOrderPayload()` - 9 edges
 9. `requireShopOwner()` - 8 edges
@@ -68,36 +68,32 @@
 ## Communities (22 total, 2 thin omitted)
 
 ### Community 0 - "fail"
-Cohesion: 0.12
-Nodes (28): isMerchantOwner(), requireShopOwner(), shopIdOrFail(), fail(), ok(), recordStockAdjustMove(), publicTownship(), readBearer() (+20 more)
+Cohesion: 0.10
+Nodes (34): isMerchantOwner(), requireShopOwner(), shopIdOrFail(), publishMessageEvent(), fail(), ok(), recordStockAdjustMove(), publicTownship() (+26 more)
 
 ### Community 1 - "orders.routes.js"
-Cohesion: 0.16
-Nodes (16): main(), enrichZones(), getDeliveryFeeForTownship(), unitPriceForChannel(), allocateOrderCode(), looksLikeOrderCode(), formatLocation(), townshipLabel() (+8 more)
+Cohesion: 0.10
+Nodes (27): main(), unitPriceForChannel(), allocateOrderCode(), looksLikeOrderCode(), ACTIVE_PIPELINE_STAGES, isReadyPickupStage(), normalizeOrderStage(), OPEN_STAGES (+19 more)
 
 ### Community 2 - "server.js"
-Cohesion: 0.09
-Nodes (34): ensurePublicBucket(), getSupabaseAdmin(), storageBucketName(), supabaseStorageConfigured(), uploadImageBuffer(), ensureUploadDirs(), IMAGE_MIME, isAllowedImage() (+26 more)
+Cohesion: 0.06
+Nodes (35): realtimeClientCount(), ensureUploadDirs(), IMAGE_MIME, isAllowedImage(), makeFilename(), publicUrlFor(), root, safeExt() (+27 more)
 
 ### Community 3 - "scripts"
-Cohesion: 0.08
-Nodes (24): nodemon, description, devDependencies, nodemon, prisma, engines, node, main (+16 more)
+Cohesion: 0.07
+Nodes (26): nodemon, description, devDependencies, nodemon, engines, node, main, name (+18 more)
 
 ### Community 4 - "dependencies"
 Cohesion: 0.09
 Nodes (23): bcryptjs, cors, dotenv, express, helmet, jsonwebtoken, multer, dependencies (+15 more)
 
 ### Community 5 - "catalog.routes.js"
-Cohesion: 0.12
-Nodes (21): main(), defaultCategories(), defaultHero(), loadMallMeta(), metaPath, root, parseMallProductId(), isPubliclySold() (+13 more)
+Cohesion: 0.11
+Nodes (21): issueGuestSession(), issueSession(), publicUser(), isPubliclySold(), parseAttributes(), productWriteData(), publicMerchantProduct(), sellChannelsOf() (+13 more)
 
 ### Community 6 - "env.js"
-Cohesion: 0.11
-Nodes (16): prisma, main(), prisma, upsertUser(), ensureOrder(), ensureShop(), IMG, main() (+8 more)
-
-### Community 7 - "merchant-guest.routes.js"
-Cohesion: 0.11
-Nodes (21): normalizeLogin(), normalizePhone(), cleanup(), clients, publish(), publishMessageEvent(), publishOrderEvent(), realtimeClientCount() (+13 more)
+Cohesion: 0.09
+Nodes (19): prisma, main(), prisma, upsertUser(), main(), prisma, upsertUser(), ensureOrder() (+11 more)
 
 ### Community 8 - "admin.routes.js"
 Cohesion: 0.13
@@ -108,8 +104,8 @@ Cohesion: 0.12
 Nodes (14): Deploy stages, Vercel, Auth flows, Demo accounts (after `npm run db:seed`), Deploy stages (Preview vs Production), Main routes (Marketplace-ready), Merchant listing mode (B2C / B2B / both / portfolio), Merchant routes (+6 more)
 
 ### Community 10 - "auth.routes.js"
-Cohesion: 0.24
-Nodes (9): issueGuestSession(), issueSession(), publicUser(), signToken(), loginSchema, registerBuyerSchema, registerMerchantSchema, ROLES (+1 more)
+Cohesion: 0.26
+Nodes (9): main(), defaultCategories(), defaultHero(), loadMallMeta(), metaPath, root, parseMallProductId(), productInclude (+1 more)
 
 ### Community 11 - "Merchant backend (Platform API)"
 Cohesion: 0.29
@@ -128,44 +124,48 @@ Cohesion: 0.33
 Nodes (5): Backend, Client wiring, Demo logins (API), Live DB (2026-10-28 follow-up), Three apps ↔ Platform API (2026-10-28)
 
 ### Community 15 - "Hostinger disk uploads (product photos)"
-Cohesion: 0.40
-Nodes (4): Env (Hostinger VPS / Node), Flow, Hostinger disk uploads (product photos), Limits
+Cohesion: 0.22
+Nodes (8): 1) File Manager — durable folder (outside public_html), 2) API env on Hostinger, 3) Check, Flow, Hostinger disk uploads (product photos), Limits, Migrate old photos (if you used public_html/uploads), Redeploy
 
 ### Community 16 - "vercel.json"
-Cohesion: 0.40
-Nodes (4): builds, routes, $schema, version
+Cohesion: 0.18
+Nodes (10): includeFiles, maxDuration, memory, buildCommand, functions, api/index.js, installCommand, rewrites (+2 more)
 
 ### Community 17 - "Townships + delivery fees (QR Shop only)"
 Cohesion: 0.50
 Nodes (3): APIs, Connection, Townships + delivery fees (QR Shop only)
 
 ### Community 20 - "merchant-guest.routes.js"
-Cohesion: 0.18
-Nodes (18): toMallProduct(), mallPricesForProduct(), resolvePricingContext(), channelsFromListingMode(), featuresPayloadForMode(), LISTING_MODES, normalizeListingMode(), publicShopChannels() (+10 more)
+Cohesion: 0.20
+Nodes (17): toMallProduct(), mallPricesForProduct(), resolvePricingContext(), channelsFromListingMode(), featuresPayloadForMode(), LISTING_MODES, normalizeListingMode(), publicShopChannels() (+9 more)
 
 ### Community 21 - "merchant-overview.routes.js"
-Cohesion: 0.21
-Nodes (8): defaultStoreStyle(), normalizePreset(), parseStoreStyle(), storeStyleToJson(), dayKey(), router, startOfLocalDay(), WEEKDAY_SHORT
+Cohesion: 0.11
+Nodes (23): enrichZones(), getDeliveryFeeForTownship(), normalizeMediaUrl(), root, SEED_COVER_FILES, SEED_LOGO_FILES, seedPathForFilename(), seedUploadsDir() (+15 more)
+
+### Community 22 - "Postman — QR Shop Platform API"
+Cohesion: 0.33
+Nodes (5): Auth header, Import, Postman — QR Shop Platform API, Seed logins, Test order
 
 ## Knowledge Gaps
-- **121 isolated node(s):** `name`, `version`, `description`, `main`, `type` (+116 more)
+- **138 isolated node(s):** `name`, `version`, `description`, `main`, `type` (+133 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `fail()` connect `fail` to `orders.routes.js`, `server.js`, `catalog.routes.js`, `merchant-guest.routes.js`, `admin.routes.js`, `auth.routes.js`, `merchant-guest.routes.js`, `merchant-overview.routes.js`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `ok()` connect `fail` to `orders.routes.js`, `server.js`, `catalog.routes.js`, `merchant-guest.routes.js`, `admin.routes.js`, `auth.routes.js`, `merchant-guest.routes.js`, `merchant-overview.routes.js`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `requireAuth()` connect `fail` to `orders.routes.js`, `server.js`, `catalog.routes.js`, `merchant-guest.routes.js`, `admin.routes.js`, `auth.routes.js`, `merchant-guest.routes.js`, `merchant-overview.routes.js`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+- **Why does `fail()` connect `fail` to `orders.routes.js`, `server.js`, `catalog.routes.js`, `admin.routes.js`, `auth.routes.js`, `merchant-guest.routes.js`, `merchant-overview.routes.js`?**
+  _High betweenness centrality (0.036) - this node is a cross-community bridge._
+- **Why does `ok()` connect `fail` to `orders.routes.js`, `server.js`, `catalog.routes.js`, `admin.routes.js`, `auth.routes.js`, `merchant-guest.routes.js`, `merchant-overview.routes.js`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Why does `requireAuth()` connect `fail` to `orders.routes.js`, `server.js`, `catalog.routes.js`, `admin.routes.js`, `auth.routes.js`, `merchant-guest.routes.js`, `merchant-overview.routes.js`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `description` to the rest of the system?**
-  _121 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _138 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `fail` be split into smaller, more focused modules?**
-  _Cohesion score 0.12470588235294118 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10273224043715846 - nodes in this community are weakly interconnected._
+- **Should `orders.routes.js` be split into smaller, more focused modules?**
+  _Cohesion score 0.09759759759759759 - nodes in this community are weakly interconnected._
 - **Should `server.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.09041835357624832 - nodes in this community are weakly interconnected._
-- **Should `scripts` be split into smaller, more focused modules?**
-  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06448202959830866 - nodes in this community are weakly interconnected._

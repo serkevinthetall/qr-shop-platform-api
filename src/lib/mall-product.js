@@ -42,6 +42,20 @@ export function toMallProduct(p) {
     badge: p.badge ?? undefined,
     imageUrl: p.imageUrl ?? "",
     stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
+    templateId: p.templateId ? String(p.templateId) : undefined,
+    attributes:
+      typeof p.attributesJson === "string"
+        ? (() => {
+            try {
+              const o = JSON.parse(p.attributesJson || "{}");
+              return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+            } catch {
+              return {};
+            }
+          })()
+        : p.attributes && typeof p.attributes === "object"
+          ? p.attributes
+          : {},
     active: p.active,
     listingMode,
     portfolioOnly: channels.portfolioOnly,
