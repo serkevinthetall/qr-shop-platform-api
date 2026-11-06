@@ -46,11 +46,11 @@ const oneTimeBuyerSchema = z.object({
   phone: z.string().min(6),
 });
 
-/** Required: name, phone, shopName. Password is set by Admin later (not by merchant). */
+/** Required: name, phone, email, shopName. Password is set by Admin later (not by merchant). */
 const registerMerchantSchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(6),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.string().email(),
   password: z.string().min(4).optional().or(z.literal("")),
   shopName: z.string().min(1),
   location: z.string().optional(),
@@ -254,13 +254,23 @@ router.post("/register/merchant", async (req, res) => {
     if (!parsed.success) return fail(res, 400, "Invalid merchant registration");
 
     const phone = normalizePhone(parsed.data.phone);
-    const emailRaw = (parsed.data.email || "").trim().toLowerCase();
-    const email =
-      emailRaw || `${phone.replace(/\D/g, "") || "shop"}@merchant.qrshop.local`;
-    const exists = await prisma.user.findFirst({
-      where: { OR: [{ email }, { phone }] },
-    });
-    if (exists) return fail(res, 409, "Account already exists");
+    const email = String(parsed.data.email || "")
+      .trim()
+      .toLowerCase();
+    if (!email.includes("@")) {
+      return fail(res, 400, "Enter a valid email address");
+    }
+    if (!phone || phone.replace(/\D/g, "").length < 6) {
+      return fail(res, 400, "Enter a valid phone number");
+    }
+    const phoneTaken = await prisma.user.findFirst({ where: { phone } });
+    if (phoneTaken) {
+      return fail(res, 409, "This phone is already registered");
+    }
+    const emailTaken = await prisma.user.findFirst({ where: { email } });
+    if (emailTaken) {
+      return fail(res, 409, "This email is already registered");
+    }
 
     const slugBase = parsed.data.shopName
       .toLowerCase()
