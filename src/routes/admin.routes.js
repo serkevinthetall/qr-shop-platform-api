@@ -201,6 +201,94 @@ router.patch("/merchants/:shopId/password", async (req, res) => {
   }
 });
 
+const deleteShopSchema = z.object({
+  merchantPassword: z.string().min(1),
+  adminPassword: z.string().min(1),
+});
+
+/**
+ * DELETE /api/admin/merchants/:shopId
+ * Permanently delete a shop. Requires both:
+ * - merchantPassword — shop owner's current Merchant-app login password
+ * - adminPassword — signed-in admin's current password
+ * Removes the shop, owner/staff users, orders, products, and cascaded shop data.
+ */
+router.delete("/merchants/:shopId", async (req, res) => {
+  try {
+    const shopId = String(req.params.shopId || "").trim();
+    if (!shopId) return fail(res, 400, "shopId required");
+
+    const parsed = deleteShopSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return fail(res, 400, "Merchant password and admin password are required");
+    }
+
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const owner = await prisma.user.findFirst({
+      where: { shopId, role: "merchant" },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!owner) return fail(res, 404, "Shop owner account not found");
+
+    const adminId = String(req.user?.sub || "").trim();
+    if (!adminId) return fail(res, 401, "Sign in required", "unauthorized");
+    const admin = await prisma.user.findUnique({ where: { id: adminId } });
+    if (
+      !admin ||
+      (admin.role !== "admin" && admin.role !== "super_admin") ||
+      admin.active === false
+    ) {
+      return fail(res, 403, "Admin account required");
+    }
+
+    const merchantOk = await bcrypt.compare(
+      parsed.data.merchantPassword,
+      owner.passwordHash,
+    );
+    if (!merchantOk) {
+      return fail(res, 403, "Merchant password is incorrect", "bad_merchant_password");
+    }
+
+    const adminOk = await bcrypt.compare(
+      parsed.data.adminPassword,
+      admin.passwordHash,
+    );
+    if (!adminOk) {
+      return fail(res, 403, "Admin password is incorrect", "bad_admin_password");
+    }
+
+    const shopName = shop.name;
+    const ownerIds = (
+      await prisma.user.findMany({
+        where: { shopId },
+        select: { id: true },
+      })
+    ).map((u) => u.id);
+
+    await prisma.$transaction(async (tx) => {
+      /** Orders (and lines) first — Order.shopId / OrderLine.product block shop delete. */
+      await tx.order.deleteMany({ where: { shopId } });
+
+      if (ownerIds.length) {
+        await tx.guestQr.updateMany({
+          where: { createdById: { in: ownerIds } },
+          data: { createdById: null },
+        });
+      }
+
+      await tx.user.deleteMany({ where: { shopId } });
+      await tx.shop.delete({ where: { id: shopId } });
+    });
+
+    return ok(res, { deleted: true, shopId, shopName });
+  } catch (err) {
+    console.error("admin delete shop", err);
+    return fail(res, 500, "Could not delete shop", "db_error");
+  }
+});
+
 /* ─── Announcements (Admin → Marketplace / Merchant) ─── */
 
 const announcementBody = z.object({
