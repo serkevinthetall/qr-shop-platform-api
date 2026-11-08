@@ -262,6 +262,11 @@ router.get("/:id/products", async (req, res) => {
             /* ignore */
           }
         }
+        const compareAtB2bRaw = Number(attributes.__compareAtB2bKs);
+        const compareAtB2bKs =
+          Number.isFinite(compareAtB2bRaw) && compareAtB2bRaw > 0
+            ? Math.floor(compareAtB2bRaw)
+            : null;
         return {
           id: p.id,
           productId: p.id,
@@ -274,6 +279,8 @@ router.get("/:id/products", async (req, res) => {
             Number(p.wholesaleMinQty) > 0
               ? Math.floor(Number(p.wholesaleMinQty))
               : null,
+          compareAtKs: p.compareAtKs ?? null,
+          compareAtB2bKs,
           imageUrl: p.imageUrl || "",
           badge: p.badge || null,
           stock: Math.max(0, Math.floor(Number(p.stock) || 0)),

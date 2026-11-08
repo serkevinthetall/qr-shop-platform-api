@@ -5,6 +5,21 @@
 import { mallPricesForProduct } from "./pricing-context.js";
 import { publicShopChannels } from "./shop-channels.js";
 
+function parseProductAttributes(p) {
+  if (typeof p.attributesJson === "string") {
+    try {
+      const o = JSON.parse(p.attributesJson || "{}");
+      return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+    } catch {
+      return {};
+    }
+  }
+  if (p.attributes && typeof p.attributes === "object" && !Array.isArray(p.attributes)) {
+    return p.attributes;
+  }
+  return {};
+}
+
 export function toMallProduct(p) {
   const priced = mallPricesForProduct(p, p.shop?.features);
   const channels = publicShopChannels(p.shop?.features);
@@ -15,6 +30,16 @@ export function toMallProduct(p) {
     priced.priceB2bKs != null &&
     Number(priced.priceB2cKs) > 0 &&
     Number(priced.priceB2bKs) > 0;
+  const attributes = parseProductAttributes(p);
+  const compareAtB2bRaw = Number(attributes.__compareAtB2bKs);
+  const compareAtB2bKs =
+    Number.isFinite(compareAtB2bRaw) && compareAtB2bRaw > 0
+      ? Math.floor(compareAtB2bRaw)
+      : undefined;
+  const compareAtKs =
+    p.compareAtKs != null && Number(p.compareAtKs) > 0
+      ? Math.floor(Number(p.compareAtKs))
+      : undefined;
   return {
     id: `${p.shopId}__${p.id}`,
     productId: p.id,
@@ -32,10 +57,13 @@ export function toMallProduct(p) {
         : null,
     priceKs,
     price: `${Number(priceKs).toLocaleString()} Ks`,
-    compareAtKs: p.compareAtKs ?? undefined,
+    compareAtKs,
     compareAt:
-      p.compareAtKs != null
-        ? `${Number(p.compareAtKs).toLocaleString()} Ks`
+      compareAtKs != null ? `${compareAtKs.toLocaleString()} Ks` : undefined,
+    compareAtB2bKs,
+    compareAtB2b:
+      compareAtB2bKs != null
+        ? `${compareAtB2bKs.toLocaleString()} Ks`
         : undefined,
     brand: p.shop?.name ?? "",
     categoryId: p.categoryId ?? "essentials",
@@ -43,19 +71,7 @@ export function toMallProduct(p) {
     imageUrl: p.imageUrl ?? "",
     stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
     templateId: p.templateId ? String(p.templateId) : undefined,
-    attributes:
-      typeof p.attributesJson === "string"
-        ? (() => {
-            try {
-              const o = JSON.parse(p.attributesJson || "{}");
-              return o && typeof o === "object" && !Array.isArray(o) ? o : {};
-            } catch {
-              return {};
-            }
-          })()
-        : p.attributes && typeof p.attributes === "object"
-          ? p.attributes
-          : {},
+    attributes,
     active: p.active,
     listingMode,
     portfolioOnly: channels.portfolioOnly,
