@@ -217,7 +217,13 @@ router.post("/products", async (req, res) => {
     }
 
     const parsed = createSchema.safeParse(req.body);
-    if (!parsed.success) return fail(res, 400, "Invalid product");
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      const detail = first?.message
+        ? `${first.path.join(".") || "body"}: ${first.message}`
+        : "Invalid product";
+      return fail(res, 400, detail, "invalid_product");
+    }
 
     const data = productWriteData(parsed.data);
     if (!data.name) return fail(res, 400, "Name required");
