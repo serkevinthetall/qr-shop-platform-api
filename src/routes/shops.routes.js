@@ -262,11 +262,22 @@ router.get("/:id/products", async (req, res) => {
             /* ignore */
           }
         }
-        const compareAtB2bRaw = Number(attributes.__compareAtB2bKs);
-        const compareAtB2bKs =
-          Number.isFinite(compareAtB2bRaw) && compareAtB2bRaw > 0
-            ? Math.floor(compareAtB2bRaw)
+        const priceB2bNum =
+          p.priceB2bKs != null && Number(p.priceB2bKs) > 0
+            ? Math.floor(Number(p.priceB2bKs))
             : null;
+        const compareCandidates = [
+          Number(attributes.__compareAtB2bKs),
+          Number(attributes.__listWholesaleKs),
+        ].filter(
+          (n) =>
+            Number.isFinite(n) &&
+            n > 0 &&
+            (priceB2bNum == null || n > priceB2bNum),
+        );
+        const compareAtB2bKs = compareCandidates.length
+          ? Math.floor(Math.max(...compareCandidates))
+          : null;
         return {
           id: p.id,
           productId: p.id,

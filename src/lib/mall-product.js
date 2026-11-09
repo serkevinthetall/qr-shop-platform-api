@@ -31,11 +31,22 @@ export function toMallProduct(p) {
     Number(priced.priceB2cKs) > 0 &&
     Number(priced.priceB2bKs) > 0;
   const attributes = parseProductAttributes(p);
-  const compareAtB2bRaw = Number(attributes.__compareAtB2bKs);
-  const compareAtB2bKs =
-    Number.isFinite(compareAtB2bRaw) && compareAtB2bRaw > 0
-      ? Math.floor(compareAtB2bRaw)
-      : undefined;
+  const priceB2bNum =
+    priced.priceB2bKs != null && Number(priced.priceB2bKs) > 0
+      ? Math.floor(Number(priced.priceB2bKs))
+      : null;
+  const compareCandidates = [
+    Number(attributes.__compareAtB2bKs),
+    Number(attributes.__listWholesaleKs),
+  ].filter(
+    (n) =>
+      Number.isFinite(n) &&
+      n > 0 &&
+      (priceB2bNum == null || n > priceB2bNum),
+  );
+  const compareAtB2bKs = compareCandidates.length
+    ? Math.floor(Math.max(...compareCandidates))
+    : undefined;
   const compareAtKs =
     p.compareAtKs != null && Number(p.compareAtKs) > 0
       ? Math.floor(Number(p.compareAtKs))

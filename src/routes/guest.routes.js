@@ -496,6 +496,22 @@ router.get("/products", requireGuest, async (req, res) => {
             /* ignore */
           }
         }
+        const priceB2bNum =
+          priced.priceB2bKs != null && Number(priced.priceB2bKs) > 0
+            ? Math.floor(Number(priced.priceB2bKs))
+            : null;
+        const compareCandidates = [
+          Number(attributes.__compareAtB2bKs),
+          Number(attributes.__listWholesaleKs),
+        ].filter(
+          (n) =>
+            Number.isFinite(n) &&
+            n > 0 &&
+            (priceB2bNum == null || n > priceB2bNum),
+        );
+        const compareAtB2bKs = compareCandidates.length
+          ? Math.floor(Math.max(...compareCandidates))
+          : null;
         return {
           ...priced,
           wholesaleMinQty:
@@ -504,6 +520,7 @@ router.get("/products", requireGuest, async (req, res) => {
             Number(p.wholesaleMinQty) > 0
               ? Math.floor(Number(p.wholesaleMinQty))
               : null,
+          compareAtB2bKs,
           imageUrl: p.imageUrl || null,
           stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
           templateId: p.templateId ? String(p.templateId) : undefined,
