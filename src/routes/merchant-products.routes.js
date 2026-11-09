@@ -274,7 +274,11 @@ router.post("/products", async (req, res) => {
         purchaseUom: data.purchaseUom ?? "piece",
         uomFactor: data.uomFactor ?? 1,
         templateId: data.templateId ?? null,
-        attributesJson: data.attributesJson ?? "{}",
+        attributesJson:
+          data.attributesJson ??
+          (parsed.data.attributes
+            ? JSON.stringify(parsed.data.attributes)
+            : "{}"),
         active: published,
         /** Published → shop website; mall/app only when those flags are on. */
         sellOnOwnPage: published,
