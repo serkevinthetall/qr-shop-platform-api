@@ -469,6 +469,11 @@ router.delete("/products/:id", async (req, res) => {
 
     const hard = req.query.hard === "1" || req.query.hard === "true";
     if (hard) {
+      /** Detach order lines first — FK has no onDelete and blocks hard delete. */
+      await prisma.orderLine.updateMany({
+        where: { productId: existing.id },
+        data: { productId: null },
+      });
       await prisma.product.delete({ where: { id: existing.id } });
       return ok(res, { id: existing.id, deleted: true });
     }
