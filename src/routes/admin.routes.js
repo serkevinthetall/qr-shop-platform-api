@@ -17,6 +17,7 @@ import {
   listPlatformPayments,
   mapPlatformPayment,
 } from "../lib/platform-payments.js";
+import { ensureCategoriesSeeded } from "../lib/categories.js";
 
 const router = Router();
 
@@ -764,6 +765,7 @@ function mapCategory(c) {
 
 router.get("/categories", async (_req, res) => {
   try {
+    await ensureCategoriesSeeded();
     const rows = await prisma.category.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     });

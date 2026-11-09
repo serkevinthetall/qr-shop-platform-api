@@ -4,6 +4,7 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { toMallProduct, parseMallProductId } from "../lib/mall-product.js";
 import { defaultCategories, defaultHero } from "../lib/mall-meta.js";
+import { ensureCategoriesSeeded } from "../lib/categories.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
 
 const router = Router();
@@ -36,6 +37,7 @@ const productInclude = {
  */
 router.get("/categories", async (_req, res) => {
   try {
+    await ensureCategoriesSeeded();
     const rows = await prisma.category.findMany({
       where: { active: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
