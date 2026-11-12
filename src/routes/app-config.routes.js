@@ -24,6 +24,50 @@ function envStr(name, fallback = "") {
   return v || fallback;
 }
 
+const DEFAULT_QR_IOS = "https://apps.apple.com/app/id6800218923";
+const DEFAULT_QR_ANDROID =
+  "https://play.google.com/store/apps/details?id=com.qrshop.myanmar";
+
+/**
+ * Public — QR App (buyer) polls this on launch for maintenance / force-update.
+ * GET /api/app-config
+ *
+ * Hostinger env (optional):
+ *   APP_MAINTENANCE                 (true|false — pause shop UI)
+ *   QR_APP_MIN_VERSION              (default 1.0.0)
+ *   QR_APP_MIN_IOS_VERSION
+ *   QR_APP_MIN_ANDROID_VERSION
+ *   QR_APP_IOS_STORE_URL
+ *   QR_APP_ANDROID_STORE_URL
+ */
+router.get("/", (_req, res) => {
+  const minVersion = envStr("QR_APP_MIN_VERSION", "1.0.0");
+  const minIos = envStr("QR_APP_MIN_IOS_VERSION", minVersion);
+  const minAndroid = envStr("QR_APP_MIN_ANDROID_VERSION", minVersion);
+  const maintenance = envBool("APP_MAINTENANCE", false);
+  const iosStoreUrl = envStr("QR_APP_IOS_STORE_URL", DEFAULT_QR_IOS);
+  const androidStoreUrl = envStr("QR_APP_ANDROID_STORE_URL", DEFAULT_QR_ANDROID);
+
+  const payload = {
+    app: "qr-app",
+    maintenance,
+    min_version: minVersion,
+    min_ios_version: minIos,
+    min_android_version: minAndroid,
+    ios_store_url: iosStoreUrl,
+    android_store_url: androidStoreUrl,
+    // camelCase aliases
+    minVersion,
+    minIosVersion: minIos,
+    minAndroidVersion: minAndroid,
+    iosStoreUrl,
+    androidStoreUrl,
+  };
+
+  // Flat fields + { ok, data } so older QR App clients and Platform envelope both work.
+  return res.json({ ok: true, success: true, ...payload, data: payload });
+});
+
 /**
  * Public — Merchant native app polls this for force-update.
  * GET /api/app-config/merchant
