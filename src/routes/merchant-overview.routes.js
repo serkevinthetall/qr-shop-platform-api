@@ -4,6 +4,10 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { shopIdOrFail } from "../lib/merchant-auth.js";
 import { publicShopChannels } from "../lib/shop-channels.js";
+import {
+  openingHoursToJson,
+  parseOpeningHours,
+} from "../lib/opening-hours.js";
 import { parseStoreStyle, storeStyleToJson } from "../lib/store-style.js";
 import { publicMerchantProduct } from "../lib/merchant-product.js";
 import {
@@ -376,11 +380,13 @@ router.get("/shop", async (req, res) => {
 
     const ch = publicShopChannels(shop.features);
     const storeStyle = parseStoreStyle(shop.storeStyleJson);
+    const openingHours = parseOpeningHours(shop.openingHoursJson);
     return ok(res, {
       ...withNormalizedShopMedia(shop, req),
       storeStyle,
       websitePublished: Boolean(shop.websitePublished),
       aboutText: shop.aboutText ?? "",
+      openingHours,
       listingMode: ch.listingMode,
       portfolioOnly: ch.portfolioOnly,
       canOrder: ch.canOrder,
@@ -471,6 +477,10 @@ router.patch("/shop", async (req, res) => {
       data.storeStyleJson = storeStyleToJson(req.body.storeStyle);
     }
 
+    if (req.body.openingHours != null) {
+      data.openingHoursJson = openingHoursToJson(req.body.openingHours);
+    }
+
     if (Object.keys(data).length === 0) {
       return fail(res, 400, "Nothing to update");
     }
@@ -489,6 +499,7 @@ router.patch("/shop", async (req, res) => {
       storeStyle: parseStoreStyle(shop.storeStyleJson),
       websitePublished: Boolean(shop.websitePublished),
       aboutText: shop.aboutText ?? "",
+      openingHours: parseOpeningHours(shop.openingHoursJson),
       listingMode: ch.listingMode,
       portfolioOnly: ch.portfolioOnly,
       canOrder: ch.canOrder,

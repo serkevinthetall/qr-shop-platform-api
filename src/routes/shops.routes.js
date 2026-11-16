@@ -16,6 +16,7 @@ import {
 } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
+import { parseOpeningHours } from "../lib/opening-hours.js";
 import { parseStoreStyle } from "../lib/store-style.js";
 import {
   normalizeMediaUrl,
@@ -225,6 +226,7 @@ router.get("/:id/products", async (req, res) => {
     });
     const ch = publicShopChannels(shop.features);
     const storeStyle = parseStoreStyle(shop.storeStyleJson);
+    const openingHours = parseOpeningHours(shop.openingHoursJson);
 
     return ok(res, {
       shop: {
@@ -241,6 +243,7 @@ router.get("/:id/products", async (req, res) => {
         location: shop.location,
         township: shop.township,
         aboutText: shop.aboutText ?? "",
+        openingHours,
         websitePublished: true,
         storeStyle,
         listingMode: ch.listingMode,
@@ -382,6 +385,7 @@ router.get("/:id", async (req, res) => {
     storeStyle: parseStoreStyle(shop.storeStyleJson),
     websitePublished: Boolean(shop.websitePublished),
     aboutText: shop.aboutText ?? "",
+    openingHours: parseOpeningHours(shop.openingHoursJson),
     listingMode: ch.listingMode,
     portfolioOnly: ch.portfolioOnly,
     canOrder: ch.canOrder,

@@ -173,6 +173,8 @@ model Shop {
   storeStyleJson   String  @default("{}")
   /** About tab copy for the shop website */
   aboutText        String?
+  /** Opening hours for About: { enabled, days: { mon…sun: { closed, open, close } } } */
+  openingHoursJson String  @default("{}")
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
