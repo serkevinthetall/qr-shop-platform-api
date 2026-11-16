@@ -18,14 +18,6 @@ Auth + mall channels: registered logins, one-time buyer QR, shop modes **b2c / b
 
 ## Demo accounts (after `npm run db:seed`)
 
-| Role | Login | Password |
-|------|-------|----------|
-| Super admin | `super@qrshop.com` | `11111` |
-| Admin | `qrshop@gmail.com` | `11111` |
-| Merchant | `admin@gmail.com` | `1111` |
-| Staff | `09777100201` | `1234` |
-| Buyer | `09111222333` | `1111` |
-
 Sample guest phone open for B2B on shop `shop-nova`: `09998887766`.
 
 ## Setup (Hostinger MySQL + disk photos)
