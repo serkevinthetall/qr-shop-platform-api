@@ -15,3 +15,5 @@ uploads/*
 .cursor/
 .figma/
 .env*
+!.env.example
+!.env.preview.example
