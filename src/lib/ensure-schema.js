@@ -4,6 +4,7 @@ let expressColumnReady = false;
 let wholesaleMinQtyReady = false;
 let productBadgeTableReady = false;
 let adminViewOtpTableReady = false;
+let passwordLoginEnabledReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -112,11 +113,35 @@ export async function ensureAdminViewOtpTable() {
   adminViewOtpTableReady = true;
 }
 
+/** Buyer App vs one-time — Hostinger may lack prisma db push. */
+export async function ensurePasswordLoginEnabledColumn() {
+  if (passwordLoginEnabledReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`User\`
+      ADD COLUMN \`passwordLoginEnabled\` BOOLEAN NOT NULL DEFAULT true
+    `);
+    console.log("ensure-schema: added User.passwordLoginEnabled");
+  } catch (err) {
+    if (isDupColumn(err)) {
+      /* already migrated */
+    } else {
+      console.warn(
+        "ensure-schema: passwordLoginEnabled",
+        String(err?.message || err).slice(0, 240),
+      );
+      throw err;
+    }
+  }
+  passwordLoginEnabledReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
     ensureWholesaleMinQtyColumn().catch(() => {}),
     ensureProductBadgeTable().catch(() => {}),
     ensureAdminViewOtpTable().catch(() => {}),
+    ensurePasswordLoginEnabledColumn().catch(() => {}),
   ]);
 }

@@ -106,6 +106,15 @@ router.post("/login", async (req, res) => {
       );
     }
 
+    if (user.role === "buyer" && user.passwordLoginEnabled === false) {
+      return fail(
+        res,
+        403,
+        "This is a one-time account — ask Admin to set a password, or Register on the App",
+        "one_time_account",
+      );
+    }
+
     const match = await bcrypt.compare(parsed.data.password, user.passwordHash);
     if (!match) return fail(res, 401, "Invalid login or password");
 
@@ -173,6 +182,8 @@ router.post("/buyer/one-time", async (req, res) => {
           name,
           phone,
           passwordHash,
+          /** One-time identity — cannot App-login until Admin reset or full register. */
+          passwordLoginEnabled: false,
         },
         include: { addresses: true },
       });
@@ -240,6 +251,7 @@ router.post("/register/buyer", async (req, res) => {
         address: location,
         townshipId,
         passwordHash,
+        passwordLoginEnabled: true,
         ...(townshipId
           ? {
               addresses: {
@@ -383,7 +395,7 @@ router.post("/change-password", requireAuth, async (req, res) => {
     const passwordHash = await bcrypt.hash(parsed.data.nextPassword, 10);
     await prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash },
+      data: { passwordHash, passwordLoginEnabled: true },
     });
     return ok(res, { ok: true });
   } catch (err) {

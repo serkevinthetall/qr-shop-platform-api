@@ -1288,14 +1288,15 @@ router.delete("/payments/:id", async (req, res) => {
 
 router.get("/otp-status", (_req, res) => ok(res, otpStatus()));
 
-/** GET /api/admin/accounts — buyers + merchants (no passwords) */
+/** GET /api/admin/accounts — admin / merchant / App user / one-time (no passwords) */
 router.get("/accounts", async (req, res) => {
   try {
     const role = String(req.query.role || "").trim();
     const q = String(req.query.q || "").trim();
+    const allowed = new Set(["all", "admin", "merchant", "buyer", "one_time"]);
     const rows = await listAccountsForAdmin({
       q,
-      role: role === "buyer" || role === "merchant" ? role : undefined,
+      role: allowed.has(role) ? role : "all",
     });
     return ok(res, rows);
   } catch (err) {
@@ -1406,7 +1407,7 @@ router.patch("/accounts/:userId/password", async (req, res) => {
     const passwordHash = await bcrypt.hash(parsed.data.password, 10);
     await prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash },
+      data: { passwordHash, passwordLoginEnabled: true },
     });
 
     return ok(res, {
@@ -1414,6 +1415,7 @@ router.patch("/accounts/:userId/password", async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      passwordLoginEnabled: true,
       updated: true,
     });
   } catch (err) {

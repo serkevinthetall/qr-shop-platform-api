@@ -40,9 +40,22 @@ function makeCode() {
 }
 
 function publicAccount(user, extras = {}) {
+  const passwordLoginEnabled = user.passwordLoginEnabled !== false;
+  const accountKind =
+    user.role === "admin" || user.role === "super_admin"
+      ? "admin"
+      : user.role === "merchant"
+        ? "merchant"
+        : user.role === "buyer"
+          ? passwordLoginEnabled
+            ? "app_user"
+            : "one_time"
+          : user.role;
   return {
     id: user.id,
     role: user.role,
+    accountKind,
+    passwordLoginEnabled,
     name: user.name,
     phone: user.phone,
     email: user.email,
@@ -56,10 +69,31 @@ function publicAccount(user, extras = {}) {
   };
 }
 
+/**
+ * @param {{ q?: string, role?: string }} opts
+ * role: all | admin | merchant | buyer | one_time
+ *   buyer = App user (passwordLoginEnabled)
+ *   one_time = buyer without App password login
+ */
 export async function listAccountsForAdmin({ q = "", role } = {}) {
-  const where = {
-    role: role || { in: ["buyer", "merchant"] },
-  };
+  const filter = String(role || "").trim();
+  const where = {};
+  if (filter === "admin") {
+    where.role = { in: ["admin", "super_admin"] };
+  } else if (filter === "merchant") {
+    where.role = "merchant";
+  } else if (filter === "buyer") {
+    where.role = "buyer";
+    where.passwordLoginEnabled = true;
+  } else if (filter === "one_time") {
+    where.role = "buyer";
+    where.passwordLoginEnabled = false;
+  } else if (filter === "all" || !filter) {
+    where.role = { in: ["buyer", "merchant", "admin", "super_admin"] };
+  } else {
+    where.role = { in: ["buyer", "merchant"] };
+  }
+
   const needle = String(q || "").trim();
   if (needle) {
     where.OR = [
@@ -75,6 +109,7 @@ export async function listAccountsForAdmin({ q = "", role } = {}) {
     select: {
       id: true,
       role: true,
+      passwordLoginEnabled: true,
       name: true,
       phone: true,
       email: true,
@@ -121,7 +156,14 @@ export async function loadAccountDetail(userId) {
     },
   });
   if (!user) return null;
-  if (user.role !== "buyer" && user.role !== "merchant") return null;
+  if (
+    user.role !== "buyer" &&
+    user.role !== "merchant" &&
+    user.role !== "admin" &&
+    user.role !== "super_admin"
+  ) {
+    return null;
+  }
   const { passwordHash: _pw, ...safe } = user;
   return publicAccount(safe, {
     shop: user.shop,
@@ -198,7 +240,8 @@ export async function issueViewAccountOtp({ adminUserId, targetUserId }) {
     throw err;
   }
   const target = await prisma.user.findUnique({ where: { id: targetUserId } });
-  if (!target || (target.role !== "buyer" && target.role !== "merchant")) {
+  const allowedRoles = new Set(["buyer", "merchant", "admin", "super_admin"]);
+  if (!target || !allowedRoles.has(target.role)) {
     const err = new Error("Account not found");
     err.code = "not_found";
     throw err;
