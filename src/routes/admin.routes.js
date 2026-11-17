@@ -1378,4 +1378,48 @@ router.get("/accounts/:userId", async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/admin/accounts/:userId/password
+ * Reset App customer (buyer) login password. No OTP — admin session only.
+ * Merchants keep PATCH /api/admin/merchants/:shopId/password.
+ */
+router.patch("/accounts/:userId/password", async (req, res) => {
+  try {
+    const userId = String(req.params.userId || "").trim();
+    if (!userId) return fail(res, 400, "userId required");
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return fail(res, 400, "Password must be at least 4 characters");
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return fail(res, 404, "Account not found");
+    if (user.role !== "buyer") {
+      return fail(
+        res,
+        400,
+        "Only App buyer passwords can be reset here — use Merchants for shop owners",
+        "not_buyer",
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    });
+
+    return ok(res, {
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      updated: true,
+    });
+  } catch (err) {
+    console.error("admin reset buyer password", err);
+    return fail(res, 500, "Could not reset password", "db_error");
+  }
+});
+
 export default router;
