@@ -18,6 +18,7 @@ import {
   mapPlatformPayment,
 } from "../lib/platform-payments.js";
 import { ensureCategoriesSeeded } from "../lib/categories.js";
+import { ensureProductBadgesSeeded } from "../lib/product-badges.js";
 
 const router = Router();
 
@@ -990,6 +991,150 @@ router.delete("/categories/:id", async (req, res) => {
   } catch (err) {
     if (err?.code === "P2025") return fail(res, 404, "Category not found");
     return fail(res, 500, "Could not delete category", "db_error");
+  }
+});
+
+/* ─── Product badges (ribbons) ─── */
+
+function mapBadge(b) {
+  return {
+    id: b.id,
+    name: b.name,
+    nameMy: b.nameMy ?? "",
+    sortOrder: b.sortOrder ?? 0,
+    active: b.active !== false,
+  };
+}
+
+router.get("/badges", async (_req, res) => {
+  try {
+    await ensureProductBadgesSeeded();
+    const rows = await prisma.productBadge.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+    return ok(res, rows.map(mapBadge));
+  } catch (err) {
+    console.error("admin badges", err);
+    return fail(res, 500, "Could not load badges", "db_error");
+  }
+});
+
+router.post("/badges", async (req, res) => {
+  try {
+    const name = String(req.body.name || "").trim();
+    if (!name) return fail(res, 400, "Name required");
+    const idRaw = String(req.body.id || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "")
+      .slice(0, 40);
+    const id =
+      idRaw.length >= 2
+        ? idRaw
+        : name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "")
+            .slice(0, 40) || `badge-${Date.now().toString(36)}`;
+    const allNames = await prisma.productBadge.findMany({ select: { name: true } });
+    if (
+      allNames.some((b) => b.name.trim().toLowerCase() === name.toLowerCase())
+    ) {
+      return fail(res, 409, "Badge name already exists");
+    }
+    const existing = await prisma.productBadge.findUnique({ where: { id } });
+    if (existing) return fail(res, 409, "Badge id already exists");
+    const maxSort = await prisma.productBadge.aggregate({ _max: { sortOrder: true } });
+    const row = await prisma.productBadge.create({
+      data: {
+        id,
+        name,
+        nameMy: String(req.body.nameMy || "").trim() || null,
+        sortOrder:
+          req.body.sortOrder != null
+            ? Number(req.body.sortOrder) || 0
+            : (maxSort._max.sortOrder ?? 0) + 10,
+        active: req.body.active !== false,
+      },
+    });
+    return ok(res, mapBadge(row), { created: true });
+  } catch (err) {
+    console.error("admin badge create", err);
+    if (err?.code === "P2002") return fail(res, 409, "Badge already exists");
+    return fail(res, 500, "Could not create badge", "db_error");
+  }
+});
+
+router.patch("/badges/:id", async (req, res) => {
+  try {
+    const existing = await prisma.productBadge.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) return fail(res, 404, "Badge not found");
+
+    const data = {};
+    if (req.body.name != null) data.name = String(req.body.name).trim();
+    if (req.body.nameMy != null) data.nameMy = String(req.body.nameMy).trim() || null;
+    if (req.body.sortOrder != null) data.sortOrder = Number(req.body.sortOrder) || 0;
+    if (typeof req.body.active === "boolean") data.active = req.body.active;
+    if (data.name === "") return fail(res, 400, "Name required");
+
+    if (data.name && data.name !== existing.name) {
+      const others = await prisma.productBadge.findMany({
+        where: { NOT: { id: existing.id } },
+        select: { name: true },
+      });
+      if (
+        others.some(
+          (b) => b.name.trim().toLowerCase() === data.name.toLowerCase(),
+        )
+      ) {
+        return fail(res, 409, "Badge name already exists");
+      }
+    }
+
+    const row = await prisma.productBadge.update({
+      where: { id: existing.id },
+      data,
+    });
+
+    /** Keep product.badge strings in sync when Admin renames. */
+    if (data.name && data.name !== existing.name) {
+      await prisma.product.updateMany({
+        where: { badge: existing.name },
+        data: { badge: data.name },
+      });
+    }
+
+    return ok(res, mapBadge(row));
+  } catch (err) {
+    if (err?.code === "P2025") return fail(res, 404, "Badge not found");
+    return fail(res, 500, "Could not update badge", "db_error");
+  }
+});
+
+router.delete("/badges/:id", async (req, res) => {
+  try {
+    const existing = await prisma.productBadge.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) return fail(res, 404, "Badge not found");
+    const inUse = await prisma.product.count({
+      where: { badge: existing.name },
+    });
+    if (inUse > 0) {
+      return fail(
+        res,
+        400,
+        `Badge is used by ${inUse} product(s) — turn it Off instead of deleting`,
+        "badge_in_use",
+      );
+    }
+    await prisma.productBadge.delete({ where: { id: existing.id } });
+    return ok(res, { deleted: true });
+  } catch (err) {
+    if (err?.code === "P2025") return fail(res, 404, "Badge not found");
+    return fail(res, 500, "Could not delete badge", "db_error");
   }
 });
 

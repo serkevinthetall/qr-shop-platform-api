@@ -554,6 +554,18 @@ model Category {
   active    Boolean @default(true)
 }
 
+/**
+ * Product ribbon / badge labels (Admin-controlled).
+ * Product.badge stores the English `name` string for mall display.
+ */
+model ProductBadge {
+  id        String  @id
+  name      String  @unique
+  nameMy    String?
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+}
+
 /** Marketplace home hero (Admin-edited; seeded from mall-meta.json) */
 model MallHero {
   id        String   @id @default("default")

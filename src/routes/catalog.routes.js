@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { toMallProduct, parseMallProductId } from "../lib/mall-product.js";
 import { defaultCategories, defaultHero } from "../lib/mall-meta.js";
 import { ensureCategoriesSeeded } from "../lib/categories.js";
+import { listActiveProductBadges } from "../lib/product-badges.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
 
 const router = Router();
@@ -58,6 +59,26 @@ router.get("/categories", async (_req, res) => {
   } catch (err) {
     console.error("catalog categories", err);
     return ok(res, defaultCategories());
+  }
+});
+
+/**
+ * GET /api/catalog/badges — active product badge labels (Admin-controlled)
+ */
+router.get("/badges", async (_req, res) => {
+  try {
+    const rows = await listActiveProductBadges();
+    return ok(
+      res,
+      rows.map((b) => ({
+        id: b.id,
+        name: b.name,
+        nameMy: b.nameMy ?? undefined,
+      })),
+    );
+  } catch (err) {
+    console.error("catalog badges", err);
+    return ok(res, []);
   }
 });
 

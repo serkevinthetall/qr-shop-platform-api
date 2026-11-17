@@ -11,6 +11,7 @@ import {
 import { resolveListingMode } from "../lib/shop-channels.js";
 import { recordStockAdjustMove } from "../lib/stock-moves.js";
 import { ensureWholesaleMinQtyColumn } from "../lib/ensure-schema.js";
+import { resolveProductBadgeName } from "../lib/product-badges.js";
 
 const router = Router();
 
@@ -243,6 +244,22 @@ router.post("/products", async (req, res) => {
       }
     }
 
+    let badge = null;
+    if (data.badge) {
+      const resolved = await resolveProductBadgeName(data.badge, {
+        allowInactive: true,
+      });
+      if (resolved === undefined) {
+        return fail(
+          res,
+          400,
+          "Pick a badge from the Admin list (or leave empty)",
+          "invalid_badge",
+        );
+      }
+      badge = resolved;
+    }
+
     const published = data.active !== false;
     const catalogOnly = await shopIsCatalogOnly(shopId);
     let sellOnMarketplace =
@@ -273,7 +290,7 @@ router.post("/products", async (req, res) => {
         costKs: data.costKs ?? null,
         stock: data.stock ?? 0,
         categoryId,
-        badge: data.badge ?? null,
+        badge,
         imageUrl: data.imageUrl ?? null,
         barcode: data.barcode ?? null,
         uom: data.uom ?? "piece",
@@ -315,6 +332,25 @@ router.put("/products/:id", async (req, res) => {
     const data = productWriteData(req.body, { partial: true });
     if (Object.keys(data).length === 0) {
       return ok(res, publicMerchantProduct(existing));
+    }
+
+    if (data.badge !== undefined) {
+      if (!data.badge) {
+        data.badge = null;
+      } else {
+        const resolved = await resolveProductBadgeName(data.badge, {
+          allowInactive: true,
+        });
+        if (resolved === undefined) {
+          return fail(
+            res,
+            400,
+            "Pick a badge from the Admin list (or leave empty)",
+            "invalid_badge",
+          );
+        }
+        data.badge = resolved;
+      }
     }
 
     const nextWs =

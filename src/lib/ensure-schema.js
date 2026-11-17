@@ -2,6 +2,7 @@ import { prisma } from "./prisma.js";
 
 let expressColumnReady = false;
 let wholesaleMinQtyReady = false;
+let productBadgeTableReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -55,9 +56,36 @@ export async function ensureWholesaleMinQtyColumn() {
   wholesaleMinQtyReady = true;
 }
 
+/** Admin-controlled product badge catalog (Hostinger may lack prisma db push). */
+export async function ensureProductBadgeTable() {
+  if (productBadgeTableReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`ProductBadge\` (
+        \`id\` VARCHAR(191) NOT NULL,
+        \`name\` VARCHAR(191) NOT NULL,
+        \`nameMy\` VARCHAR(191) NULL,
+        \`sortOrder\` INT NOT NULL DEFAULT 0,
+        \`active\` BOOLEAN NOT NULL DEFAULT true,
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`ProductBadge_name_key\` (\`name\`)
+      ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    `);
+    console.log("ensure-schema: ensured ProductBadge table");
+  } catch (err) {
+    console.warn(
+      "ensure-schema: ProductBadge",
+      String(err?.message || err).slice(0, 240),
+    );
+    throw err;
+  }
+  productBadgeTableReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
     ensureWholesaleMinQtyColumn().catch(() => {}),
+    ensureProductBadgeTable().catch(() => {}),
   ]);
 }
