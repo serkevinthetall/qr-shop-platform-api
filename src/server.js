@@ -24,6 +24,7 @@ import merchantGuidesRoutes from "./routes/merchant-guides.routes.js";
 import orderRoutes from "./routes/orders.routes.js";
 import checkoutRoutes from "./routes/checkout.routes.js";
 import catalogRoutes from "./routes/catalog.routes.js";
+import appCatalogRoutes from "./routes/app-catalog.routes.js";
 import shopRoutes from "./routes/shops.routes.js";
 import townshipRoutes from "./routes/townships.routes.js";
 import addressRoutes from "./routes/addresses.routes.js";
@@ -239,6 +240,8 @@ app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/realtime", realtimeRoutes);
 app.use("/api/catalog", catalogRoutes);
+/** QR App–only catalog (retail / sellOnApp) — not shared with Marketplace web. */
+app.use("/api/app/catalog", appCatalogRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/townships", townshipRoutes);
 app.use("/api/addresses", addressRoutes);
