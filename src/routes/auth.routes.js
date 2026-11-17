@@ -31,6 +31,10 @@ const registerBuyerSchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(6),
   password: z.string().min(4),
+  /** Optional Gmail / email for sign-in later */
+  email: z
+    .union([z.string().email(), z.literal(""), z.null()])
+    .optional(),
   /** Street line (Marketplace register) */
   street: z.string().min(1).optional(),
   /** Admin-published township id */
@@ -198,6 +202,17 @@ router.post("/register/buyer", async (req, res) => {
     const exists = await prisma.user.findFirst({ where: { phone } });
     if (exists) return fail(res, 409, "This phone is already registered");
 
+    const emailRaw = String(parsed.data.email || "")
+      .trim()
+      .toLowerCase();
+    const email = emailRaw.includes("@") ? emailRaw : null;
+    if (email) {
+      const emailTaken = await prisma.user.findFirst({ where: { email } });
+      if (emailTaken) {
+        return fail(res, 409, "This email is already registered");
+      }
+    }
+
     const street = (parsed.data.street || parsed.data.address || "").trim();
     if (!street) return fail(res, 400, "Street / address is required");
 
@@ -221,6 +236,7 @@ router.post("/register/buyer", async (req, res) => {
         role: "buyer",
         name: parsed.data.name.trim(),
         phone,
+        email,
         address: location,
         townshipId,
         passwordHash,
