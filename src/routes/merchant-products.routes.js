@@ -117,7 +117,8 @@ const createSchema = z.object({
   lowStockAlertEnabled: z.boolean().optional(),
   lowStockThreshold: z.number().int().nonnegative().optional(),
   categoryId: z.string().min(1, "Category required"),
-  badge: z.string().optional(),
+  /** Merchant sends null when no badge (clear / unset) — must not reject create. */
+  badge: z.string().nullish(),
   imageUrl: z
     .string()
     .optional()
