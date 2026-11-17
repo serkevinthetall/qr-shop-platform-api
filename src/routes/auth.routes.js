@@ -106,17 +106,28 @@ router.post("/login", async (req, res) => {
       );
     }
 
-    if (user.role === "buyer" && user.passwordLoginEnabled === false) {
-      return fail(
-        res,
-        403,
-        "This is a one-time account — ask Admin to set a password, or Register on the App",
-        "one_time_account",
-      );
+    const match = await bcrypt.compare(parsed.data.password, user.passwordHash);
+    if (!match) {
+      /** Wrong password + never unlocked for App login → one-time identity. */
+      if (user.role === "buyer" && user.passwordLoginEnabled === false) {
+        return fail(
+          res,
+          403,
+          "This is a one-time account — ask Admin to set a password, or Register on the App",
+          "one_time_account",
+        );
+      }
+      return fail(res, 401, "Invalid login or password");
     }
 
-    const match = await bcrypt.compare(parsed.data.password, user.passwordHash);
-    if (!match) return fail(res, 401, "Invalid login or password");
+    /** Password ok but still flagged one-time (e.g. Admin reset before flag) — unlock. */
+    if (user.role === "buyer" && user.passwordLoginEnabled === false) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordLoginEnabled: true },
+      });
+      user.passwordLoginEnabled = true;
+    }
 
     return ok(res, issueSession(user));
   } catch (err) {
