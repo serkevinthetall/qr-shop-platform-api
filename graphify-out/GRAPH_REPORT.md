@@ -1,16 +1,16 @@
-# Graph Report - QR Shop Platform API  (2026-11-06)
+# Graph Report - QR Shop Platform API  (2026-11-17)
 
 ## Corpus Check
-- 87 files · ~65,108 words
+- 96 files · ~70,456 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 500 nodes · 1037 edges · 24 communities (23 shown, 1 thin omitted)
+- 558 nodes · 1162 edges · 26 communities (23 shown, 3 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.5)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `82729eb2`
+- Built from commit: `fdd84110`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -39,6 +39,8 @@
 - merchant-overview.routes.js
 - Postman — QR Shop Platform API
 - seed-sample-shop-messages.js
+- go.routes.js
+- setup-preview-db.sh
 
 ## God Nodes (most connected - your core abstractions)
 1. `fail()` - 40 edges
@@ -54,60 +56,60 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `main()` --references--> `@prisma/client`  [EXTRACTED]
-  scripts/seed-sample-shop-grocery.js → package.json
-- `main()` --calls--> `allocateOrderCode()`  [EXTRACTED]
-  scripts/backfill-order-codes.mjs → src/lib/order-code.js
-- `main()` --references--> `@prisma/client`  [EXTRACTED]
-  scripts/import-odoo-qr-app-to-sample-shop.js → package.json
-- `main()` --references--> `@prisma/client`  [EXTRACTED]
   scripts/seed-sample-shop-orders.js → package.json
 - `main()` --calls--> `allocateOrderCode()`  [EXTRACTED]
+  scripts/backfill-order-codes.mjs → src/lib/order-code.js
+- `main()` --calls--> `allocateOrderCode()`  [EXTRACTED]
   scripts/import-odoo-qr-app-to-sample-shop.js → src/lib/order-code.js
+- `main()` --calls--> `ensureBuiltinPlatformPayments()`  [EXTRACTED]
+  scripts/seed-mall-meta.js → src/lib/platform-payments.js
+- `main()` --references--> `@prisma/client`  [EXTRACTED]
+  scripts/import-odoo-qr-app-to-sample-shop.js → package.json
 
 ## Import Cycles
 - None detected.
 
-## Communities (24 total, 1 thin omitted)
+## Communities (26 total, 3 thin omitted)
 
 ### Community 0 - "fail"
-Cohesion: 0.12
-Nodes (29): isMerchantOwner(), requireShopOwner(), shopIdOrFail(), fail(), ok(), recordStockAdjustMove(), readBearer(), requireAuth() (+21 more)
+Cohesion: 0.06
+Nodes (58): isMerchantOwner(), requireShopOwner(), shopIdOrFail(), realtimeClientCount(), fail(), ok(), recordStockAdjustMove(), readBearer() (+50 more)
 
 ### Community 1 - "orders.routes.js"
-Cohesion: 0.12
-Nodes (23): ensureExpressZonesColumn(), ensureSchemaPatches(), ensureWholesaleMinQtyColumn(), isDupColumn(), resolveUnitPrice(), ACTIVE_PIPELINE_STAGES, isReadyPickupStage(), normalizeOrderStage() (+15 more)
+Cohesion: 0.06
+Nodes (37): main(), BASKETS, buildSpecs(), BUYERS, DELIVERY_STAGES, __dirname, main(), PAYMENTS (+29 more)
 
 ### Community 2 - "server.js"
-Cohesion: 0.05
-Nodes (43): normalizeMediaUrl(), root, SEED_COVER_FILES, SEED_LOGO_FILES, seedPathForFilename(), seedUploadsDir(), withNormalizedShopMedia(), ensureUploadDirs() (+35 more)
+Cohesion: 0.08
+Nodes (33): normalizeMediaUrl(), root, SEED_COVER_FILES, SEED_LOGO_FILES, seedPathForFilename(), seedUploadsDir(), withNormalizedShopMedia(), DAY_KEYS (+25 more)
 
 ### Community 3 - "scripts"
 Cohesion: 0.07
 Nodes (27): nodemon, description, devDependencies, nodemon, engines, node, main, name (+19 more)
 
 ### Community 4 - "dependencies"
-Cohesion: 0.10
-Nodes (21): bcryptjs, cors, dotenv, express, helmet, jsonwebtoken, multer, dependencies (+13 more)
+Cohesion: 0.09
+Nodes (23): bcryptjs, cors, dotenv, express, helmet, jsonwebtoken, multer, nodemailer (+15 more)
 
 ### Community 5 - "catalog.routes.js"
-Cohesion: 0.07
-Nodes (34): issueGuestSession(), issueSession(), publicUser(), normalizeLogin(), normalizePhone(), pricesForContext(), cleanup(), clients (+26 more)
+Cohesion: 0.10
+Nodes (23): issueGuestSession(), issueSession(), publicUser(), isPubliclySold(), parseAttributes(), productWriteData(), publicMerchantProduct(), sellChannelsOf() (+15 more)
 
 ### Community 6 - "env.js"
 Cohesion: 0.09
 Nodes (19): prisma, main(), prisma, upsertUser(), main(), prisma, upsertUser(), ensureOrder() (+11 more)
 
 ### Community 7 - "import-odoo-qr-app-to-sample-shop.js"
-Cohesion: 0.09
-Nodes (29): @prisma/client, @prisma/client, main(), createOdooClient(), ensureSampleShop(), fetchAllSearchRead(), kyats(), main() (+21 more)
+Cohesion: 0.11
+Nodes (21): @prisma/client, @prisma/client, createOdooClient(), ensureSampleShop(), fetchAllSearchRead(), kyats(), main(), mapFulfillment() (+13 more)
 
 ### Community 8 - "admin.routes.js"
-Cohesion: 0.09
-Nodes (26): main(), isVisibleToMerchant(), MERCHANT_SCOPES, normalizeMerchantScope(), parseMerchantIds(), publicAnnouncement(), toDbFields(), defaultCategories() (+18 more)
+Cohesion: 0.07
+Nodes (48): consumeChallenge(), grantKey(), grantViewAccess(), hashCode(), hasViewAccess(), issueViewAccountOtp(), listAccountsForAdmin(), loadAccountDetail() (+40 more)
 
 ### Community 9 - "QR Shop Platform API"
-Cohesion: 0.08
-Nodes (21): After deploy, Deploy stages, Environment checklist, Health checks, Not used in production, Vercel, Where the API runs, Database: Supabase Postgres (LEGACY) (+13 more)
+Cohesion: 0.07
+Nodes (25): After deploy, Deploy stages (Hostinger), Health checks, Not used in production, Preview env, Production env, Where the API runs, Mapping (+17 more)
 
 ### Community 10 - "auth.routes.js"
 Cohesion: 0.15
@@ -142,16 +144,16 @@ Cohesion: 0.50
 Nodes (3): APIs, Connection, Townships + delivery fees (QR Shop only)
 
 ### Community 18 - "Database: Supabase Postgres"
-Cohesion: 0.20
-Nodes (7): cuidLike(), __dirname, FAMILIES, IMG, main(), prisma, root
+Cohesion: 0.16
+Nodes (16): normalizeLogin(), normalizePhone(), cleanup(), clients, publish(), publishMessageEvent(), publishOrderEvent(), subscribe() (+8 more)
 
 ### Community 20 - "merchant-guest.routes.js"
-Cohesion: 0.18
-Nodes (18): toMallProduct(), unitPriceForChannel(), mallPricesForProduct(), resolvePricingContext(), channelsFromListingMode(), featuresPayloadForMode(), LISTING_MODES, normalizeListingMode() (+10 more)
+Cohesion: 0.14
+Nodes (22): main(), ensureCategoriesSeeded(), defaultCategories(), defaultHero(), loadMallMeta(), metaPath, root, parseMallProductId() (+14 more)
 
 ### Community 21 - "merchant-overview.routes.js"
-Cohesion: 0.16
-Nodes (13): isPubliclySold(), parseAttributes(), productWriteData(), publicMerchantProduct(), sellChannelsOf(), defaultStoreStyle(), normalizePreset(), parseStoreStyle() (+5 more)
+Cohesion: 0.80
+Nodes (4): candidateFromId(), digitsOnly(), isCompleteBarcode(), main()
 
 ### Community 22 - "Postman — QR Shop Platform API"
 Cohesion: 0.33
@@ -162,24 +164,24 @@ Cohesion: 0.25
 Nodes (7): BUYERS, cuidLike(), __dirname, main(), prisma, root, SCRIPTS
 
 ## Knowledge Gaps
-- **169 isolated node(s):** `name`, `version`, `description`, `main`, `type` (+164 more)
+- **181 isolated node(s):** `name`, `version`, `description`, `main`, `type` (+176 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `@prisma/client` connect `import-odoo-qr-app-to-sample-shop.js` to `Database: Supabase Postgres`, `dependencies`?**
-  _High betweenness centrality (0.176) - this node is a cross-community bridge._
-- **Why does `allocateOrderCode()` connect `import-odoo-qr-app-to-sample-shop.js` to `fail`, `orders.routes.js`?**
+- **Why does `@prisma/client` connect `import-odoo-qr-app-to-sample-shop.js` to `orders.routes.js`, `dependencies`?**
   _High betweenness centrality (0.166) - this node is a cross-community bridge._
+- **Why does `allocateOrderCode()` connect `orders.routes.js` to `Database: Supabase Postgres`, `import-odoo-qr-app-to-sample-shop.js`?**
+  _High betweenness centrality (0.160) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `scripts`, `import-odoo-qr-app-to-sample-shop.js`?**
-  _High betweenness centrality (0.145) - this node is a cross-community bridge._
+  _High betweenness centrality (0.138) - this node is a cross-community bridge._
 - **What connects `name`, `version`, `description` to the rest of the system?**
-  _169 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _181 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `fail` be split into smaller, more focused modules?**
-  _Cohesion score 0.1187980433263452 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06332992849846783 - nodes in this community are weakly interconnected._
 - **Should `orders.routes.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.11904761904761904 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0647342995169082 - nodes in this community are weakly interconnected._
 - **Should `server.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.05454545454545454 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07665505226480836 - nodes in this community are weakly interconnected._

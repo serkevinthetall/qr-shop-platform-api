@@ -566,6 +566,23 @@ model ProductBadge {
   active    Boolean @default(true)
 }
 
+/**
+ * Saved OTP for Admin “view user account without login”.
+ * Plaintext code is never stored — only SHA-256 hash.
+ */
+model AdminViewOtp {
+  id           String    @id
+  adminUserId  String
+  targetUserId String
+  codeHash     String
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([adminUserId, targetUserId])
+  @@index([expiresAt])
+}
+
 /** Marketplace home hero (Admin-edited; seeded from mall-meta.json) */
 model MallHero {
   id        String   @id @default("default")

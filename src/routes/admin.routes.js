@@ -19,6 +19,14 @@ import {
 } from "../lib/platform-payments.js";
 import { ensureCategoriesSeeded } from "../lib/categories.js";
 import { ensureProductBadgesSeeded } from "../lib/product-badges.js";
+import {
+  hasViewAccess,
+  issueViewAccountOtp,
+  listAccountsForAdmin,
+  loadAccountDetail,
+  otpStatus,
+  verifyViewAccountOtp,
+} from "../lib/admin-view-otp.js";
 
 const router = Router();
 
@@ -1273,6 +1281,100 @@ router.delete("/payments/:id", async (req, res) => {
     return ok(res, { deleted: true });
   } catch (err) {
     return fail(res, 500, "Could not delete payment", "db_error");
+  }
+});
+
+/* ─── View user account (OTP via Admin Gmail — no user password login) ─── */
+
+router.get("/otp-status", (_req, res) => ok(res, otpStatus()));
+
+/** GET /api/admin/accounts — buyers + merchants (no passwords) */
+router.get("/accounts", async (req, res) => {
+  try {
+    const role = String(req.query.role || "").trim();
+    const q = String(req.query.q || "").trim();
+    const rows = await listAccountsForAdmin({
+      q,
+      role: role === "buyer" || role === "merchant" ? role : undefined,
+    });
+    return ok(res, rows);
+  } catch (err) {
+    console.error("admin accounts", err);
+    return fail(res, 500, "Could not load accounts", "db_error");
+  }
+});
+
+/**
+ * POST /api/admin/accounts/:userId/view-otp
+ * Emails a 6-digit OTP from Admin Gmail. Does not log in as the user.
+ */
+router.post("/accounts/:userId/view-otp", async (req, res) => {
+  try {
+    const adminUserId = String(req.user?.sub || "").trim();
+    if (!adminUserId) return fail(res, 401, "Sign in required");
+    const result = await issueViewAccountOtp({
+      adminUserId,
+      targetUserId: String(req.params.userId || "").trim(),
+    });
+    return ok(res, result);
+  } catch (err) {
+    if (err?.code === "otp_not_configured") {
+      return fail(res, 503, err.message, "otp_not_configured");
+    }
+    if (err?.code === "not_found") return fail(res, 404, err.message);
+    console.error("admin view-otp", err);
+    return fail(res, 500, err?.message || "Could not send OTP", "otp_send_failed");
+  }
+});
+
+/**
+ * POST /api/admin/accounts/:userId/view-otp/verify
+ * Body: { code } — on success returns saved account detail (no password).
+ */
+router.post("/accounts/:userId/view-otp/verify", async (req, res) => {
+  try {
+    const adminUserId = String(req.user?.sub || "").trim();
+    if (!adminUserId) return fail(res, 401, "Sign in required");
+    const code = String(req.body?.code || "").trim();
+    if (!/^\d{6}$/.test(code)) {
+      return fail(res, 400, "Enter the 6-digit OTP", "validation_error");
+    }
+    const detail = await verifyViewAccountOtp({
+      adminUserId,
+      targetUserId: String(req.params.userId || "").trim(),
+      code,
+    });
+    return ok(res, detail);
+  } catch (err) {
+    if (err?.code === "otp_invalid") {
+      return fail(res, 401, err.message, "otp_invalid");
+    }
+    if (err?.code === "not_found") return fail(res, 404, err.message);
+    console.error("admin view-otp verify", err);
+    return fail(res, 500, "Could not verify OTP", "otp_verify_failed");
+  }
+});
+
+/** GET /api/admin/accounts/:userId — only after OTP verify (30 min grant). */
+router.get("/accounts/:userId", async (req, res) => {
+  try {
+    const adminUserId = String(req.user?.sub || "").trim();
+    const targetUserId = String(req.params.userId || "").trim();
+    if (!adminUserId) return fail(res, 401, "Sign in required");
+    if (!hasViewAccess(adminUserId, targetUserId)) {
+      return fail(
+        res,
+        403,
+        "OTP required to view this account",
+        "otp_required",
+      );
+    }
+    const detail = await loadAccountDetail(targetUserId);
+    if (!detail) return fail(res, 404, "Account not found");
+    return ok(res, detail);
+  } catch (err) {
+    console.error("admin account detail", err);
+    return fail(res, 500, "Could not load account", "db_error");
   }
 });
 

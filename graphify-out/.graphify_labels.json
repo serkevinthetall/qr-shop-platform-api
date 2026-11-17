@@ -22,5 +22,7 @@
   "20": "merchant-guest.routes.js",
   "21": "merchant-overview.routes.js",
   "22": "Postman — QR Shop Platform API",
-  "23": "seed-sample-shop-messages.js"
+  "23": "seed-sample-shop-messages.js",
+  "24": "go.routes.js",
+  "25": "setup-preview-db.sh"
 }

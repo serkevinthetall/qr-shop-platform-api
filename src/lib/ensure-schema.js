@@ -3,6 +3,7 @@ import { prisma } from "./prisma.js";
 let expressColumnReady = false;
 let wholesaleMinQtyReady = false;
 let productBadgeTableReady = false;
+let adminViewOtpTableReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -82,10 +83,40 @@ export async function ensureProductBadgeTable() {
   productBadgeTableReady = true;
 }
 
+/** Admin OTP challenges for viewing buyer/merchant accounts. */
+export async function ensureAdminViewOtpTable() {
+  if (adminViewOtpTableReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`AdminViewOtp\` (
+        \`id\` VARCHAR(191) NOT NULL,
+        \`adminUserId\` VARCHAR(191) NOT NULL,
+        \`targetUserId\` VARCHAR(191) NOT NULL,
+        \`codeHash\` VARCHAR(191) NOT NULL,
+        \`expiresAt\` DATETIME(3) NOT NULL,
+        \`consumedAt\` DATETIME(3) NULL,
+        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        INDEX \`AdminViewOtp_adminUserId_targetUserId_idx\` (\`adminUserId\`, \`targetUserId\`),
+        INDEX \`AdminViewOtp_expiresAt_idx\` (\`expiresAt\`)
+      ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    `);
+    console.log("ensure-schema: ensured AdminViewOtp table");
+  } catch (err) {
+    console.warn(
+      "ensure-schema: AdminViewOtp",
+      String(err?.message || err).slice(0, 240),
+    );
+    throw err;
+  }
+  adminViewOtpTableReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
     ensureWholesaleMinQtyColumn().catch(() => {}),
     ensureProductBadgeTable().catch(() => {}),
+    ensureAdminViewOtpTable().catch(() => {}),
   ]);
 }
