@@ -155,6 +155,19 @@ router.post("/merchants", async (req, res) => {
     return ok(res, shop, { created: true });
   } catch (err) {
     console.error("admin create merchant", err);
+    const code = err?.code || "";
+    const msg = String(err?.message || "");
+    if (code === "P2002") {
+      return fail(res, 409, "Email, phone, or shop slug already exists", "conflict");
+    }
+    if (msg.includes("openingHoursJson") || msg.includes("Unknown column")) {
+      return fail(
+        res,
+        500,
+        "Database is missing a required column — run prisma db push on the API host",
+        "schema_mismatch",
+      );
+    }
     return fail(res, 500, "Could not create shop", "db_error");
   }
 });
