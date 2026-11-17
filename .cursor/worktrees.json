@@ -1,0 +1,8 @@
+{
+  "setup-worktree-unix": [
+    "npm ci || npm install",
+    "cp \"$ROOT_WORKTREE_PATH/.env\" .env 2>/dev/null || true",
+    "cp \"$ROOT_WORKTREE_PATH/.env.preview\" .env.preview 2>/dev/null || true",
+    "npx prisma generate"
+  ]
+}

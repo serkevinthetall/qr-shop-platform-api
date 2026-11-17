@@ -12,7 +12,9 @@ reports/
 uploads/*
 !uploads/.gitkeep
 
-.cursor/
+.cursor/*
+!.cursor/worktrees.json
+
 .figma/
 .env*
 !.env.example
