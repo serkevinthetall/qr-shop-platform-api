@@ -84,29 +84,53 @@ router.get("/merchants", async (_req, res) => {
 });
 
 /** Required: name, phone, shopName, address(location), password (Admin sets it). Email optional. */
+const requiredTrimmed = (min, message) =>
+  z.preprocess(
+    (v) => (v == null ? "" : v),
+    z.string().trim().min(min, message),
+  );
+
 const createMerchantSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().min(6),
-  shopName: z.string().min(2),
+  name: requiredTrimmed(2, "Owner name must be at least 2 characters"),
+  email: z
+    .union([
+      z.literal(""),
+      z.string().trim().email("Enter a valid email, or leave blank"),
+    ])
+    .optional(),
+  phone: requiredTrimmed(6, "Enter a valid phone number"),
+  shopName: requiredTrimmed(2, "Shop name must be at least 2 characters"),
   location: z.string().optional(),
-  password: z.string().min(4),
+  password: requiredTrimmed(4, "Password must be at least 4 characters"),
 });
 
 /** POST /api/admin/merchants — Admin creates an approved shop + owner */
 router.post("/merchants", async (req, res) => {
   try {
     const parsed = createMerchantSchema.safeParse(req.body);
-    if (!parsed.success) return fail(res, 400, "Invalid shop details");
+    if (!parsed.success) {
+      const first = parsed.error.issues[0]?.message || "Invalid shop details";
+      return fail(res, 400, first, "validation_error");
+    }
 
     const phone = normalizePhone(parsed.data.phone);
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 8) {
+      return fail(res, 400, "Enter a valid phone (at least 8 digits)", "validation_error");
+    }
+
     const emailRaw = (parsed.data.email || "").trim().toLowerCase();
     const email =
-      emailRaw || `${phone.replace(/\D/g, "") || "shop"}@merchant.qrshop.local`;
-    const exists = await prisma.user.findFirst({
-      where: { OR: [{ email }, { phone }] },
-    });
-    if (exists) return fail(res, 409, "Email or phone already registered");
+      emailRaw || `${phoneDigits || "shop"}@merchant.qrshop.local`;
+
+    const emailTaken = await prisma.user.findFirst({ where: { email } });
+    if (emailTaken) {
+      return fail(res, 409, "This email is already registered", "email_taken");
+    }
+    const phoneTaken = await prisma.user.findFirst({ where: { phone } });
+    if (phoneTaken) {
+      return fail(res, 409, "This phone is already registered", "phone_taken");
+    }
 
     const slugBase = parsed.data.shopName
       .toLowerCase()
@@ -169,6 +193,110 @@ router.post("/merchants", async (req, res) => {
       );
     }
     return fail(res, 500, "Could not create shop", "db_error");
+  }
+});
+
+const updateMerchantSchema = z.object({
+  name: requiredTrimmed(2, "Owner name must be at least 2 characters"),
+  email: z
+    .union([
+      z.literal(""),
+      z.string().trim().email("Enter a valid email, or leave blank"),
+    ])
+    .optional(),
+  phone: requiredTrimmed(6, "Enter a valid phone number"),
+  shopName: requiredTrimmed(2, "Shop name must be at least 2 characters"),
+  location: z.string().optional(),
+});
+
+/**
+ * PATCH /api/admin/merchants/:shopId
+ * Admin edits shop + owner contact details (name, phone, email, shop name, location).
+ */
+router.patch("/merchants/:shopId", async (req, res) => {
+  try {
+    const shopId = String(req.params.shopId || "").trim();
+    if (!shopId) return fail(res, 400, "shopId required");
+
+    const parsed = updateMerchantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0]?.message || "Invalid shop details";
+      return fail(res, 400, first, "validation_error");
+    }
+
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const owner = await prisma.user.findFirst({
+      where: { shopId, role: "merchant" },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!owner) return fail(res, 404, "Shop owner account not found");
+
+    const phone = normalizePhone(parsed.data.phone);
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 8) {
+      return fail(res, 400, "Enter a valid phone (at least 8 digits)", "validation_error");
+    }
+
+    const emailRaw = (parsed.data.email || "").trim().toLowerCase();
+    const email =
+      emailRaw ||
+      owner.email ||
+      `${phoneDigits || "shop"}@merchant.qrshop.local`;
+
+    const emailTaken = await prisma.user.findFirst({
+      where: { email, NOT: { id: owner.id } },
+    });
+    if (emailTaken) {
+      return fail(res, 409, "This email is already registered", "email_taken");
+    }
+    const phoneTaken = await prisma.user.findFirst({
+      where: { phone, NOT: { id: owner.id } },
+    });
+    if (phoneTaken) {
+      return fail(res, 409, "This phone is already registered", "phone_taken");
+    }
+
+    const shopName = parsed.data.shopName.trim();
+    const location = parsed.data.location?.trim() || shop.location || "Online";
+    const ownerName = parsed.data.name.trim();
+
+    const [, updatedShop] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: owner.id },
+        data: {
+          name: ownerName,
+          phone,
+          email,
+        },
+      }),
+      prisma.shop.update({
+        where: { id: shopId },
+        data: {
+          name: shopName,
+          phone,
+          email,
+          location,
+        },
+        include: {
+          users: {
+            where: { role: "merchant" },
+            select: { id: true, name: true, email: true, phone: true },
+          },
+          _count: { select: { products: true, orders: true } },
+        },
+      }),
+    ]);
+
+    return ok(res, updatedShop);
+  } catch (err) {
+    console.error("admin update merchant", err);
+    const code = err?.code || "";
+    if (code === "P2002") {
+      return fail(res, 409, "Email or phone already exists", "conflict");
+    }
+    return fail(res, 500, "Could not update shop", "db_error");
   }
 });
 
