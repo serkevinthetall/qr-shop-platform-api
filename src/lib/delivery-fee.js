@@ -46,10 +46,17 @@ export async function enrichZones(zonesOrJson) {
   const zones = Array.isArray(zonesOrJson)
     ? zonesOrJson
     : unpackZonesJson(zonesOrJson).zones;
+  const ids = [
+    ...new Set(zones.map((z) => z?.townshipId).filter(Boolean)),
+  ];
+  const found = ids.length
+    ? await prisma.township.findMany({ where: { id: { in: ids } } })
+    : [];
+  const byId = new Map(found.map((t) => [t.id, t]));
   const out = [];
   for (const z of zones) {
     if (!z?.townshipId) continue;
-    const t = await prisma.township.findUnique({ where: { id: z.townshipId } });
+    const t = byId.get(z.townshipId);
     out.push({
       townshipId: z.townshipId,
       feeKs: Math.max(0, Math.floor(Number(z.feeKs) || 0)),

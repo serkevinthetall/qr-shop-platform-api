@@ -34,23 +34,33 @@ const expressStateSchema = z.object({
 });
 
 async function cleanZones(zones) {
-  const cleaned = [];
   const seen = new Set();
+  const ordered = [];
   for (const z of zones) {
-    if (seen.has(z.townshipId)) continue;
-    const t = await prisma.township.findUnique({ where: { id: z.townshipId } });
-    if (!t || !t.active) {
+    if (!z?.townshipId || seen.has(z.townshipId)) continue;
+    seen.add(z.townshipId);
+    ordered.push(z);
+  }
+  // One query — avoid N findUnique round-trips on every Add (UI stays "saving" until this finishes).
+  const ids = ordered.map((z) => z.townshipId);
+  const found = ids.length
+    ? await prisma.township.findMany({
+        where: { id: { in: ids }, active: true },
+        select: { id: true },
+      })
+    : [];
+  const okIds = new Set(found.map((t) => t.id));
+  for (const z of ordered) {
+    if (!okIds.has(z.townshipId)) {
       const err = new Error(`Township not published: ${z.townshipId}`);
       err.code = "township_not_published";
       throw err;
     }
-    seen.add(z.townshipId);
-    cleaned.push({
-      townshipId: z.townshipId,
-      feeKs: Math.max(0, Math.floor(z.feeKs)),
-    });
   }
-  return cleaned;
+  return ordered.map((z) => ({
+    townshipId: z.townshipId,
+    feeKs: Math.max(0, Math.floor(z.feeKs)),
+  }));
 }
 
 async function cleanExpressStates(rows) {
