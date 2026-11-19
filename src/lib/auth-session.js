@@ -26,14 +26,20 @@ export function publicUser(u, addresses = undefined) {
 }
 
 /** Registered account JWT (buyer / merchant / staff / admin / super_admin) */
-export function issueSession(user, addresses = undefined) {
-  const token = signToken({
-    kind: "user",
-    sub: user.id,
-    role: user.role,
-    shopId: user.shopId ?? undefined,
-    name: user.name,
-  });
+export function issueSession(user, addresses = undefined, extras = {}) {
+  const token = signToken(
+    {
+      kind: "user",
+      sub: user.id,
+      role: user.role,
+      shopId: user.shopId ?? undefined,
+      name: user.name,
+      ...(extras.impersonatedBy
+        ? { impersonatedBy: extras.impersonatedBy }
+        : {}),
+    },
+    extras.expiresIn ? { expiresIn: extras.expiresIn } : {},
+  );
   return { token, user: publicUser(user, addresses ?? user.addresses) };
 }
 

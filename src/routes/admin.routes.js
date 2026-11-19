@@ -1331,6 +1331,62 @@ router.get("/accounts", async (req, res) => {
 });
 
 /**
+ * POST /api/admin/accounts/:userId/open-shop
+ * Merchant only — issue a short merchant JWT so Admin can open that shop
+ * in the Merchant app (no merchant password).
+ */
+router.post("/accounts/:userId/open-shop", async (req, res) => {
+  try {
+    const adminUserId = String(req.user?.sub || "").trim();
+    if (!adminUserId) return fail(res, 401, "Sign in required");
+    const userId = String(req.params.userId || "").trim();
+    if (!userId) return fail(res, 400, "userId required");
+
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { shop: { select: { id: true, name: true, slug: true, status: true } } },
+    });
+    if (!target) return fail(res, 404, "Account not found");
+    if (target.role !== "merchant") {
+      return fail(
+        res,
+        400,
+        "Open shop is only for merchant accounts",
+        "not_merchant",
+      );
+    }
+    if (!target.shopId || !target.shop) {
+      return fail(res, 400, "This merchant has no shop linked");
+    }
+    if (target.active === false) {
+      return fail(res, 400, "Merchant account is inactive");
+    }
+
+    const { issueSession } = await import("../lib/auth-session.js");
+    const session = issueSession(target, undefined, {
+      impersonatedBy: adminUserId,
+      expiresIn: "2h",
+    });
+
+    return ok(res, {
+      token: session.token,
+      user: session.user,
+      shop: {
+        id: target.shop.id,
+        name: target.shop.name,
+        slug: target.shop.slug,
+        status: target.shop.status,
+      },
+      expiresIn: "2h",
+      impersonatedBy: adminUserId,
+    });
+  } catch (err) {
+    console.error("admin open-shop", err);
+    return fail(res, 500, "Could not open shop session", "db_error");
+  }
+});
+
+/**
  * POST /api/admin/accounts/:userId/view-otp
  * Emails a 6-digit OTP from Admin Gmail. Does not log in as the user.
  */

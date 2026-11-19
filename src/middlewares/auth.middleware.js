@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
 import { fail } from "../lib/response.js";
 
-export function signToken(payload) {
+export function signToken(payload, options = {}) {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is not set");
   return jwt.sign(payload, secret, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    expiresIn: options.expiresIn || process.env.JWT_EXPIRES_IN || "7d",
   });
 }
 
