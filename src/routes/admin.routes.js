@@ -1309,6 +1309,62 @@ router.get("/customers", async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/admin/customers/registered/:buyerId
+ * Admin only — remove a registered QR App buyer (orders kept, buyerId cleared).
+ */
+router.delete("/customers/registered/:buyerId", async (req, res) => {
+  try {
+    const buyerId = String(req.params.buyerId || "").trim();
+    if (!buyerId) return fail(res, 400, "buyerId required");
+
+    const { isRegisteredBuyer } = await import("../lib/shop-customers.js");
+    const { normalizePhone } = await import("../lib/phone.js");
+
+    const user = await prisma.user.findUnique({ where: { id: buyerId } });
+    if (!user) return fail(res, 404, "Customer not found");
+    if (!isRegisteredBuyer(user)) {
+      return fail(res, 400, "Only registered App users can be removed here");
+    }
+
+    const phone = normalizePhone(user.phone);
+    await prisma.$transaction(async (tx) => {
+      if (phone) {
+        await tx.guestPhoneAccess.deleteMany({ where: { phone } });
+      }
+      await tx.order.updateMany({
+        where: { buyerId },
+        data: { buyerId: null },
+      });
+      await tx.review.updateMany({
+        where: { buyerId },
+        data: { buyerId: null },
+      });
+      try {
+        await tx.chatThread.updateMany({
+          where: { buyerId },
+          data: { buyerId: null },
+        });
+      } catch {
+        /* older schema without chat buyerId — ignore */
+      }
+      await tx.buyerAddress.deleteMany({ where: { userId: buyerId } });
+      await tx.user.delete({ where: { id: buyerId } });
+    });
+
+    return ok(res, {
+      deleted: true,
+      buyerId,
+      email: user.email,
+      phone: user.phone,
+      name: user.name,
+    });
+  } catch (err) {
+    console.error("admin delete registered customer", err);
+    return fail(res, 500, "Could not remove customer", "db_error");
+  }
+});
+
 /* ─── View user account (OTP via Admin Gmail — no user password login) ─── */
 
 router.get("/otp-status", (_req, res) => ok(res, otpStatus()));

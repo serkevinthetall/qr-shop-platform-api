@@ -119,34 +119,70 @@ export async function listCustomers(opts = {}) {
       ].filter(Boolean),
     ),
   ];
+  const buyerIds = [
+    ...new Set(orders.map((o) => o.buyerId).filter(Boolean)),
+  ];
+
+  /** Match 09… / 959… variants to the same buyer. */
+  function phoneLookupKeys(raw) {
+    const n = normalizePhone(raw);
+    const digits = n.replace(/\D/g, "");
+    const keys = new Set([n, digits].filter(Boolean));
+    if (digits.startsWith("95") && digits.length >= 11) {
+      keys.add(`0${digits.slice(2)}`);
+    }
+    if (digits.startsWith("0") && digits.length >= 10) {
+      keys.add(`95${digits.slice(1)}`);
+    }
+    return [...keys];
+  }
 
   const buyersByPhone = new Map();
-  if (phones.length) {
+  const buyersById = new Map();
+  const buyerSelect = {
+    id: true,
+    name: true,
+    phone: true,
+    email: true,
+    role: true,
+    passwordLoginEnabled: true,
+  };
+
+  const phoneVariants = [...new Set(phones.flatMap((p) => phoneLookupKeys(p)))];
+  if (phoneVariants.length || buyerIds.length) {
     const buyers = await prisma.user.findMany({
       where: {
         role: "buyer",
-        phone: { in: phones },
+        OR: [
+          ...(phoneVariants.length ? [{ phone: { in: phoneVariants } }] : []),
+          ...(buyerIds.length ? [{ id: { in: buyerIds } }] : []),
+        ],
       },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        email: true,
-        role: true,
-        passwordLoginEnabled: true,
-      },
+      select: buyerSelect,
     });
     for (const b of buyers) {
-      const p = normalizePhone(b.phone);
-      if (p) buyersByPhone.set(p, b);
+      buyersById.set(b.id, b);
+      for (const k of phoneLookupKeys(b.phone)) {
+        buyersByPhone.set(k, b);
+      }
     }
+  }
+
+  function resolveBuyer(phone, orderBuyer, buyerId) {
+    if (orderBuyer) return orderBuyer;
+    if (buyerId && buyersById.has(buyerId)) return buyersById.get(buyerId);
+    for (const k of phoneLookupKeys(phone)) {
+      const hit = buyersByPhone.get(k);
+      if (hit) return hit;
+    }
+    return null;
   }
 
   for (const o of orders) {
     const phone = normalizePhone(o.buyerPhone);
     if (!phone) continue;
     const key = `${o.shopId}|${phone}`;
-    const buyer = o.buyer || buyersByPhone.get(phone) || null;
+    const buyer = resolveBuyer(phone, o.buyer, o.buyerId);
     const type = customerTypeFromBuyer(buyer);
     let row = map.get(key);
     if (!row) {
@@ -176,7 +212,7 @@ export async function listCustomers(opts = {}) {
     const phone = normalizePhone(a.phone);
     if (!phone) continue;
     const key = `${a.shopId}|${phone}`;
-    const buyer = buyersByPhone.get(phone) || null;
+    const buyer = resolveBuyer(phone, null, null);
     const type = customerTypeFromBuyer(buyer);
     let row = map.get(key);
     if (!row) {
