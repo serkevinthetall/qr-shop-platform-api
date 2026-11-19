@@ -9,6 +9,11 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { normalizePhone } from "../lib/phone.js";
 import { publishMessageEvent } from "../lib/realtime.js";
+import {
+  isoOrNull,
+  messageIsReadByPeer,
+  unreadForBuyer,
+} from "../lib/chat-read.js";
 
 const router = Router();
 
@@ -22,6 +27,8 @@ const sendSchema = z.object({
 });
 
 function publicThread(row, { includeMessages = false } = {}) {
+  const buyerLastReadAt = isoOrNull(row.buyerLastReadAt);
+  const merchantLastReadAt = isoOrNull(row.merchantLastReadAt);
   const out = {
     id: row.id,
     shopId: row.shopId,
@@ -33,15 +40,17 @@ function publicThread(row, { includeMessages = false } = {}) {
     lastMessage: row.lastMessage,
     lastAt: row.lastAt,
     createdAt: row.createdAt,
-    unread: 0,
+    buyerLastReadAt,
+    merchantLastReadAt,
+    unread: unreadForBuyer(row),
   };
   if (includeMessages && Array.isArray(row.messages)) {
-    out.messages = row.messages.map(publicMessage);
+    out.messages = row.messages.map((m) => publicMessage(m, row.merchantLastReadAt));
   }
   return out;
 }
 
-function publicMessage(m) {
+function publicMessage(m, merchantLastReadAt) {
   return {
     id: m.id,
     threadId: m.threadId,
@@ -52,6 +61,11 @@ function publicMessage(m) {
     productImageUrl: m.productImageUrl || null,
     productPriceLabel: m.productPriceLabel || null,
     createdAt: m.createdAt,
+    /** Buyer → merchant: green ticks when merchant has opened past this message. */
+    read:
+      m.from === "buyer"
+        ? messageIsReadByPeer(m.createdAt, merchantLastReadAt)
+        : false,
   };
 }
 
@@ -152,8 +166,10 @@ router.get(
         return fail(res, result.error.status, result.error.message);
       }
 
-      const full = await prisma.chatThread.findUnique({
+      const now = new Date();
+      const full = await prisma.chatThread.update({
         where: { id: result.thread.id },
+        data: { buyerLastReadAt: now },
         include: {
           shop: { select: { id: true, name: true } },
           messages: { orderBy: { createdAt: "asc" }, take: 200 },
@@ -208,11 +224,13 @@ router.post(
             productPriceLabel: parsed.data.productPriceLabel?.trim() || null,
           },
         });
+        const now = new Date();
         await tx.chatThread.update({
           where: { id: result.thread.id },
           data: {
             lastMessage: text.slice(0, 240),
-            lastAt: new Date(),
+            lastAt: now,
+            buyerLastReadAt: now,
             buyerHiddenAt: null,
             merchantHiddenAt: null,
           },
@@ -235,7 +253,7 @@ router.post(
         res,
         {
           threadId: result.thread.id,
-          message: publicMessage(msg),
+          message: publicMessage(msg, result.thread.merchantLastReadAt),
         },
         { created: true },
       );
@@ -264,7 +282,17 @@ router.get("/threads/:id", requireAuth, requireRole("buyer"), async (req, res) =
       },
     });
     if (!thread) return fail(res, 404, "Chat not found");
-    return ok(res, publicThread(thread, { includeMessages: true }));
+
+    const now = new Date();
+    const updated = await prisma.chatThread.update({
+      where: { id: thread.id },
+      data: { buyerLastReadAt: now },
+      include: {
+        shop: { select: { id: true, name: true } },
+        messages: { orderBy: { createdAt: "asc" }, take: 200 },
+      },
+    });
+    return ok(res, publicThread(updated, { includeMessages: true }));
   } catch (err) {
     console.error("chat thread get", err);
     return fail(res, 500, "Could not load chat", "db_error");

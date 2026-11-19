@@ -13,7 +13,10 @@ import { resolvePricingContext } from "../lib/pricing-context.js";
 import { resolveDeliveryOptions } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
 import { resolveUnitPrice } from "../lib/mall-product.js";
-import { ensureWholesaleMinQtyColumn } from "../lib/ensure-schema.js";
+import {
+  ensureOrderMerchantLastReadColumn,
+  ensureWholesaleMinQtyColumn,
+} from "../lib/ensure-schema.js";
 import { publishOrderEvent } from "../lib/realtime.js";
 import { allocateOrderCode, looksLikeOrderCode } from "../lib/order-code.js";
 import {
@@ -741,13 +744,44 @@ router.get("/", requireUserOrGuest, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/orders/mark-read — merchant/staff mark orders opened (bulk).
+ * Body: { ids: string[] }
+ */
+router.post(
+  "/mark-read",
+  requireAuth,
+  requireRole("merchant", "staff"),
+  async (req, res) => {
+    try {
+      await ensureOrderMerchantLastReadColumn().catch(() => {});
+      const shopId = req.user.shopId;
+      if (!shopId) return fail(res, 403, "No shop on account");
+      const ids = Array.isArray(req.body?.ids)
+        ? req.body.ids.map((x) => String(x || "").trim()).filter(Boolean)
+        : [];
+      if (ids.length === 0) return fail(res, 400, "ids required");
+      const now = new Date();
+      const result = await prisma.order.updateMany({
+        where: { shopId, id: { in: ids.slice(0, 200) } },
+        data: { merchantLastReadAt: now },
+      });
+      return ok(res, { updated: result.count });
+    } catch (err) {
+      console.error("orders mark-read", err);
+      return fail(res, 500, "Could not mark orders read", "db_error");
+    }
+  },
+);
+
 /** GET /api/orders/:id — order detail by cuid or short code (d1214 / p12431) */
 router.get("/:id", requireUserOrGuest, async (req, res) => {
   try {
     if (
       req.params.id === "checkout" ||
       req.params.id === "guest" ||
-      req.params.id === "track"
+      req.params.id === "track" ||
+      req.params.id === "mark-read"
     ) {
       return fail(res, 404, "Not found");
     }
@@ -770,6 +804,20 @@ router.get("/:id", requireUserOrGuest, async (req, res) => {
     if (!canViewOrder(req, order)) {
       return fail(res, 403, "Not allowed to view this order");
     }
+
+    const isMerchantSide =
+      req.authKind !== "guest" &&
+      (req.user?.role === "merchant" || req.user?.role === "staff") &&
+      order.shopId === req.user?.shopId;
+    if (isMerchantSide) {
+      await ensureOrderMerchantLastReadColumn().catch(() => {});
+      order = await prisma.order.update({
+        where: { id: order.id },
+        data: { merchantLastReadAt: new Date() },
+        include,
+      });
+    }
+
     return ok(res, withNormalizedStage(order));
   } catch (err) {
     console.error("get order", err);
@@ -825,6 +873,14 @@ router.patch(
       if (data.stage === "ready_pickup") {
         data.pickupReserved = true;
       }
+    }
+
+    if (
+      req.user.role === "merchant" ||
+      req.user.role === "staff"
+    ) {
+      await ensureOrderMerchantLastReadColumn().catch(() => {});
+      data.merchantLastReadAt = new Date();
     }
 
     if (Object.keys(data).length === 0) {

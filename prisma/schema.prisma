@@ -420,6 +420,8 @@ model Order {
   subtotalKs      Int
   totalKs         Int
   pickupReserved  Boolean          @default(false)
+  /** Merchant/staff opened this order — drives unread badge + green ticks. */
+  merchantLastReadAt DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
@@ -707,6 +709,10 @@ model ChatThread {
   buyerHiddenAt    DateTime?
   /** Soft-hide from merchant inbox (buyer side unaffected). */
   merchantHiddenAt DateTime?
+  /** Merchant opened thread through this time — drives badge + buyer ticks. */
+  merchantLastReadAt DateTime?
+  /** Buyer opened thread through this time — drives merchant ticks. */
+  buyerLastReadAt    DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   messages     ChatMessage[]

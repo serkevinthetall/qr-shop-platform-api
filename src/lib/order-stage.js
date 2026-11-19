@@ -43,9 +43,29 @@ export function shouldStockOutForStage(stage, action) {
   );
 }
 
+/** True when merchant has not opened a new request yet. */
+export function orderUnreadForMerchant(order) {
+  if (!order || typeof order !== "object") return false;
+  if (order.merchantLastReadAt) return false;
+  return normalizeOrderStage(order.stage) === "request";
+}
+
 /** Attach normalized stage on order JSON for API responses. */
 export function withNormalizedStage(order) {
   if (!order || typeof order !== "object") return order;
   const stage = normalizeOrderStage(order.stage);
-  return { ...order, stage, stageRaw: order.stage };
+  const merchantLastReadAt =
+    order.merchantLastReadAt instanceof Date
+      ? order.merchantLastReadAt.toISOString()
+      : order.merchantLastReadAt || null;
+  const unreadForMerchant = orderUnreadForMerchant(order);
+  return {
+    ...order,
+    stage,
+    stageRaw: order.stage,
+    merchantLastReadAt,
+    unreadForMerchant,
+    /** Green double-tick when merchant has opened (or no longer a new request). */
+    read: !unreadForMerchant,
+  };
 }

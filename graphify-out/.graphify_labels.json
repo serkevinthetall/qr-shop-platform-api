@@ -4,7 +4,7 @@
   "2": "server.js",
   "3": "scripts",
   "4": "dependencies",
-  "5": "catalog.routes.js",
+  "5": "seed-sample-shop-grocery.js",
   "6": "env.js",
   "7": "import-odoo-qr-app-to-sample-shop.js",
   "8": "admin.routes.js",
@@ -23,6 +23,15 @@
   "21": "merchant-overview.routes.js",
   "22": "Postman — QR Shop Platform API",
   "23": "seed-sample-shop-messages.js",
-  "24": "go.routes.js",
-  "25": "setup-preview-db.sh"
+  "24": "mall.routes.js",
+  "25": "setup-preview-db.sh",
+  "26": "uploads.routes.js",
+  "27": "catalog.routes.js",
+  "28": "go.routes.js",
+  "29": "merchant-customers.routes.js",
+  "30": "package.json",
+  "31": "devDependencies",
+  "32": "cors",
+  "33": "jsonwebtoken",
+  "34": "prisma"
 }

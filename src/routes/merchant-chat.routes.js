@@ -8,6 +8,11 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { shopIdOrFail } from "../lib/merchant-auth.js";
 import { publishMessageEvent } from "../lib/realtime.js";
+import {
+  isoOrNull,
+  messageIsReadByPeer,
+  unreadForMerchant,
+} from "../lib/chat-read.js";
 
 const router = Router();
 
@@ -18,6 +23,8 @@ const sendSchema = z.object({
 });
 
 function publicThread(row, { includeMessages = false } = {}) {
+  const buyerLastReadAt = isoOrNull(row.buyerLastReadAt);
+  const merchantLastReadAt = isoOrNull(row.merchantLastReadAt);
   const out = {
     id: row.id,
     shopId: row.shopId,
@@ -28,6 +35,9 @@ function publicThread(row, { includeMessages = false } = {}) {
     lastMessage: row.lastMessage,
     lastAt: row.lastAt,
     createdAt: row.createdAt,
+    buyerLastReadAt,
+    merchantLastReadAt,
+    unreadForMerchant: unreadForMerchant(row),
   };
   if (includeMessages && Array.isArray(row.messages)) {
     out.messages = row.messages.map((m) => ({
@@ -40,6 +50,11 @@ function publicThread(row, { includeMessages = false } = {}) {
       productImageUrl: m.productImageUrl || null,
       productPriceLabel: m.productPriceLabel || null,
       createdAt: m.createdAt,
+      /** Merchant → buyer: green ticks when buyer has opened past this message. */
+      read:
+        m.from === "merchant"
+          ? messageIsReadByPeer(m.createdAt, row.buyerLastReadAt)
+          : false,
     }));
   }
   return out;
@@ -76,7 +91,16 @@ router.get("/chat/threads/:id", async (req, res) => {
       },
     });
     if (!thread) return fail(res, 404, "Chat not found");
-    return ok(res, publicThread(thread, { includeMessages: true }));
+
+    const now = new Date();
+    const updated = await prisma.chatThread.update({
+      where: { id: thread.id },
+      data: { merchantLastReadAt: now },
+      include: {
+        messages: { orderBy: { createdAt: "asc" }, take: 300 },
+      },
+    });
+    return ok(res, publicThread(updated, { includeMessages: true }));
   } catch (err) {
     console.error("merchant chat get", err);
     return fail(res, 500, "Could not load chat", "db_error");
@@ -106,11 +130,13 @@ router.post("/chat/threads/:id/messages", async (req, res) => {
           text,
         },
       });
+      const now = new Date();
       await tx.chatThread.update({
         where: { id: thread.id },
         data: {
           lastMessage: text.slice(0, 240),
-          lastAt: new Date(),
+          lastAt: now,
+          merchantLastReadAt: now,
           buyerHiddenAt: null,
           merchantHiddenAt: null,
         },
@@ -141,6 +167,7 @@ router.post("/chat/threads/:id/messages", async (req, res) => {
           productId: null,
           productName: null,
           createdAt: msg.createdAt,
+          read: messageIsReadByPeer(msg.createdAt, thread.buyerLastReadAt),
         },
       },
       { created: true },

@@ -5,6 +5,8 @@ let wholesaleMinQtyReady = false;
 let productBadgeTableReady = false;
 let adminViewOtpTableReady = false;
 let passwordLoginEnabledReady = false;
+let chatReadColumnsReady = false;
+let orderReadColumnReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -136,6 +138,52 @@ export async function ensurePasswordLoginEnabledColumn() {
   passwordLoginEnabledReady = true;
 }
 
+/** ChatThread read receipts (Hostinger may lack prisma db push). */
+export async function ensureChatReadColumns() {
+  if (chatReadColumnsReady) return;
+  for (const col of ["merchantLastReadAt", "buyerLastReadAt"]) {
+    try {
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE \`ChatThread\`
+        ADD COLUMN \`${col}\` DATETIME(3) NULL
+      `);
+      console.log(`ensure-schema: added ChatThread.${col}`);
+    } catch (err) {
+      if (isDupColumn(err)) {
+        /* already migrated */
+      } else {
+        console.warn(
+          `ensure-schema: ChatThread.${col}`,
+          String(err?.message || err).slice(0, 240),
+        );
+      }
+    }
+  }
+  chatReadColumnsReady = true;
+}
+
+/** Order merchant open/read receipts. */
+export async function ensureOrderMerchantLastReadColumn() {
+  if (orderReadColumnReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`Order\`
+      ADD COLUMN \`merchantLastReadAt\` DATETIME(3) NULL
+    `);
+    console.log("ensure-schema: added Order.merchantLastReadAt");
+  } catch (err) {
+    if (isDupColumn(err)) {
+      /* already migrated */
+    } else {
+      console.warn(
+        "ensure-schema: Order.merchantLastReadAt",
+        String(err?.message || err).slice(0, 240),
+      );
+    }
+  }
+  orderReadColumnReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
@@ -143,5 +191,7 @@ export async function ensureSchemaPatches() {
     ensureProductBadgeTable().catch(() => {}),
     ensureAdminViewOtpTable().catch(() => {}),
     ensurePasswordLoginEnabledColumn().catch(() => {}),
+    ensureChatReadColumns().catch(() => {}),
+    ensureOrderMerchantLastReadColumn().catch(() => {}),
   ]);
 }

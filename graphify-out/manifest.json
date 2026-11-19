@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1794885830.182863,
-    "ast_hash": "f74b754fc4342c7ad391c92e25ac02c7",
+    "mtime": 1795060978.7935364,
+    "ast_hash": "ba151652bc523806d2dc44d395c0190e",
     "semantic_hash": ""
   },
   "scripts/check-db.js": {
@@ -50,13 +50,13 @@
     "semantic_hash": ""
   },
   "src/lib/auth-session.js": {
-    "mtime": 1793159404.4471364,
-    "ast_hash": "6190d1d71e1741bfe13e1850bca35bda",
+    "mtime": 1795060040.9829965,
+    "ast_hash": "6a19d01ee0eb1650fee30aa541a8c162",
     "semantic_hash": ""
   },
   "src/lib/delivery-fee.js": {
-    "mtime": 1793875885.0898035,
-    "ast_hash": "37590e1b97e30265371fa5185d897f76",
+    "mtime": 1794992765.3851905,
+    "ast_hash": "72afca44ed470f360bb45826b537082e",
     "semantic_hash": ""
   },
   "src/lib/env.js": {
@@ -70,7 +70,7 @@
     "semantic_hash": ""
   },
   "src/lib/mall-product.js": {
-    "mtime": 1794207471.6696498,
+    "mtime": 1794969718.0396643,
     "ast_hash": "89fc1785b052e9d04e56fb8d0eaf59f7",
     "semantic_hash": ""
   },
@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "src/lib/merchant-product.js": {
-    "mtime": 1793855142.2110336,
-    "ast_hash": "00cf227b25ac57180dd9ef79c5a3295a",
+    "mtime": 1795070155.7352362,
+    "ast_hash": "20ce2724827ebf62e41963e674a9625a",
     "semantic_hash": ""
   },
   "src/lib/phone.js": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "src/middlewares/auth.middleware.js": {
-    "mtime": 1793176553.153157,
-    "ast_hash": "1fe08d77e5bd6fa56146c124a7df5669",
+    "mtime": 1795060037.6711485,
+    "ast_hash": "e0f7760bfa7f5ca2a955244b8fde391e",
     "semantic_hash": ""
   },
   "src/routes/addresses.routes.js": {
@@ -135,17 +135,17 @@
     "semantic_hash": ""
   },
   "src/routes/admin.routes.js": {
-    "mtime": 1794885918.8998945,
-    "ast_hash": "afd58c7c64e4a57273ee199bd0022c10",
+    "mtime": 1795062733.9342685,
+    "ast_hash": "c262f5049867f03fa0a913fd5e02a09e",
     "semantic_hash": ""
   },
   "src/routes/auth.routes.js": {
-    "mtime": 1793954114.4122405,
-    "ast_hash": "6c8bdc5179edcbe757aaa5b747324656",
+    "mtime": 1794901408.7902834,
+    "ast_hash": "c398cb65b6bccc118cfee99eae5a83f1",
     "semantic_hash": ""
   },
   "src/routes/catalog.routes.js": {
-    "mtime": 1794884046.920105,
+    "mtime": 1794888956.351283,
     "ast_hash": "b26adc09166c2c798c265e801438d89d",
     "semantic_hash": ""
   },
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "src/routes/merchant-delivery.routes.js": {
-    "mtime": 1793853417.732602,
-    "ast_hash": "f1de1ed89780ba1865be813784c8ed34",
+    "mtime": 1794992760.1494026,
+    "ast_hash": "8352b76dbb43421f85e7025b03ea30c3",
     "semantic_hash": ""
   },
   "src/routes/merchant-enquiries.routes.js": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/routes/merchant-products.routes.js": {
-    "mtime": 1794884062.0163453,
-    "ast_hash": "1500266c0f3a61b21ff9b488d80be589",
+    "mtime": 1794969718.064162,
+    "ast_hash": "bfc9b142b5c8d97f523d15f6f49eda51",
     "semantic_hash": ""
   },
   "src/routes/merchant-staff.routes.js": {
@@ -215,8 +215,8 @@
     "semantic_hash": ""
   },
   "src/routes/orders.routes.js": {
-    "mtime": 1793862182.5095553,
-    "ast_hash": "0a9364ec0f20f4343e8d8381b41be934",
+    "mtime": 1795082846.0051734,
+    "ast_hash": "456c34c3672ddb71f3d85ec9bbaeb271",
     "semantic_hash": ""
   },
   "src/routes/realtime.routes.js": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/server.js": {
-    "mtime": 1793950012.7371588,
-    "ast_hash": "ba078ca3fc7bdce1091db6e6eff44196",
+    "mtime": 1795057123.742659,
+    "ast_hash": "a824df95b97922cc2d20d8a134d6db92",
     "semantic_hash": ""
   },
   "vercel.json": {
@@ -300,13 +300,13 @@
     "semantic_hash": ""
   },
   "src/routes/chat.routes.js": {
-    "mtime": 1793953389.9355125,
-    "ast_hash": "7e7f6689bf83f1dd56a6dd12be063ba4",
+    "mtime": 1795082547.6824443,
+    "ast_hash": "140ee123222adb10303c5bea91f4475e",
     "semantic_hash": ""
   },
   "src/routes/merchant-chat.routes.js": {
-    "mtime": 1793953398.8105125,
-    "ast_hash": "6853ee0c6abef086d7dba638d4139581",
+    "mtime": 1795082546.6294403,
+    "ast_hash": "cd943c4e6a20a04293c2ad8b8d72ae98",
     "semantic_hash": ""
   },
   "scripts/backfill-order-codes.mjs": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/lib/order-stage.js": {
-    "mtime": 1793846614.0261643,
-    "ast_hash": "2a6d2992d49e823e751ef01f7afaccdb",
+    "mtime": 1795082814.982194,
+    "ast_hash": "ca1a2bb9f457ba8d1a05a4caae6f5bcb",
     "semantic_hash": ""
   },
   "scripts/check-shop-delivery.sql": {
@@ -435,8 +435,8 @@
     "semantic_hash": ""
   },
   "src/lib/ensure-schema.js": {
-    "mtime": 1794885862.834625,
-    "ast_hash": "b7d597a54255758d11c779bfb66814ff",
+    "mtime": 1795082822.3557694,
+    "ast_hash": "f564c6f362ee85c3d0e69c277778584d",
     "semantic_hash": ""
   },
   "src/routes/app-config.routes.js": {
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "src/lib/admin-view-otp.js": {
-    "mtime": 1794885913.7691276,
-    "ast_hash": "c468d1467f3241b4a3c9f576a6609d92",
+    "mtime": 1795059135.0868587,
+    "ast_hash": "71f4c4692b8b07dd5deb354ebf38f06a",
     "semantic_hash": ""
   },
   "src/lib/categories.js": {
@@ -487,6 +487,36 @@
   "raw/preview-vs-production.md": {
     "mtime": 1794824099.2143347,
     "ast_hash": "a49840306c1b7efd1a5dad8a895788a5",
+    "semantic_hash": ""
+  },
+  "src/lib/app-catalog-product.js": {
+    "mtime": 1795057139.882623,
+    "ast_hash": "ad077921250880f5ea6357d4b495214b",
+    "semantic_hash": ""
+  },
+  "src/routes/app-catalog.routes.js": {
+    "mtime": 1795057162.8336039,
+    "ast_hash": "3e11634125429e110d0c8a773e97690a",
+    "semantic_hash": ""
+  },
+  "scripts/migrate-chat-read-receipts.sql": {
+    "mtime": 1795082876.6977696,
+    "ast_hash": "5ef66ce0e287394f62721d55f1d50727",
+    "semantic_hash": ""
+  },
+  "src/lib/chat-read.js": {
+    "mtime": 1795082444.59194,
+    "ast_hash": "7c85fecba2a2aa514fa724048aef27f1",
+    "semantic_hash": ""
+  },
+  "src/lib/shop-customers.js": {
+    "mtime": 1795062724.2943988,
+    "ast_hash": "01fd8165c9afca925db83b4ccefd6ff8",
+    "semantic_hash": ""
+  },
+  "src/routes/merchant-customers.routes.js": {
+    "mtime": 1795057106.2826755,
+    "ast_hash": "8dc9241666334ccffaa3850e7e4a006d",
     "semantic_hash": ""
   }
 }
