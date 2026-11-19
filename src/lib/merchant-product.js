@@ -25,9 +25,13 @@ export function sellChannelsOf(p) {
       sellOnOwnPage: on,
     };
   }
+  /**
+   * Mall/App: null must stay off (`!== false` treated null as ON).
+   * Own page: still default on when only mall was explicitly cleared.
+   */
   return {
-    sellOnMarketplace: p.sellOnMarketplace !== false,
-    sellOnApp: p.sellOnApp !== false,
+    sellOnMarketplace: p.sellOnMarketplace === true,
+    sellOnApp: p.sellOnApp === true,
     sellOnOwnPage: p.sellOnOwnPage !== false,
   };
 }
