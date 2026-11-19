@@ -1,6 +1,7 @@
 /**
- * QR App catalog row — retail (B2C) only.
- * Never expose wholesale / B2B fields to the native buyer app.
+ * QR App catalog row.
+ * Default: retail only.
+ * When viewer has shop wholesale access: list_price uses B2B when set.
  */
 import { mallPricesForProduct } from "./pricing-context.js";
 import { publicShopChannels } from "./shop-channels.js";
@@ -19,22 +20,49 @@ export function appRetailKs(p, features) {
   return null;
 }
 
+function appWholesaleKs(p, features) {
+  const priced = mallPricesForProduct(p, features ?? p.shop?.features);
+  if (priced.priceB2bKs != null && Number(priced.priceB2bKs) > 0) {
+    return Math.floor(Number(priced.priceB2bKs));
+  }
+  if (p.priceB2bKs != null && Number(p.priceB2bKs) > 0) {
+    return Math.floor(Number(p.priceB2bKs));
+  }
+  return null;
+}
+
 /**
- * Map Prisma Product → QR App catalog row (retail-only).
- * Returns null when the SKU has no retail price (hidden from app).
+ * @param {object} p Prisma product (+ shop.features)
+ * @param {{ wholesaleShopIds?: Set<string> }} [viewer]
  */
-export function toAppCatalogProduct(p) {
+export function toAppCatalogProduct(p, viewer = {}) {
   const channels = publicShopChannels(p.shop?.features);
   if (channels.portfolioOnly) return null;
 
   const retail = appRetailKs(p);
-  if (retail == null || retail <= 0) return null;
+  const wholesale = appWholesaleKs(p);
+  const allowWs =
+    Boolean(viewer.wholesaleShopIds?.has?.(p.shopId)) && wholesale != null;
 
+  /** Hide SKU when neither price is usable for this viewer. */
+  if (!allowWs && (retail == null || retail <= 0)) return null;
+  if (allowWs && wholesale == null && (retail == null || retail <= 0)) {
+    return null;
+  }
+
+  const activeKs = allowWs ? wholesale : retail;
   const stock = Math.max(0, Math.floor(Number(p.stock) || 0));
   const compareAtKs =
-    p.compareAtKs != null && Number(p.compareAtKs) > retail
+    !allowWs &&
+    p.compareAtKs != null &&
+    Number(p.compareAtKs) > activeKs
       ? Math.floor(Number(p.compareAtKs))
       : undefined;
+
+  const minQty =
+    allowWs && p.wholesaleMinQty != null && Number(p.wholesaleMinQty) > 1
+      ? Math.floor(Number(p.wholesaleMinQty))
+      : null;
 
   return {
     id: `${p.shopId}__${p.id}`,
@@ -43,13 +71,13 @@ export function toAppCatalogProduct(p) {
     shopName: p.shop?.name ?? "",
     shopSlug: p.shop?.slug ?? undefined,
     name: p.name,
-    /** Primary price for QR App (`list_price` maps from this). */
-    priceKs: retail,
+    /** Active unit price for QR App (`list_price` maps from this). */
+    priceKs: activeKs,
     priceB2cKs: retail,
-    price: `${retail.toLocaleString()} Ks`,
-    /** Explicitly stripped — app must never show wholesale. */
-    priceB2bKs: null,
-    wholesaleMinQty: null,
+    price: `${activeKs.toLocaleString()} Ks`,
+    priceB2bKs: allowWs ? wholesale : null,
+    wholesaleMinQty: minQty,
+    pricingChannel: allowWs ? "b2b" : "b2c",
     compareAtKs,
     compareAt:
       compareAtKs != null ? `${compareAtKs.toLocaleString()} Ks` : undefined,
@@ -59,12 +87,12 @@ export function toAppCatalogProduct(p) {
     imageUrl: p.imageUrl ?? "",
     stock,
     active: p.active,
-    listingMode: "b2c",
+    listingMode: allowWs ? "b2b" : "b2c",
     portfolioOnly: false,
     canOrder: channels.canOrder && stock > 0,
     channels: {
-      b2cEnabled: true,
-      b2bEnabled: false,
+      b2cEnabled: retail != null,
+      b2bEnabled: allowWs,
       showBoth: false,
     },
     updatedAt: p.updatedAt?.toISOString?.() ?? p.updatedAt,

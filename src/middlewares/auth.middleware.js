@@ -35,6 +35,24 @@ export function requireAuth(req, res, next) {
   }
 }
 
+/** Attach req.user when Bearer is a registered user; never 401 (public routes). */
+export function optionalAuth(req, _res, next) {
+  const token = readBearer(req);
+  if (!token) return next();
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return next();
+    const payload = jwt.verify(token, secret);
+    if (payload.kind !== "guest") {
+      req.user = payload;
+      req.authKind = "user";
+    }
+  } catch {
+    /* ignore bad token on public catalog */
+  }
+  return next();
+}
+
 /** Registered user OR one-time guest JWT */
 export function requireUserOrGuest(req, res, next) {
   const token = readBearer(req);

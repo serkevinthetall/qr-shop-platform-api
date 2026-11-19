@@ -1284,6 +1284,31 @@ router.delete("/payments/:id", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/customers
+ * Buyers only (one-time + registered) across shops — not merchant/admin accounts.
+ * Query: shopId, type=all|one_time|registered, from, to
+ */
+router.get("/customers", async (req, res) => {
+  try {
+    const { listCustomers } = await import("../lib/shop-customers.js");
+    const type = String(req.query.type || "all");
+    const shopId = String(req.query.shopId || "").trim() || null;
+    const fromRaw = req.query.from ? new Date(String(req.query.from)) : null;
+    const toRaw = req.query.to ? new Date(String(req.query.to)) : null;
+    const rows = await listCustomers({
+      shopId,
+      type: ["one_time", "registered", "all"].includes(type) ? type : "all",
+      from: fromRaw && !Number.isNaN(fromRaw.getTime()) ? fromRaw : null,
+      to: toRaw && !Number.isNaN(toRaw.getTime()) ? toRaw : null,
+    });
+    return ok(res, rows);
+  } catch (err) {
+    console.error("admin customers", err);
+    return fail(res, 500, "Could not load customers", "db_error");
+  }
+});
+
 /* ─── View user account (OTP via Admin Gmail — no user password login) ─── */
 
 router.get("/otp-status", (_req, res) => ok(res, otpStatus()));

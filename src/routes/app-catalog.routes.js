@@ -6,7 +6,7 @@
  * GET /api/app/catalog/:id
  *
  * - Only SKUs with sellOnApp
- * - Retail (B2C) prices only — no wholesale fields
+ * - Retail by default; wholesale when merchant allowed this registered phone
  */
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
@@ -16,6 +16,9 @@ import { parseMallProductId } from "../lib/mall-product.js";
 import { defaultCategories } from "../lib/mall-meta.js";
 import { ensureCategoriesSeeded } from "../lib/categories.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
+import { optionalAuth } from "../middlewares/auth.middleware.js";
+import { normalizePhone } from "../lib/phone.js";
+import { isRegisteredBuyer } from "../lib/shop-customers.js";
 
 const router = Router();
 
@@ -38,6 +41,31 @@ const appShopGate = {
     { features: { listingMode: { not: "portfolio" } } },
   ],
 };
+
+/** Shops where this registered App user may see wholesale. */
+async function wholesaleShopIdsForReq(req) {
+  const ids = new Set();
+  const sub = req.user?.sub;
+  if (!sub) return ids;
+  const user = await prisma.user.findUnique({
+    where: { id: sub },
+    select: {
+      id: true,
+      role: true,
+      phone: true,
+      passwordLoginEnabled: true,
+    },
+  });
+  if (!isRegisteredBuyer(user)) return ids;
+  const phone = normalizePhone(user.phone);
+  if (!phone) return ids;
+  const rows = await prisma.guestPhoneAccess.findMany({
+    where: { phone, b2bAllowed: true },
+    select: { shopId: true },
+  });
+  for (const r of rows) ids.add(r.shopId);
+  return ids;
+}
 
 /**
  * GET /api/app/catalog/categories
@@ -68,8 +96,10 @@ router.get("/categories", async (_req, res) => {
   }
 });
 
+router.use(optionalAuth);
+
 /**
- * GET /api/app/catalog — paginated retail-only product list for QR App
+ * GET /api/app/catalog — paginated product list for QR App
  * Query: categoryId, shopId, q, deal, page, limit
  */
 router.get("/", async (req, res) => {
@@ -120,6 +150,9 @@ router.get("/", async (req, res) => {
       ],
     };
 
+    const wholesaleShopIds = await wholesaleShopIdsForReq(req);
+    const viewer = { wholesaleShopIds };
+
     /** Fetch a bit more than one page so retail-null (B2B-only) rows can be dropped. */
     const fetchTake = Math.min(500, limit + 24);
     const [totalRaw, products] = await Promise.all([
@@ -134,7 +167,7 @@ router.get("/", async (req, res) => {
     ]);
 
     const mapped = products
-      .map(toAppCatalogProduct)
+      .map((p) => toAppCatalogProduct(p, viewer))
       .filter(Boolean)
       .slice(0, limit);
 
@@ -144,7 +177,7 @@ router.get("/", async (req, res) => {
       total: totalRaw,
       hasMore: skip + products.length < totalRaw,
       channel: "app",
-      pricing: "retail",
+      pricing: wholesaleShopIds.size ? "mixed" : "retail",
     });
   } catch (err) {
     console.error("app catalog list", err);
@@ -153,7 +186,7 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * GET /api/app/catalog/:id — single SKU for QR App PDP (retail-only)
+ * GET /api/app/catalog/:id — single SKU for QR App PDP
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -177,9 +210,10 @@ router.get("/:id", async (req, res) => {
     });
     if (!product) return fail(res, 404, "Product not found");
 
-    const row = toAppCatalogProduct(product);
+    const wholesaleShopIds = await wholesaleShopIdsForReq(req);
+    const row = toAppCatalogProduct(product, { wholesaleShopIds });
     if (!row) {
-      return fail(res, 404, "Product not available on app (no retail price)");
+      return fail(res, 404, "Product not available on app (no price)");
     }
     return ok(res, row);
   } catch (err) {

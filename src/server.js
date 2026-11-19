@@ -11,6 +11,7 @@ import serverless from "serverless-http";
 import authRoutes from "./routes/auth.routes.js";
 import guestRoutes from "./routes/guest.routes.js";
 import merchantGuestRoutes from "./routes/merchant-guest.routes.js";
+import merchantCustomersRoutes from "./routes/merchant-customers.routes.js";
 import merchantDeliveryRoutes from "./routes/merchant-delivery.routes.js";
 import merchantProductsRoutes from "./routes/merchant-products.routes.js";
 import merchantPaymentsRoutes from "./routes/merchant-payments.routes.js";
@@ -204,7 +205,10 @@ app.get("/api", (_req, res) => {
       "PATCH /api/merchant/enquiries/:id",
       "GET  /api/merchant/guides",
       "GET  /api/merchant/guest-phones",
+      "GET  /api/merchant/customers",
+      "POST /api/merchant/customers",
       "POST /api/merchant/guest-qr",
+      "GET  /api/admin/customers",
       "POST /api/auth/guest/open",
       "POST /api/auth/guest/easy-checkout",
       "GET  /api/auth/guest/products",
@@ -234,6 +238,7 @@ app.use("/api/merchant", merchantEnquiriesRoutes);
 app.use("/api/merchant", merchantChatRoutes);
 app.use("/api/merchant", merchantGuidesRoutes);
 app.use("/api/merchant", merchantGuestRoutes);
+app.use("/api/merchant", merchantCustomersRoutes);
 app.use("/api/merchant", merchantDeliveryRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/checkout", checkoutRoutes);
