@@ -401,10 +401,9 @@ router.get("/:id", async (req, res) => {
 const ADMIN_MODULE_KEYS = [
   "barcodeTrackingEnabled",
   "couponCodesEnabled",
-  "bogoEnabled",
   "staffEnabled",
   "posEnabled",
-  /** deliveryModuleEnabled retired — delivery pricing always available */
+  /** deliveryModuleEnabled + bogoEnabled retired — always available to merchants */
   "memberPointsEnabled",
 ];
 

@@ -7,6 +7,7 @@ let adminViewOtpTableReady = false;
 let passwordLoginEnabledReady = false;
 let chatReadColumnsReady = false;
 let orderReadColumnReady = false;
+let bogoAlwaysOnReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -184,6 +185,27 @@ export async function ensureOrderMerchantLastReadColumn() {
   orderReadColumnReady = true;
 }
 
+/** Buy 1 Get 1 is core — flip any shops still Off from the old Admin module. */
+export async function ensureBogoAlwaysOn() {
+  if (bogoAlwaysOnReady) return;
+  try {
+    const result = await prisma.$executeRawUnsafe(`
+      UPDATE \`ShopFeatures\`
+      SET \`bogoEnabled\` = 1
+      WHERE \`bogoEnabled\` = 0
+    `);
+    if (Number(result) > 0) {
+      console.log(`ensure-schema: enabled bogo for ${result} shop(s)`);
+    }
+  } catch (err) {
+    console.warn(
+      "ensure-schema: bogoAlwaysOn",
+      String(err?.message || err).slice(0, 240),
+    );
+  }
+  bogoAlwaysOnReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
@@ -193,5 +215,6 @@ export async function ensureSchemaPatches() {
     ensurePasswordLoginEnabledColumn().catch(() => {}),
     ensureChatReadColumns().catch(() => {}),
     ensureOrderMerchantLastReadColumn().catch(() => {}),
+    ensureBogoAlwaysOn().catch(() => {}),
   ]);
 }

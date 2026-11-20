@@ -744,13 +744,12 @@ router.delete("/guides/:id", async (req, res) => {
 /**
  * Merchant Modules hub toggles (ShopFeatures).
  * Staff + POS are not offered (platform holds them back) — Purchases retired.
- * Delivery pricing is always on — not a module.
+ * Delivery pricing + Buy 1 Get 1 are always on — not modules.
  */
 const MODULE_DEFS = [
   { key: "barcodeTrackingEnabled", id: "barcode", label: "Barcode" },
   { key: "memberPointsEnabled", id: "points", label: "Member points" },
   { key: "couponCodesEnabled", id: "coupons", label: "Coupon codes" },
-  { key: "bogoEnabled", id: "bogo", label: "Buy 1 Get 1" },
 ];
 
 /**

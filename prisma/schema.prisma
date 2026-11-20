@@ -208,7 +208,8 @@ model ShopFeatures {
   barcodeTrackingEnabled Boolean         @default(false)
   ratingsReviewsEnabled  Boolean         @default(false)
   couponCodesEnabled     Boolean         @default(false)
-  bogoEnabled            Boolean         @default(false)
+  /** Always treated as On in apps — Buy X Get Y is core, not a module. */
+  bogoEnabled            Boolean         @default(true)
   staffEnabled           Boolean         @default(false)
   posEnabled             Boolean         @default(false)
   /** Always treated as On in apps — delivery pricing is core, not a module. */
