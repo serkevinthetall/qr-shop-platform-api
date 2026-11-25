@@ -290,13 +290,14 @@ export async function ensureMerchantNotifyTables() {
       ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
     `);
     console.log("ensure-schema: ensured DevicePushToken + MerchantNotification");
+    merchantNotifyTablesReady = true;
   } catch (err) {
     console.warn(
       "ensure-schema: merchantNotify",
       String(err?.message || err).slice(0, 240),
     );
+    // Do not mark ready on failure — next request must retry CREATE TABLE.
   }
-  merchantNotifyTablesReady = true;
 }
 
 /** QR App buyer inbox + language on DevicePushToken. */

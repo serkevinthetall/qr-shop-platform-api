@@ -205,3 +205,31 @@ async function notifyShopNewMessageAsync({
     imageUrl: productImageUrl,
   });
 }
+
+/** Send a test banner to this merchant/staff user's registered Expo token(s). */
+export async function sendMerchantTestPush(userId) {
+  await ensureMerchantNotifyTables();
+  const id = String(userId || "").trim();
+  if (!id) return { ok: false, error: "Missing user id" };
+  const rows = await prisma.$queryRawUnsafe(
+    `SELECT id, userId, token, notifyOrders, notifyMessages FROM DevicePushToken WHERE userId = ?`,
+    id,
+  );
+  if (!rows?.length) {
+    return {
+      ok: false,
+      error: "No Expo push token registered for this account",
+      tokenCount: 0,
+    };
+  }
+  const result = await pushToTokens(rows, {
+    title: "အသိပေးချက် စမ်းသပ်ချက်",
+    body: "Merchant background push အလုပ်လုပ်နေပါသည်။",
+    data: { kind: "test" },
+  });
+  return {
+    ok: true,
+    tokenCount: rows.length,
+    tickets: result?.data || [],
+  };
+}

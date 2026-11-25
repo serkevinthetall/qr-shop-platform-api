@@ -7,12 +7,17 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { shopIdOrFail } from "../lib/merchant-auth.js";
 import { ensureMerchantNotifyTables } from "../lib/ensure-schema.js";
+import { sendMerchantTestPush } from "../lib/merchant-notify.js";
 
 const router = Router();
 router.use(requireAuth, requireRole("merchant", "staff"));
 
 function newId(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function userIdOf(req) {
+  return String(req.user?.sub || req.user?.id || "").trim();
 }
 
 /** PUT /api/merchant/push-token — register / update Expo token + prefs */
@@ -96,6 +101,46 @@ router.put("/push-token", async (req, res) => {
   } catch (err) {
     console.error("push-token", err);
     return fail(res, 500, "Could not save push token", "db_error");
+  }
+});
+
+/** GET /api/merchant/push-status — is an Expo token saved for this login? */
+router.get("/push-status", async (req, res) => {
+  try {
+    const userId = userIdOf(req);
+    if (!userId) return fail(res, 401, "Unauthorized");
+    await ensureMerchantNotifyTables();
+    const rows = await prisma.$queryRawUnsafe(
+      `SELECT token, platform, notifyOrders, notifyMessages, updatedAt FROM DevicePushToken WHERE userId = ?`,
+      userId,
+    );
+    const token = rows?.[0]?.token || null;
+    return ok(res, {
+      registered: Boolean(token),
+      tokenCount: rows?.length || 0,
+      tokenPreview: token ? `${String(token).slice(0, 28)}…` : null,
+      platform: rows?.[0]?.platform || null,
+      updatedAt: rows?.[0]?.updatedAt || null,
+    });
+  } catch (err) {
+    console.error("merchant push-status", err);
+    return fail(res, 500, "Could not load push status", "db_error");
+  }
+});
+
+/** POST /api/merchant/notifications/test-push — closed-app banner smoke test */
+router.post("/notifications/test-push", async (req, res) => {
+  try {
+    const userId = userIdOf(req);
+    if (!userId) return fail(res, 401, "Unauthorized");
+    const result = await sendMerchantTestPush(userId);
+    if (!result.ok) {
+      return fail(res, 400, result.error || "Test push failed");
+    }
+    return ok(res, { message: "Test push sent", ...result });
+  } catch (err) {
+    console.error("merchant test-push", err);
+    return fail(res, 500, "Could not send test push", "db_error");
   }
 });
 

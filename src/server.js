@@ -176,7 +176,7 @@ app.use("/go", goRoutes);
 app.get("/api", (_req, res) => {
   ok(res, {
     name: "QR Shop Platform API",
-    version: "0.7.0",
+    version: "0.7.1",
     routes: [
       "GET  /go/s/:shopId",
       "GET  /go/s/:shopId/p/:productId",
@@ -207,8 +207,10 @@ app.get("/api", (_req, res) => {
       "PATCH /api/merchant/enquiries/:id",
       "GET  /api/merchant/guides",
       "PUT  /api/merchant/push-token",
+      "GET  /api/merchant/push-status",
       "GET  /api/merchant/notifications",
       "POST /api/merchant/notifications/mark-read",
+      "POST /api/merchant/notifications/test-push",
       "GET  /api/merchant/guest-phones",
       "GET  /api/merchant/customers",
       "POST /api/merchant/customers",

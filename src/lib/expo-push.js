@@ -40,7 +40,17 @@ export async function sendExpoPushMessages(messages) {
         payload?.errors?.[0]?.message || "Expo push request failed",
       );
     }
-    if (Array.isArray(payload?.data)) results.push(...payload.data);
+    if (Array.isArray(payload?.data)) {
+      results.push(...payload.data);
+      for (const ticket of payload.data) {
+        if (ticket?.status === "error") {
+          console.warn(
+            "expo push ticket",
+            ticket.message || ticket.details?.error || ticket,
+          );
+        }
+      }
+    }
   }
   return { data: results };
 }
