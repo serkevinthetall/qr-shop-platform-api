@@ -400,6 +400,10 @@ model Order {
    * (street · township label, or pickup note). Guest: optional free text.
    */
   address         String?
+  /** Optional note from buyer (QR App / Marketplace checkout). */
+  buyerNote       String?          @db.VarChar(1000)
+  /** Soft preferred delivery day (YYYY-MM-DD) — not an SLA. */
+  preferredDeliveryDate String?    @db.VarChar(10)
   channel         OrderChannel     @default(b2c)
   fulfillment     OrderFulfillment
   /** Matches PlatformPaymentMethod.id (cod, kpay, …) — was OrderPayment enum */

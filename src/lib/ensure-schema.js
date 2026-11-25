@@ -7,7 +7,10 @@ let adminViewOtpTableReady = false;
 let passwordLoginEnabledReady = false;
 let chatReadColumnsReady = false;
 let orderReadColumnReady = false;
+let orderBuyerNoteReady = false;
+let orderPreferredDeliveryDateReady = false;
 let bogoAlwaysOnReady = false;
+let merchantNotifyTablesReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -185,6 +188,50 @@ export async function ensureOrderMerchantLastReadColumn() {
   orderReadColumnReady = true;
 }
 
+/** Buyer checkout note (QR App delivery notes → Merchant order detail). */
+export async function ensureOrderBuyerNoteColumn() {
+  if (orderBuyerNoteReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`Order\`
+      ADD COLUMN \`buyerNote\` VARCHAR(1000) NULL
+    `);
+    console.log("ensure-schema: added Order.buyerNote");
+  } catch (err) {
+    if (isDupColumn(err)) {
+      /* already migrated */
+    } else {
+      console.warn(
+        "ensure-schema: Order.buyerNote",
+        String(err?.message || err).slice(0, 240),
+      );
+    }
+  }
+  orderBuyerNoteReady = true;
+}
+
+/** Soft preferred delivery day YYYY-MM-DD (not SLA). */
+export async function ensureOrderPreferredDeliveryDateColumn() {
+  if (orderPreferredDeliveryDateReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`Order\`
+      ADD COLUMN \`preferredDeliveryDate\` VARCHAR(10) NULL
+    `);
+    console.log("ensure-schema: added Order.preferredDeliveryDate");
+  } catch (err) {
+    if (isDupColumn(err)) {
+      /* already migrated */
+    } else {
+      console.warn(
+        "ensure-schema: Order.preferredDeliveryDate",
+        String(err?.message || err).slice(0, 240),
+      );
+    }
+  }
+  orderPreferredDeliveryDateReady = true;
+}
+
 /** Buy 1 Get 1 is core — flip any shops still Off from the old Admin module. */
 export async function ensureBogoAlwaysOn() {
   if (bogoAlwaysOnReady) return;
@@ -206,6 +253,51 @@ export async function ensureBogoAlwaysOn() {
   bogoAlwaysOnReady = true;
 }
 
+/** Merchant Expo tokens + in-app notification feed. */
+export async function ensureMerchantNotifyTables() {
+  if (merchantNotifyTablesReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`DevicePushToken\` (
+        \`id\` VARCHAR(191) NOT NULL,
+        \`userId\` VARCHAR(191) NOT NULL,
+        \`token\` VARCHAR(512) NOT NULL,
+        \`platform\` VARCHAR(32) NULL,
+        \`notifyOrders\` BOOLEAN NOT NULL DEFAULT true,
+        \`notifyMessages\` BOOLEAN NOT NULL DEFAULT true,
+        \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        UNIQUE KEY \`DevicePushToken_token_key\` (\`token\`),
+        KEY \`DevicePushToken_userId_idx\` (\`userId\`)
+      ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`MerchantNotification\` (
+        \`id\` VARCHAR(191) NOT NULL,
+        \`shopId\` VARCHAR(191) NOT NULL,
+        \`kind\` VARCHAR(32) NOT NULL,
+        \`title\` VARCHAR(255) NOT NULL,
+        \`body\` VARCHAR(1000) NOT NULL,
+        \`titleMy\` VARCHAR(255) NULL,
+        \`bodyMy\` VARCHAR(1000) NULL,
+        \`dataJson\` TEXT NULL,
+        \`readAt\` DATETIME(3) NULL,
+        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        KEY \`MerchantNotification_shopId_createdAt_idx\` (\`shopId\`, \`createdAt\`)
+      ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    `);
+    console.log("ensure-schema: ensured DevicePushToken + MerchantNotification");
+  } catch (err) {
+    console.warn(
+      "ensure-schema: merchantNotify",
+      String(err?.message || err).slice(0, 240),
+    );
+  }
+  merchantNotifyTablesReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
@@ -215,6 +307,9 @@ export async function ensureSchemaPatches() {
     ensurePasswordLoginEnabledColumn().catch(() => {}),
     ensureChatReadColumns().catch(() => {}),
     ensureOrderMerchantLastReadColumn().catch(() => {}),
+    ensureOrderBuyerNoteColumn().catch(() => {}),
+    ensureOrderPreferredDeliveryDateColumn().catch(() => {}),
     ensureBogoAlwaysOn().catch(() => {}),
+    ensureMerchantNotifyTables().catch(() => {}),
   ]);
 }

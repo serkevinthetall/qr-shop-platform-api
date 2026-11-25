@@ -70,6 +70,10 @@ const placeSchema = z.object({
   payment: z.string().min(2).max(24),
   /** Required for wallet methods (kpay, uabpay, …) — absolute or /uploads/… */
   paymentSlipUrl: z.string().min(8).max(2048).optional().nullable(),
+  /** Optional note from buyer (QR App delivery notes). */
+  buyerNote: z.string().max(1000).optional().nullable(),
+  /** Soft preferred day YYYY-MM-DD (not an SLA). Empty → ignored. */
+  preferredDeliveryDate: z.string().max(10).optional().nullable(),
   lines: z.array(lineSchema).min(1),
   deliveryFeeKs: z.number().int().nonnegative().optional(),
   townshipId: z.string().optional(),
@@ -291,6 +295,11 @@ async function createOrderPayload(
     };
   }
   const paymentSlipUrl = isWalletPayment(payId) ? slipUrl : null;
+  const buyerNote = String(b.buyerNote || "").trim().slice(0, 1000) || null;
+  const preferredRaw = String(b.preferredDeliveryDate || "").trim();
+  const preferredDeliveryDate = /^\d{4}-\d{2}-\d{2}$/.test(preferredRaw)
+    ? preferredRaw
+    : null;
 
   const profileAddressLine = String(profileAddress || "").trim();
   const profileTownship = String(profileTownshipId || "").trim() || null;
@@ -381,6 +390,8 @@ async function createOrderPayload(
         buyerName: b.buyerName.trim(),
         buyerPhone: phone,
         address,
+        buyerNote,
+        preferredDeliveryDate,
         channel: effectiveChannel,
         fulfillment: b.fulfillment,
         payment: b.payment,
@@ -615,6 +626,8 @@ function publicTrackOrder(order) {
     buyerName: order.buyerName,
     buyerPhone: order.buyerPhone,
     address: order.address,
+    buyerNote: order.buyerNote || null,
+    preferredDeliveryDate: order.preferredDeliveryDate || null,
     fulfillment: order.fulfillment,
     payment: order.payment,
     stage: order.stage,
