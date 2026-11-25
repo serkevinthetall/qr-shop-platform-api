@@ -18,6 +18,7 @@ import {
   ensureWholesaleMinQtyColumn,
 } from "../lib/ensure-schema.js";
 import { publishOrderEvent } from "../lib/realtime.js";
+import { notifyShopNewOrder } from "../lib/merchant-notify.js";
 import { allocateOrderCode, looksLikeOrderCode } from "../lib/order-code.js";
 import {
   normalizeOrderStage,
@@ -419,6 +420,7 @@ async function createOrderPayload(
   });
 
   publishOrderEvent(order, "created");
+  notifyShopNewOrder(order);
   return { order };
 }
 

@@ -12,6 +12,7 @@ import { resolveListingMode } from "../lib/shop-channels.js";
 import { recordStockAdjustMove } from "../lib/stock-moves.js";
 import { ensureWholesaleMinQtyColumn } from "../lib/ensure-schema.js";
 import { resolveProductBadgeName } from "../lib/product-badges.js";
+import { notifyBuyersProductBadge } from "../lib/buyer-notify.js";
 
 const router = Router();
 
@@ -311,6 +312,10 @@ router.post("/products", async (req, res) => {
         showOnWebsite: published || sellOnMarketplace || sellOnApp,
       },
     });
+    notifyBuyersProductBadge(row, {
+      previousBadge: null,
+      previousSellOnApp: false,
+    });
     return ok(res.status(201), publicMerchantProduct(row));
   } catch (err) {
     console.error("merchant product create", err);
@@ -436,6 +441,16 @@ router.put("/products/:id", async (req, res) => {
       where: { id: existing.id },
       data,
     });
+    const badgeChanged =
+      data.badge !== undefined ||
+      data.sellOnApp === true ||
+      (existing.sellOnApp !== true && row.sellOnApp === true);
+    if (badgeChanged) {
+      notifyBuyersProductBadge(row, {
+        previousBadge: existing.badge,
+        previousSellOnApp: existing.sellOnApp === true,
+      });
+    }
     return ok(res, publicMerchantProduct(row));
   } catch (err) {
     console.error("merchant product update", err);

@@ -9,6 +9,7 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { normalizePhone } from "../lib/phone.js";
 import { publishMessageEvent } from "../lib/realtime.js";
+import { notifyShopNewMessage } from "../lib/merchant-notify.js";
 import {
   isoOrNull,
   messageIsReadByPeer,
@@ -248,6 +249,14 @@ router.post(
         },
         "created",
       );
+
+      notifyShopNewMessage({
+        shopId: result.thread.shopId,
+        threadId: result.thread.id,
+        buyerName: result.thread.buyerName || buyer.name,
+        text,
+        productImageUrl: parsed.data.productImageUrl?.trim() || null,
+      });
 
       return ok(
         res,

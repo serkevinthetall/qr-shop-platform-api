@@ -11,6 +11,7 @@ let orderBuyerNoteReady = false;
 let orderPreferredDeliveryDateReady = false;
 let bogoAlwaysOnReady = false;
 let merchantNotifyTablesReady = false;
+let buyerNotifyTablesReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -298,6 +299,54 @@ export async function ensureMerchantNotifyTables() {
   merchantNotifyTablesReady = true;
 }
 
+/** QR App buyer inbox + language on DevicePushToken. */
+export async function ensureBuyerNotifyTables() {
+  if (buyerNotifyTablesReady) return;
+  await ensureMerchantNotifyTables();
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`DevicePushToken\`
+      ADD COLUMN \`language\` VARCHAR(8) NULL
+    `);
+    console.log("ensure-schema: added DevicePushToken.language");
+  } catch (err) {
+    if (!isDupColumn(err)) {
+      console.warn(
+        "ensure-schema: DevicePushToken.language",
+        String(err?.message || err).slice(0, 240),
+      );
+    }
+  }
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`BuyerNotification\` (
+        \`id\` VARCHAR(191) NOT NULL,
+        \`kind\` VARCHAR(32) NOT NULL,
+        \`title\` VARCHAR(255) NOT NULL,
+        \`body\` VARCHAR(1000) NOT NULL,
+        \`titleMy\` VARCHAR(255) NULL,
+        \`bodyMy\` VARCHAR(1000) NULL,
+        \`productId\` VARCHAR(191) NULL,
+        \`productName\` VARCHAR(255) NULL,
+        \`ribbonName\` VARCHAR(120) NULL,
+        \`couponCode\` VARCHAR(64) NULL,
+        \`amount\` INT NULL,
+        \`dataJson\` TEXT NULL,
+        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`),
+        KEY \`BuyerNotification_createdAt_idx\` (\`createdAt\`)
+      ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    `);
+    console.log("ensure-schema: ensured BuyerNotification");
+  } catch (err) {
+    console.warn(
+      "ensure-schema: BuyerNotification",
+      String(err?.message || err).slice(0, 240),
+    );
+  }
+  buyerNotifyTablesReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
@@ -311,5 +360,6 @@ export async function ensureSchemaPatches() {
     ensureOrderPreferredDeliveryDateColumn().catch(() => {}),
     ensureBogoAlwaysOn().catch(() => {}),
     ensureMerchantNotifyTables().catch(() => {}),
+    ensureBuyerNotifyTables().catch(() => {}),
   ]);
 }
