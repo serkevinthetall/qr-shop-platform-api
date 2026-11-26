@@ -16,6 +16,8 @@ import {
 } from "../lib/media-url.js";
 import {
   activateSubscriptionData,
+  approvalSubscriptionData,
+  needsApprovalSubscriptionHeal,
   normalizePlan,
   resolveSubscription,
   subscriptionPayload,
@@ -374,7 +376,7 @@ router.get("/shop", async (req, res) => {
     const shopId = shopIdOrFail(req, res);
     if (!shopId) return;
 
-    const shop = await prisma.shop.findUnique({
+    let shop = await prisma.shop.findUnique({
       where: { id: shopId },
       include: {
         features: true,
@@ -383,6 +385,22 @@ router.get("/shop", async (req, res) => {
       },
     });
     if (!shop) return fail(res, 404, "Shop not found");
+
+    if (needsApprovalSubscriptionHeal(shop)) {
+      try {
+        shop = await prisma.shop.update({
+          where: { id: shopId },
+          data: approvalSubscriptionData(shop),
+          include: {
+            features: true,
+            delivery: true,
+            payments: true,
+          },
+        });
+      } catch (e) {
+        console.warn("merchant shop heal subscription", e?.message || e);
+      }
+    }
 
     const ch = publicShopChannels(shop.features);
     const storeStyle = parseStoreStyle(shop.storeStyleJson);
@@ -411,7 +429,7 @@ router.get("/shop", async (req, res) => {
 
 /**
  * POST /api/merchant/subscription/activate
- * Start / renew 12-month period when new or due. Join date unchanged.
+ * Renew 12-month period when Due. Join date unchanged. Approval already activates.
  */
 router.post("/subscription/activate", async (req, res) => {
   try {
@@ -428,12 +446,15 @@ router.post("/subscription/activate", async (req, res) => {
       return fail(
         res,
         400,
-        "Activate is only available when new or expired (due)",
+        "Activate is only available when subscription is due",
         "not_activatable",
       );
     }
 
-    const plan = normalizePlan(req.body?.plan) || live.plan || "trial";
+    const plan =
+      normalizePlan(req.body?.plan) ||
+      live.plan ||
+      (String(shop.status).toLowerCase() === "approved" ? "premium" : "trial");
     const data = activateSubscriptionData(shop, { plan });
     const updated = await prisma.shop.update({
       where: { id: shopId },

@@ -24,6 +24,10 @@ import {
   withNormalizedShopMedia,
 } from "../lib/media-url.js";
 import { listPlatformPayments } from "../lib/platform-payments.js";
+import {
+  approvalSubscriptionData,
+  subscriptionPayload,
+} from "../lib/shop-subscription.js";
 
 const router = Router();
 
@@ -471,14 +475,25 @@ router.patch(
     if (!["pending", "approved", "rejected", "suspended"].includes(status)) {
       return fail(res, 400, "Invalid status");
     }
+    const existing = await prisma.shop.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!existing) return fail(res, 404, "Shop not found");
+
+    const data = {
+      status,
+      reviewNote: req.body.feedback ?? req.body.reviewNote ?? undefined,
+    };
+    /** Approved → Premium Member, Active, period from join date. */
+    if (status === "approved") {
+      Object.assign(data, approvalSubscriptionData(existing));
+    }
+
     const shop = await prisma.shop.update({
       where: { id: req.params.id },
-      data: {
-        status,
-        reviewNote: req.body.feedback ?? req.body.reviewNote ?? undefined,
-      },
+      data,
     });
-    return ok(res, shop);
+    return ok(res, { ...shop, subscription: subscriptionPayload(shop) });
   },
 );
 

@@ -1,6 +1,7 @@
 /**
  * Shop platform subscription — Trial / Premium Member, 12-month periods.
- * signedUpAt (join date) is set once and never overwritten.
+ * Approved shops are Premium Member; join date is the period start (already active).
+ * Activate renews only when Due. signedUpAt (join date) is never overwritten.
  */
 
 export const SUB_PLANS = ["trial", "premium"];
@@ -16,7 +17,7 @@ function trim(v) {
 export function normalizePlan(raw) {
   const p = trim(raw).toLowerCase();
   if (p === "premium" || p === "premium_member") return "premium";
-  if (p === "trial") return "trial";
+  if (p === "trial" || p === "free") return "trial";
   return null;
 }
 
@@ -37,30 +38,103 @@ export function addMonthsIso(from, months = SUB_PERIOD_MONTHS) {
   return end.toISOString();
 }
 
+/** Join / registration date — subSignedUpAt, else createdAt. */
+export function joinDateOf(shop) {
+  if (shop?.subSignedUpAt instanceof Date) return shop.subSignedUpAt;
+  if (shop?.subSignedUpAt) {
+    const d = new Date(shop.subSignedUpAt);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  if (shop?.createdAt instanceof Date) return shop.createdAt;
+  if (shop?.createdAt) {
+    const d = new Date(shop.createdAt);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+/**
+ * Prisma fields when a shop becomes approved:
+ * Premium Member, Active, period starts at join date.
+ * Does not overwrite an existing in-period expiry.
+ */
+export function approvalSubscriptionData(shop) {
+  const joinAt = joinDateOf(shop) || new Date();
+  const signedUpAt = shop?.subSignedUpAt
+    ? shop.subSignedUpAt instanceof Date
+      ? shop.subSignedUpAt
+      : new Date(shop.subSignedUpAt)
+    : joinAt;
+  const start = Number.isNaN(signedUpAt.getTime()) ? joinAt : signedUpAt;
+  const data = {
+    subPlan: "premium",
+    subStatus: "active",
+  };
+  if (!shop?.subSignedUpAt) {
+    data.subSignedUpAt = start;
+  }
+
+  const currentStatus = normalizeStatus(shop?.subStatus);
+  const hasExpires = Boolean(shop?.subExpiresAt);
+  const expiresMs = hasExpires
+    ? new Date(shop.subExpiresAt).getTime()
+    : NaN;
+  const inPeriod =
+    currentStatus === "active" &&
+    hasExpires &&
+    !Number.isNaN(expiresMs) &&
+    expiresMs >= Date.now();
+
+  if (!inPeriod) {
+    data.subExpiresAt = new Date(
+      addMonthsIso(start, SUB_PERIOD_MONTHS) || addMonthsIso(new Date(), SUB_PERIOD_MONTHS),
+    );
+  }
+  return data;
+}
+
+/** Approved shop missing Premium / Active / period from join. */
+export function needsApprovalSubscriptionHeal(shop) {
+  if (String(shop?.status || "").toLowerCase() !== "approved") return false;
+  const plan = normalizePlan(shop?.subPlan);
+  const status = normalizeStatus(shop?.subStatus);
+  if (plan !== "premium") return true;
+  if (status === "none" || status === "canceled") return true;
+  if (!shop?.subExpiresAt) return true;
+  return false;
+}
+
 /**
  * Derive live status: active past expiry → due.
+ * Approved shops resolve as Premium Active from join when not yet set.
  * Never mutates signedUpAt.
  */
 export function resolveSubscription(shop) {
-  const signedUpAt =
-    shop?.subSignedUpAt instanceof Date
-      ? shop.subSignedUpAt.toISOString()
-      : shop?.subSignedUpAt
-        ? String(shop.subSignedUpAt)
-        : shop?.createdAt instanceof Date
-          ? shop.createdAt.toISOString()
-          : shop?.createdAt
-            ? String(shop.createdAt)
-            : null;
+  const joinAt = joinDateOf(shop);
+  const signedUpAt = joinAt ? joinAt.toISOString() : null;
 
   let plan = normalizePlan(shop?.subPlan);
   let status = normalizeStatus(shop?.subStatus);
-  const expiresAt =
+  let expiresAt =
     shop?.subExpiresAt instanceof Date
       ? shop.subExpiresAt.toISOString()
       : shop?.subExpiresAt
         ? String(shop.subExpiresAt)
         : null;
+
+  const shopStatus = String(shop?.status || "").toLowerCase();
+  if (
+    shopStatus === "approved" &&
+    (status === "none" || status === "canceled" || !expiresAt || plan !== "premium")
+  ) {
+    plan = "premium";
+    status = "active";
+    if (!expiresAt && signedUpAt) {
+      expiresAt = addMonthsIso(signedUpAt, SUB_PERIOD_MONTHS);
+    } else if (!expiresAt) {
+      expiresAt = addMonthsIso(new Date(), SUB_PERIOD_MONTHS);
+    }
+  }
 
   if (status === "active" && expiresAt) {
     const end = new Date(expiresAt).getTime();
@@ -78,8 +152,9 @@ export function resolveSubscription(shop) {
     }
   }
 
+  /** Activate renews when due / expired — approval already activates new shops. */
   const canActivate =
-    status === "none" || status === "due" || (expiresAt != null && daysLeft != null && daysLeft < 0);
+    status === "due" || (expiresAt != null && daysLeft != null && daysLeft < 0);
 
   return {
     merchantId: shop?.id || shop?.merchantId || "",
@@ -99,22 +174,20 @@ export function subscriptionPayload(shop) {
 }
 
 /**
- * Build Prisma update for activate — keeps signedUpAt.
+ * Build Prisma update for activate / renew — keeps signedUpAt.
+ * Period starts from now (renewal). Approved shops default to Premium.
  * @param {object} shop current shop row
  * @param {{ plan?: string }} [opts]
  */
 export function activateSubscriptionData(shop, opts = {}) {
   const current = resolveSubscription(shop);
-  const plan = normalizePlan(opts.plan) || current.plan || "trial";
+  const approved = String(shop?.status || "").toLowerCase() === "approved";
+  const plan =
+    normalizePlan(opts.plan) ||
+    current.plan ||
+    (approved ? "premium" : "trial");
   const now = new Date();
-  const signedUpAt =
-    shop.subSignedUpAt instanceof Date
-      ? shop.subSignedUpAt
-      : shop.subSignedUpAt
-        ? new Date(shop.subSignedUpAt)
-        : shop.createdAt instanceof Date
-          ? shop.createdAt
-          : now;
+  const signedUpAt = joinDateOf(shop) || now;
 
   const data = {
     subPlan: plan,
@@ -149,8 +222,7 @@ export function patchSubscriptionData(shop, body = {}) {
     }
   }
   if (!shop.subSignedUpAt) {
-    data.subSignedUpAt =
-      shop.createdAt instanceof Date ? shop.createdAt : new Date();
+    data.subSignedUpAt = joinDateOf(shop) || new Date();
   }
   return data;
 }

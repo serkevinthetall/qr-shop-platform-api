@@ -29,9 +29,13 @@ import {
 } from "../lib/admin-view-otp.js";
 import {
   activateSubscriptionData,
+  addMonthsIso,
+  approvalSubscriptionData,
+  needsApprovalSubscriptionHeal,
   normalizePlan,
   patchSubscriptionData,
   resolveSubscription,
+  SUB_PERIOD_MONTHS,
   subscriptionPayload,
 } from "../lib/shop-subscription.js";
 
@@ -97,7 +101,29 @@ router.get("/merchants", async (_req, res) => {
         _count: { select: { products: true, orders: true } },
       },
     });
-    return ok(res, shops.map(withSubscription));
+    /** Backfill approved shops that never got Premium / Active from join. */
+    const healed = await Promise.all(
+      shops.map(async (shop) => {
+        if (!needsApprovalSubscriptionHeal(shop)) return shop;
+        try {
+          return await prisma.shop.update({
+            where: { id: shop.id },
+            data: approvalSubscriptionData(shop),
+            include: {
+              users: {
+                where: { role: "merchant" },
+                select: { id: true, name: true, email: true, phone: true },
+              },
+              _count: { select: { products: true, orders: true } },
+            },
+          });
+        } catch (e) {
+          console.warn("heal approval subscription", shop.id, e?.message || e);
+          return shop;
+        }
+      }),
+    );
+    return ok(res, healed.map(withSubscription));
   } catch (err) {
     console.error("admin merchants", err);
     return fail(res, 500, "Could not load merchants", "db_error");
@@ -123,7 +149,7 @@ const createMerchantSchema = z.object({
   shopName: requiredTrimmed(2, "Shop name must be at least 2 characters"),
   location: z.string().optional(),
   password: requiredTrimmed(4, "Password must be at least 4 characters"),
-  /** trial | premium — status stays none until Activate */
+  /** Approved shops are Premium; plan optional (forced premium on create). */
   plan: z.enum(["trial", "premium"]).optional(),
 });
 
@@ -173,10 +199,10 @@ router.post("/merchants", async (req, res) => {
         location: parsed.data.location?.trim() || "Online",
         status: "approved",
         listed: true,
-        subPlan: normalizePlan(parsed.data.plan) || "trial",
-        subStatus: "none",
+        subPlan: "premium",
+        subStatus: "active",
         subSignedUpAt: joinAt,
-        subExpiresAt: null,
+        subExpiresAt: new Date(addMonthsIso(joinAt, SUB_PERIOD_MONTHS)),
         features: {
           create: {
             listingMode: "b2c",
@@ -370,7 +396,7 @@ router.patch("/merchants/:shopId/subscription", async (req, res) => {
 
 /**
  * POST /api/admin/merchants/:shopId/subscription/activate
- * Start / renew 12-month period. Keeps join date. Only for new (none) or due.
+ * Renew 12-month period when Due. Keeps join date. Approval already activates.
  */
 router.post("/merchants/:shopId/subscription/activate", async (req, res) => {
   try {
@@ -384,13 +410,15 @@ router.post("/merchants/:shopId/subscription/activate", async (req, res) => {
       return fail(
         res,
         400,
-        "Activate is only available for new or expired (due) shops",
+        "Activate is only available when subscription is due",
         "not_activatable",
       );
     }
 
     const plan =
-      normalizePlan(req.body?.plan) || live.plan || "trial";
+      normalizePlan(req.body?.plan) ||
+      live.plan ||
+      (String(shop.status).toLowerCase() === "approved" ? "premium" : "trial");
     const data = activateSubscriptionData(shop, { plan });
     const updated = await prisma.shop.update({
       where: { id: shopId },

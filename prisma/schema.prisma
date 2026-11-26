@@ -184,8 +184,8 @@ model Shop {
   /**
    * Platform subscription (Admin + Merchant synced).
    * plan: trial | premium · status: none | active | due | canceled
-   * subSignedUpAt = join date (set once, never overwrite on activate).
-   * Period is always 12 months from activate.
+   * Approved shops = premium + active; subSignedUpAt = join (= period start).
+   * Activate renews 12 months when due; join date never overwritten.
    */
   subPlan       String?
   subStatus     String    @default("none")
