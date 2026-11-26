@@ -16,7 +16,7 @@ import {
   unpackZonesJson,
 } from "../lib/delivery-fee.js";
 import { townshipLabel } from "../lib/township.js";
-import { sellChannelWhere } from "../lib/merchant-product.js";
+import { loadShopProducts } from "../lib/merchant-product.js";
 import { parseOpeningHours } from "../lib/opening-hours.js";
 import { parseStoreStyle } from "../lib/store-style.js";
 import {
@@ -217,18 +217,13 @@ router.get("/:id/products", async (req, res) => {
     }
 
     /** Shop website / Shop QR — published inventory with a category. */
-    const products = await prisma.product.findMany({
-      where: {
-        shopId: shop.id,
-        ...sellChannelWhere("own"),
-        AND: [
-          { categoryId: { not: null } },
-          { categoryId: { not: "" } },
-        ],
-      },
-      orderBy: { updatedAt: "desc" },
+    const allRows = await loadShopProducts(shop.id, {
+      activeOnly: true,
       take: 200,
     });
+    const products = (allRows || []).filter((p) =>
+      String(p.categoryId || "").trim(),
+    );
     const ch = publicShopChannels(shop.features);
     const storeStyle = parseStoreStyle(shop.storeStyleJson);
     const openingHours = parseOpeningHours(shop.openingHoursJson);
@@ -319,7 +314,12 @@ router.get("/:id/products", async (req, res) => {
     });
   } catch (err) {
     console.error("shop products", err);
-    return fail(res, 500, "Could not load shop products", "db_error");
+    return fail(
+      res,
+      500,
+      `Could not load shop products: ${String(err?.message || err).slice(0, 240)}`,
+      "db_error",
+    );
   }
 });
 
