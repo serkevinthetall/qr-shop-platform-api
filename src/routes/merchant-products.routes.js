@@ -5,6 +5,8 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { shopIdOrFail, requireShopOwner } from "../lib/merchant-auth.js";
 import {
+  loadShopProductById,
+  loadShopProducts,
   productWriteData,
   publicMerchantProduct,
 } from "../lib/merchant-product.js";
@@ -29,19 +31,13 @@ router.use(async (_req, _res, next) => {
   try {
     await ensureProductFoodInfoColumn();
   } catch {
-    /* logged in ensure-schema — list still retries below */
+    /* list/get use raw SQL fallback if column still missing */
   }
   next();
 });
 
-function isUnknownColumnError(err) {
-  const msg = String(err?.message || err || "");
-  return (
-    err?.code === "P2022" ||
-    /unknown column/i.test(msg) ||
-    /does not exist/i.test(msg) ||
-    /foodInfoJson/i.test(msg)
-  );
+function dbErrorDetail(err) {
+  return String(err?.message || err || "db_error").slice(0, 240);
 }
 
 async function shopIsCatalogOnly(shopId) {
@@ -190,38 +186,8 @@ router.get("/products", async (req, res) => {
     const activeOnly = req.query.active === "1" || req.query.active === "true";
     const lowStock = req.query.lowStock === "1" || req.query.lowStock === "true";
 
-    const where = {
-      shopId,
-      ...(activeOnly ? { active: true } : {}),
-      ...(lowStock ? { lowStockAlertEnabled: true } : {}),
-      ...(q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { barcode: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    };
-
-    async function loadRows() {
-      return prisma.product.findMany({
-        where,
-        orderBy: [{ updatedAt: "desc" }],
-        take: 500,
-      });
-    }
-
-    let rows;
-    try {
-      rows = await loadRows();
-    } catch (err) {
-      if (!isUnknownColumnError(err)) throw err;
-      /** Hostinger may miss Product.foodInfoJson until ensure-schema runs. */
-      await ensureProductFoodInfoColumn().catch(() => {});
-      rows = await loadRows();
-    }
-    const mapped = rows.map(publicMerchantProduct);
+    const rows = await loadShopProducts(shopId, { q, activeOnly, take: 500 });
+    const mapped = (rows || []).map(publicMerchantProduct);
     if (!lowStock) return ok(res, mapped);
     return ok(
       res,
@@ -229,7 +195,12 @@ router.get("/products", async (req, res) => {
     );
   } catch (err) {
     console.error("merchant products list", err);
-    return fail(res, 500, "Could not load products", "db_error");
+    return fail(
+      res,
+      500,
+      `Could not load products: ${dbErrorDetail(err)}`,
+      "db_error",
+    );
   }
 });
 
@@ -239,14 +210,17 @@ router.get("/products/:id", async (req, res) => {
     const shopId = shopIdOrFail(req, res);
     if (!shopId) return;
 
-    const row = await prisma.product.findFirst({
-      where: { id: req.params.id, shopId },
-    });
+    const row = await loadShopProductById(shopId, req.params.id);
     if (!row) return fail(res, 404, "Product not found");
     return ok(res, publicMerchantProduct(row));
   } catch (err) {
     console.error("merchant product get", err);
-    return fail(res, 500, "Could not load product", "db_error");
+    return fail(
+      res,
+      500,
+      `Could not load product: ${dbErrorDetail(err)}`,
+      "db_error",
+    );
   }
 });
 

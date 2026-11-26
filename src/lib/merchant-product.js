@@ -1,4 +1,103 @@
+import { prisma } from "./prisma.js";
+import { ensureProductFoodInfoColumn } from "./ensure-schema.js";
 import { foodInfoForMerchant, foodInfoWriteJson } from "./food-info.js";
+
+function isUnknownColumnError(err) {
+  const msg = String(err?.message || err || "");
+  return (
+    err?.code === "P2022" ||
+    /unknown column/i.test(msg) ||
+    /does not exist in the current database/i.test(msg) ||
+    /foodInfoJson/i.test(msg)
+  );
+}
+
+/**
+ * Load shop products even when Hostinger is missing Product.foodInfoJson.
+ * Tries Prisma → ensure column → Prisma → raw SELECT * fallback.
+ */
+export async function loadShopProducts(shopId, opts = {}) {
+  const take = Math.min(500, Math.max(1, Number(opts.take) || 500));
+  const activeOnly = opts.activeOnly === true;
+  const q = String(opts.q || "").trim();
+
+  const where = {
+    shopId,
+    ...(activeOnly ? { active: true } : {}),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { barcode: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  async function viaPrisma() {
+    return prisma.product.findMany({
+      where,
+      orderBy: [{ updatedAt: "desc" }],
+      take,
+    });
+  }
+
+  try {
+    return await viaPrisma();
+  } catch (err) {
+    if (!isUnknownColumnError(err)) throw err;
+  }
+
+  await ensureProductFoodInfoColumn().catch(() => {});
+
+  try {
+    return await viaPrisma();
+  } catch (err) {
+    if (!isUnknownColumnError(err)) throw err;
+  }
+
+  /** Last resort: raw SELECT * (works when column is absent from DB). */
+  let sql = `SELECT * FROM \`Product\` WHERE \`shopId\` = ?`;
+  const params = [shopId];
+  if (activeOnly) sql += ` AND \`active\` = 1`;
+  if (q) {
+    sql += ` AND (\`name\` LIKE ? OR \`barcode\` LIKE ?)`;
+    const like = `%${q}%`;
+    params.push(like, like);
+  }
+  sql += ` ORDER BY \`updatedAt\` DESC LIMIT ${take}`;
+  return prisma.$queryRawUnsafe(sql, ...params);
+}
+
+/** Single product with same schema-mismatch resilience. */
+export async function loadShopProductById(shopId, productId) {
+  async function viaPrisma() {
+    return prisma.product.findFirst({
+      where: { id: productId, shopId },
+    });
+  }
+
+  try {
+    return await viaPrisma();
+  } catch (err) {
+    if (!isUnknownColumnError(err)) throw err;
+  }
+
+  await ensureProductFoodInfoColumn().catch(() => {});
+
+  try {
+    return await viaPrisma();
+  } catch (err) {
+    if (!isUnknownColumnError(err)) throw err;
+  }
+
+  const rows = await prisma.$queryRawUnsafe(
+    `SELECT * FROM \`Product\` WHERE \`id\` = ? AND \`shopId\` = ? LIMIT 1`,
+    productId,
+    shopId,
+  );
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
 
 export function parseAttributes(raw) {
   if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw;
