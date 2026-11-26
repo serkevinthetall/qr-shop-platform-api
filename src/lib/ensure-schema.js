@@ -12,6 +12,7 @@ let orderPreferredDeliveryDateReady = false;
 let bogoAlwaysOnReady = false;
 let merchantNotifyTablesReady = false;
 let buyerNotifyTablesReady = false;
+let productFoodInfoReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -348,6 +349,29 @@ export async function ensureBuyerNotifyTables() {
   buyerNotifyTablesReady = true;
 }
 
+/** Optional food information sheet on Product (Hostinger may lack prisma db push). */
+export async function ensureProductFoodInfoColumn() {
+  if (productFoodInfoReady) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`Product\`
+      ADD COLUMN \`foodInfoJson\` LONGTEXT NULL
+    `);
+    console.log("ensure-schema: added Product.foodInfoJson");
+  } catch (err) {
+    if (isDupColumn(err)) {
+      /* already migrated */
+    } else {
+      console.warn(
+        "ensure-schema: foodInfoJson",
+        String(err?.message || err).slice(0, 240),
+      );
+      throw err;
+    }
+  }
+  productFoodInfoReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
@@ -362,5 +386,6 @@ export async function ensureSchemaPatches() {
     ensureBogoAlwaysOn().catch(() => {}),
     ensureMerchantNotifyTables().catch(() => {}),
     ensureBuyerNotifyTables().catch(() => {}),
+    ensureProductFoodInfoColumn().catch(() => {}),
   ]);
 }

@@ -138,6 +138,20 @@ const createSchema = z.object({
   uomFactor: z.number().int().positive().optional(),
   templateId: z.string().optional(),
   attributes: z.record(z.string(), z.string()).optional(),
+  foodInfo: z
+    .object({
+      enabled: z.boolean().optional(),
+      ingredientsEn: z.string().optional(),
+      ingredientsMy: z.string().optional(),
+      allergen: z.string().optional(),
+      nutritionServing: z.string().optional(),
+      nutritionEnergy: z.string().optional(),
+      nutritionFat: z.string().optional(),
+      nutritionSodium: z.string().optional(),
+      storage: z.string().optional(),
+    })
+    .nullable()
+    .optional(),
   active: z.boolean().optional(),
   showOnWebsite: z.boolean().optional(),
   sellOnMarketplace: z.boolean().optional(),
@@ -304,6 +318,7 @@ router.post("/products", async (req, res) => {
           (parsed.data.attributes
             ? JSON.stringify(parsed.data.attributes)
             : "{}"),
+        foodInfoJson: data.foodInfoJson ?? "{}",
         active: published,
         /** Published → shop website; mall/app only when those flags are on. */
         sellOnOwnPage: published,

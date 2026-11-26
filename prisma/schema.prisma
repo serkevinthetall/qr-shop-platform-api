@@ -307,6 +307,12 @@ model Product {
   templateId   String?
   /** JSON object e.g. {"color":"White","size":"M"} */
   attributesJson String @default("{}")
+  /**
+   * Optional food info sheet JSON:
+   * { enabled, ingredientsEn, ingredientsMy, allergen,
+   *   nutritionServing, nutritionEnergy, nutritionFat, nutritionSodium, storage }
+   */
+  foodInfoJson String @default("{}")
   /** Published — appears on shop website (Shop QR). Required for Marketplace/App. */
   active       Boolean  @default(true)
   /**

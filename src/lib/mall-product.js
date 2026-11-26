@@ -4,6 +4,7 @@
  */
 import { mallPricesForProduct } from "./pricing-context.js";
 import { publicShopChannels } from "./shop-channels.js";
+import { foodInfoForBuyer } from "./food-info.js";
 
 function parseProductAttributes(p) {
   if (typeof p.attributesJson === "string") {
@@ -83,6 +84,10 @@ export function toMallProduct(p) {
     stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
     templateId: p.templateId ? String(p.templateId) : undefined,
     attributes,
+    ...(() => {
+      const foodInfo = foodInfoForBuyer(p);
+      return foodInfo ? { foodInfo } : {};
+    })(),
     active: p.active,
     listingMode,
     portfolioOnly: channels.portfolioOnly,

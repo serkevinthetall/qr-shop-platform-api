@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { ok, fail } from "../lib/response.js";
+import { foodInfoForBuyer } from "../lib/food-info.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import {
   featuresPayloadForMode,
@@ -301,6 +302,10 @@ router.get("/:id/products", async (req, res) => {
           categoryId: p.categoryId || "",
           templateId: p.templateId ? String(p.templateId) : undefined,
           attributes,
+          ...(() => {
+            const foodInfo = foodInfoForBuyer(p);
+            return foodInfo ? { foodInfo } : {};
+          })(),
           canOrder:
             ch.canOrder &&
             !ch.portfolioOnly &&

@@ -5,6 +5,7 @@
  */
 import { mallPricesForProduct } from "./pricing-context.js";
 import { publicShopChannels } from "./shop-channels.js";
+import { foodInfoForBuyer } from "./food-info.js";
 
 /** Retail unit in kyats, or null when SKU has no B2C price. */
 export function appRetailKs(p, features) {
@@ -86,6 +87,10 @@ export function toAppCatalogProduct(p, viewer = {}) {
     badge: p.badge ?? undefined,
     imageUrl: p.imageUrl ?? "",
     stock,
+    ...(() => {
+      const foodInfo = foodInfoForBuyer(p);
+      return foodInfo ? { foodInfo } : {};
+    })(),
     active: p.active,
     listingMode: allowWs ? "b2b" : "b2c",
     portfolioOnly: false,

@@ -1,3 +1,5 @@
+import { foodInfoForMerchant, foodInfoWriteJson } from "./food-info.js";
+
 export function parseAttributes(raw) {
   if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw;
   if (typeof raw === "string" && raw.trim()) {
@@ -83,6 +85,7 @@ export function publicMerchantProduct(p) {
     uomFactor: p.uomFactor ?? 1,
     templateId: p.templateId ?? undefined,
     attributes: parseAttributes(p.attributesJson),
+    foodInfo: foodInfoForMerchant(p),
     active: p.active !== false,
     showOnWebsite,
     ...channels,
@@ -172,6 +175,10 @@ export function productWriteData(body, { partial = false } = {}) {
   if (body.templateId !== undefined) set("templateId", body.templateId || null);
   if (body.attributes !== undefined) {
     set("attributesJson", JSON.stringify(parseAttributes(body.attributes)));
+  }
+  if (body.foodInfo !== undefined) {
+    const json = foodInfoWriteJson(body.foodInfo);
+    if (json !== undefined) set("foodInfoJson", json);
   }
   if (typeof body.active === "boolean") set("active", body.active);
 

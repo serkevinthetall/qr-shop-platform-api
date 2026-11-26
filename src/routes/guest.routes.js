@@ -11,6 +11,7 @@ import {
   resolvePricingContext,
 } from "../lib/pricing-context.js";
 import { sellChannelWhere } from "../lib/merchant-product.js";
+import { foodInfoForBuyer } from "../lib/food-info.js";
 
 const router = Router();
 
@@ -525,6 +526,10 @@ router.get("/products", requireGuest, async (req, res) => {
           stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
           templateId: p.templateId ? String(p.templateId) : undefined,
           attributes,
+          ...(() => {
+            const foodInfo = foodInfoForBuyer(p);
+            return foodInfo ? { foodInfo } : {};
+          })(),
           canOrder:
             priced.canOrder !== false &&
             Math.max(0, Math.floor(Number(p.stock) || 0)) > 0,
