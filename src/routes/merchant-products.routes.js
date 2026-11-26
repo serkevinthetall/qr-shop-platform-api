@@ -10,7 +10,10 @@ import {
 } from "../lib/merchant-product.js";
 import { resolveListingMode } from "../lib/shop-channels.js";
 import { recordStockAdjustMove } from "../lib/stock-moves.js";
-import { ensureWholesaleMinQtyColumn } from "../lib/ensure-schema.js";
+import {
+  ensureProductFoodInfoColumn,
+  ensureWholesaleMinQtyColumn,
+} from "../lib/ensure-schema.js";
 import { resolveProductBadgeName } from "../lib/product-badges.js";
 import { notifyBuyersProductBadge } from "../lib/buyer-notify.js";
 
@@ -23,8 +26,23 @@ router.use(async (_req, _res, next) => {
   } catch {
     /* logged in ensure-schema */
   }
+  try {
+    await ensureProductFoodInfoColumn();
+  } catch {
+    /* logged in ensure-schema — list still retries below */
+  }
   next();
 });
+
+function isUnknownColumnError(err) {
+  const msg = String(err?.message || err || "");
+  return (
+    err?.code === "P2022" ||
+    /unknown column/i.test(msg) ||
+    /does not exist/i.test(msg) ||
+    /foodInfoJson/i.test(msg)
+  );
+}
 
 async function shopIsCatalogOnly(shopId) {
   const features = await prisma.shopFeatures.findUnique({ where: { shopId } });
@@ -186,11 +204,23 @@ router.get("/products", async (req, res) => {
         : {}),
     };
 
-    const rows = await prisma.product.findMany({
-      where,
-      orderBy: [{ updatedAt: "desc" }],
-      take: 500,
-    });
+    async function loadRows() {
+      return prisma.product.findMany({
+        where,
+        orderBy: [{ updatedAt: "desc" }],
+        take: 500,
+      });
+    }
+
+    let rows;
+    try {
+      rows = await loadRows();
+    } catch (err) {
+      if (!isUnknownColumnError(err)) throw err;
+      /** Hostinger may miss Product.foodInfoJson until ensure-schema runs. */
+      await ensureProductFoodInfoColumn().catch(() => {});
+      rows = await loadRows();
+    }
     const mapped = rows.map(publicMerchantProduct);
     if (!lowStock) return ok(res, mapped);
     return ok(

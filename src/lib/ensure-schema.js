@@ -367,6 +367,7 @@ export async function ensureProductFoodInfoColumn() {
         "ensure-schema: foodInfoJson",
         String(err?.message || err).slice(0, 240),
       );
+      /** Do not mark ready — next request retries ALTER. */
       throw err;
     }
   }
