@@ -14,6 +14,12 @@ import {
   normalizeMediaUrl,
   withNormalizedShopMedia,
 } from "../lib/media-url.js";
+import {
+  activateSubscriptionData,
+  normalizePlan,
+  resolveSubscription,
+  subscriptionPayload,
+} from "../lib/shop-subscription.js";
 
 const router = Router();
 
@@ -395,10 +401,48 @@ router.get("/shop", async (req, res) => {
         b2bEnabled: ch.b2bEnabled,
         showBoth: ch.b2cEnabled && ch.b2bEnabled,
       },
+      subscription: subscriptionPayload(shop),
     });
   } catch (err) {
     console.error("merchant shop get", err);
     return fail(res, 500, "Could not load shop", "db_error");
+  }
+});
+
+/**
+ * POST /api/merchant/subscription/activate
+ * Start / renew 12-month period when new or due. Join date unchanged.
+ */
+router.post("/subscription/activate", async (req, res) => {
+  try {
+    const shopId = shopIdOrFail(req, res);
+    if (!shopId) return;
+    if (req.user.role === "staff") {
+      return fail(res, 403, "Shop owner only");
+    }
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const live = resolveSubscription(shop);
+    if (!live.canActivate) {
+      return fail(
+        res,
+        400,
+        "Activate is only available when new or expired (due)",
+        "not_activatable",
+      );
+    }
+
+    const plan = normalizePlan(req.body?.plan) || live.plan || "trial";
+    const data = activateSubscriptionData(shop, { plan });
+    const updated = await prisma.shop.update({
+      where: { id: shopId },
+      data,
+    });
+    return ok(res, { subscription: subscriptionPayload(updated) });
+  } catch (err) {
+    console.error("merchant activate subscription", err);
+    return fail(res, 500, "Could not activate subscription", "db_error");
   }
 });
 

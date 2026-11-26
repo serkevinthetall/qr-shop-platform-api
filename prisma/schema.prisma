@@ -181,6 +181,16 @@ model Shop {
   aboutText        String?
   /** Opening hours for About: { enabled, days: { mon…sun: { closed, open, close } } } */
   openingHoursJson String  @default("{}")
+  /**
+   * Platform subscription (Admin + Merchant synced).
+   * plan: trial | premium · status: none | active | due | canceled
+   * subSignedUpAt = join date (set once, never overwrite on activate).
+   * Period is always 12 months from activate.
+   */
+  subPlan       String?
+  subStatus     String    @default("none")
+  subSignedUpAt DateTime?
+  subExpiresAt  DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 

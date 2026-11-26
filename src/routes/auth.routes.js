@@ -325,6 +325,7 @@ router.post("/register/merchant", async (req, res) => {
         ? parsed.data.password
         : `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`) ;
     const passwordHash = await bcrypt.hash(provisional, 10);
+    const joinAt = new Date();
     const shop = await prisma.shop.create({
       data: {
         slug,
@@ -333,6 +334,10 @@ router.post("/register/merchant", async (req, res) => {
         email,
         location: parsed.data.location ?? "",
         status: "pending",
+        subPlan: "trial",
+        subStatus: "none",
+        subSignedUpAt: joinAt,
+        subExpiresAt: null,
         features: {
           create: {
             listingMode: "b2c",

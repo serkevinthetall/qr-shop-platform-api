@@ -13,6 +13,7 @@ let bogoAlwaysOnReady = false;
 let merchantNotifyTablesReady = false;
 let buyerNotifyTablesReady = false;
 let productFoodInfoReady = false;
+let shopSubscriptionReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -372,6 +373,37 @@ export async function ensureProductFoodInfoColumn() {
   productFoodInfoReady = true;
 }
 
+/** Shop subscription columns (Hostinger may lack prisma db push). */
+export async function ensureShopSubscriptionColumns() {
+  if (shopSubscriptionReady) return;
+  const cols = [
+    ["subPlan", "VARCHAR(32) NULL"],
+    ["subStatus", "VARCHAR(32) NOT NULL DEFAULT 'none'"],
+    ["subSignedUpAt", "DATETIME(3) NULL"],
+    ["subExpiresAt", "DATETIME(3) NULL"],
+  ];
+  for (const [col, def] of cols) {
+    try {
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE \`Shop\`
+        ADD COLUMN \`${col}\` ${def}
+      `);
+      console.log(`ensure-schema: added Shop.${col}`);
+    } catch (err) {
+      if (isDupColumn(err)) {
+        /* already migrated */
+      } else {
+        console.warn(
+          `ensure-schema: Shop.${col}`,
+          String(err?.message || err).slice(0, 240),
+        );
+        throw err;
+      }
+    }
+  }
+  shopSubscriptionReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
@@ -387,5 +419,6 @@ export async function ensureSchemaPatches() {
     ensureMerchantNotifyTables().catch(() => {}),
     ensureBuyerNotifyTables().catch(() => {}),
     ensureProductFoodInfoColumn().catch(() => {}),
+    ensureShopSubscriptionColumns().catch(() => {}),
   ]);
 }

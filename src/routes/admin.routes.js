@@ -27,8 +27,20 @@ import {
   otpStatus,
   verifyViewAccountOtp,
 } from "../lib/admin-view-otp.js";
+import {
+  activateSubscriptionData,
+  normalizePlan,
+  patchSubscriptionData,
+  resolveSubscription,
+  subscriptionPayload,
+} from "../lib/shop-subscription.js";
 
 const router = Router();
+
+function withSubscription(shop) {
+  if (!shop || typeof shop !== "object") return shop;
+  return { ...shop, subscription: subscriptionPayload(shop) };
+}
 
 router.use(requireAuth, requireRole("admin"));
 
@@ -85,7 +97,7 @@ router.get("/merchants", async (_req, res) => {
         _count: { select: { products: true, orders: true } },
       },
     });
-    return ok(res, shops);
+    return ok(res, shops.map(withSubscription));
   } catch (err) {
     console.error("admin merchants", err);
     return fail(res, 500, "Could not load merchants", "db_error");
@@ -111,6 +123,8 @@ const createMerchantSchema = z.object({
   shopName: requiredTrimmed(2, "Shop name must be at least 2 characters"),
   location: z.string().optional(),
   password: requiredTrimmed(4, "Password must be at least 4 characters"),
+  /** trial | premium — status stays none until Activate */
+  plan: z.enum(["trial", "premium"]).optional(),
 });
 
 /** POST /api/admin/merchants — Admin creates an approved shop + owner */
@@ -149,6 +163,7 @@ router.post("/merchants", async (req, res) => {
     const slug = `${slugBase || "shop"}-${Date.now().toString(36)}`;
     const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
+    const joinAt = new Date();
     const shop = await prisma.shop.create({
       data: {
         slug,
@@ -158,6 +173,10 @@ router.post("/merchants", async (req, res) => {
         location: parsed.data.location?.trim() || "Online",
         status: "approved",
         listed: true,
+        subPlan: normalizePlan(parsed.data.plan) || "trial",
+        subStatus: "none",
+        subSignedUpAt: joinAt,
+        subExpiresAt: null,
         features: {
           create: {
             listingMode: "b2c",
@@ -185,7 +204,7 @@ router.post("/merchants", async (req, res) => {
       },
     });
 
-    return ok(res, shop, { created: true });
+    return ok(res, withSubscription(shop), { created: true });
   } catch (err) {
     console.error("admin create merchant", err);
     const code = err?.code || "";
@@ -298,7 +317,7 @@ router.patch("/merchants/:shopId", async (req, res) => {
       }),
     ]);
 
-    return ok(res, updatedShop);
+    return ok(res, withSubscription(updatedShop));
   } catch (err) {
     console.error("admin update merchant", err);
     const code = err?.code || "";
@@ -306,6 +325,88 @@ router.patch("/merchants/:shopId", async (req, res) => {
       return fail(res, 409, "Email or phone already exists", "conflict");
     }
     return fail(res, 500, "Could not update shop", "db_error");
+  }
+});
+
+const subscriptionPatchSchema = z.object({
+  plan: z.enum(["trial", "premium"]).nullable().optional(),
+  status: z.enum(["none", "active", "due", "canceled"]).optional(),
+  expiresAt: z.string().nullable().optional(),
+});
+
+/**
+ * PATCH /api/admin/merchants/:shopId/subscription
+ * Set plan / status. Does not change join date (subSignedUpAt).
+ */
+router.patch("/merchants/:shopId/subscription", async (req, res) => {
+  try {
+    const shopId = String(req.params.shopId || "").trim();
+    if (!shopId) return fail(res, 400, "shopId required");
+    const parsed = subscriptionPatchSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return fail(res, 400, "Invalid subscription", "validation_error");
+    }
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const data = patchSubscriptionData(shop, parsed.data);
+    const updated = await prisma.shop.update({
+      where: { id: shopId },
+      data,
+      include: {
+        users: {
+          where: { role: "merchant" },
+          select: { id: true, name: true, email: true, phone: true },
+        },
+        _count: { select: { products: true, orders: true } },
+      },
+    });
+    return ok(res, withSubscription(updated));
+  } catch (err) {
+    console.error("admin patch subscription", err);
+    return fail(res, 500, "Could not update subscription", "db_error");
+  }
+});
+
+/**
+ * POST /api/admin/merchants/:shopId/subscription/activate
+ * Start / renew 12-month period. Keeps join date. Only for new (none) or due.
+ */
+router.post("/merchants/:shopId/subscription/activate", async (req, res) => {
+  try {
+    const shopId = String(req.params.shopId || "").trim();
+    if (!shopId) return fail(res, 400, "shopId required");
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) return fail(res, 404, "Shop not found");
+
+    const live = resolveSubscription(shop);
+    if (!live.canActivate) {
+      return fail(
+        res,
+        400,
+        "Activate is only available for new or expired (due) shops",
+        "not_activatable",
+      );
+    }
+
+    const plan =
+      normalizePlan(req.body?.plan) || live.plan || "trial";
+    const data = activateSubscriptionData(shop, { plan });
+    const updated = await prisma.shop.update({
+      where: { id: shopId },
+      data,
+      include: {
+        users: {
+          where: { role: "merchant" },
+          select: { id: true, name: true, email: true, phone: true },
+        },
+        _count: { select: { products: true, orders: true } },
+      },
+    });
+    return ok(res, withSubscription(updated));
+  } catch (err) {
+    console.error("admin activate subscription", err);
+    return fail(res, 500, "Could not activate subscription", "db_error");
   }
 });
 
