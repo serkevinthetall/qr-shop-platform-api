@@ -227,14 +227,21 @@ merchantPortalRouter.get("/threads/:id", async (req, res) => {
     const shopId = shopIdOrFail(req, res);
     if (!shopId) return;
 
-    const thread = await prisma.portalThread.findFirst({
+    const existing = await prisma.portalThread.findFirst({
       where: { id: req.params.id, shopId },
+      select: { id: true },
+    });
+    if (!existing) return fail(res, 404, "Thread not found");
+
+    // Same as buyer chat: opening the thread clears merchant unread.
+    const thread = await prisma.portalThread.update({
+      where: { id: existing.id },
+      data: { unreadForMerchant: 0 },
       include: {
         shop: { select: { name: true } },
         messages: { orderBy: { createdAt: "asc" }, take: 500 },
       },
     });
-    if (!thread) return fail(res, 404, "Thread not found");
     return ok(res, publicThread(thread, { includeMessages: true }));
   } catch (err) {
     console.error("merchant portal get", err);
