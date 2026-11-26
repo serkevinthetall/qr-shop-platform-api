@@ -15,25 +15,37 @@ import {
   messageIsReadByPeer,
   unreadForBuyer,
 } from "../lib/chat-read.js";
+import { normalizeMediaUrl } from "../lib/media-url.js";
 
 const router = Router();
 
-const sendSchema = z.object({
-  text: z.string().min(1).max(4000),
-  productId: z.string().optional(),
-  productName: z.string().optional(),
-  productImageUrl: z.string().optional(),
-  productPriceLabel: z.string().optional(),
-  channel: z.enum(["app", "website"]).optional(),
-});
+const SHOP_SELECT = { id: true, name: true, logoUrl: true };
 
-function publicThread(row, { includeMessages = false } = {}) {
+const sendSchema = z
+  .object({
+    text: z.string().max(4000).optional(),
+    productId: z.string().optional(),
+    productName: z.string().optional(),
+    productImageUrl: z.string().optional(),
+    productPriceLabel: z.string().optional(),
+    channel: z.enum(["app", "website"]).optional(),
+  })
+  .refine(
+    (v) =>
+      Boolean(String(v.text || "").trim()) ||
+      Boolean(String(v.productName || "").trim()) ||
+      Boolean(String(v.productId || "").trim()),
+    { message: "Message or product required" },
+  );
+
+function publicThread(row, { includeMessages = false, req } = {}) {
   const buyerLastReadAt = isoOrNull(row.buyerLastReadAt);
   const merchantLastReadAt = isoOrNull(row.merchantLastReadAt);
   const out = {
     id: row.id,
     shopId: row.shopId,
     shopName: row.shop?.name ?? null,
+    shopLogoUrl: normalizeMediaUrl(row.shop?.logoUrl, req) || null,
     buyerId: row.buyerId,
     buyerName: row.buyerName,
     buyerPhone: row.buyerPhone,
@@ -104,7 +116,7 @@ async function upsertThread({ shopId, buyer, channel }) {
         buyerHiddenAt: null,
         ...(channel ? { channel } : {}),
       },
-      include: { shop: { select: { id: true, name: true } } },
+      include: { shop: { select: SHOP_SELECT } },
     });
     return { thread: updated, shop };
   }
@@ -117,7 +129,7 @@ async function upsertThread({ shopId, buyer, channel }) {
       buyerPhone: buyer.phone,
       channel: channel === "website" ? "website" : "app",
     },
-    include: { shop: { select: { id: true, name: true } } },
+    include: { shop: { select: SHOP_SELECT } },
   });
   return { thread: created, shop };
 }
@@ -133,11 +145,11 @@ router.get("/threads", requireAuth, requireRole("buyer"), async (req, res) => {
         buyerHiddenAt: null,
         OR: [{ buyerId: buyer.id }, { buyerPhone: buyer.phone }],
       },
-      include: { shop: { select: { id: true, name: true } } },
+      include: { shop: { select: SHOP_SELECT } },
       orderBy: { lastAt: "desc" },
       take: 100,
     });
-    return ok(res, list.map((t) => publicThread(t)));
+    return ok(res, list.map((t) => publicThread(t, { req })));
   } catch (err) {
     console.error("chat threads list", err);
     return fail(res, 500, "Could not load chats", "db_error");
@@ -172,11 +184,11 @@ router.get(
         where: { id: result.thread.id },
         data: { buyerLastReadAt: now },
         include: {
-          shop: { select: { id: true, name: true } },
+          shop: { select: SHOP_SELECT },
           messages: { orderBy: { createdAt: "asc" }, take: 200 },
         },
       });
-      return ok(res, publicThread(full, { includeMessages: true }));
+      return ok(res, publicThread(full, { includeMessages: true, req }));
     } catch (err) {
       console.error("chat with-shop get", err);
       return fail(res, 500, "Could not open chat", "db_error");
@@ -212,7 +224,11 @@ router.post(
         return fail(res, result.error.status, result.error.message);
       }
 
-      const text = parsed.data.text.trim();
+      const text =
+        String(parsed.data.text || "").trim() ||
+        (parsed.data.productName
+          ? `I'd like to ask about ${String(parsed.data.productName).trim()}`
+          : "");
       const msg = await prisma.$transaction(async (tx) => {
         const created = await tx.chatMessage.create({
           data: {
@@ -286,7 +302,7 @@ router.get("/threads/:id", requireAuth, requireRole("buyer"), async (req, res) =
         OR: [{ buyerId: buyer.id }, { buyerPhone: buyer.phone }],
       },
       include: {
-        shop: { select: { id: true, name: true } },
+        shop: { select: SHOP_SELECT },
         messages: { orderBy: { createdAt: "asc" }, take: 200 },
       },
     });
@@ -297,11 +313,11 @@ router.get("/threads/:id", requireAuth, requireRole("buyer"), async (req, res) =
       where: { id: thread.id },
       data: { buyerLastReadAt: now },
       include: {
-        shop: { select: { id: true, name: true } },
+        shop: { select: SHOP_SELECT },
         messages: { orderBy: { createdAt: "asc" }, take: 200 },
       },
     });
-    return ok(res, publicThread(updated, { includeMessages: true }));
+    return ok(res, publicThread(updated, { includeMessages: true, req }));
   } catch (err) {
     console.error("chat thread get", err);
     return fail(res, 500, "Could not load chat", "db_error");

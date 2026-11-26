@@ -5,6 +5,7 @@
 import { prisma } from "./prisma.js";
 import { sendExpoPushMessages, withDeliveryDefaults } from "./expo-push.js";
 import { ensureBuyerNotifyTables } from "./ensure-schema.js";
+import { normalizePhone } from "./phone.js";
 
 const ANDROID_CHANNEL_ID = "default";
 const PRODUCT_PUSH_DEDUPE_MS = Number(process.env.PRODUCT_PUSH_DEDUPE_MS || 120000);
@@ -235,4 +236,200 @@ export async function sendBuyerTestPush(userId) {
     data: { type: "test" },
   });
   return { ok: true, ...result };
+}
+
+async function tokensForBuyer(userId) {
+  const id = String(userId || "").trim();
+  if (!id) return [];
+  await ensureBuyerNotifyTables();
+  const rows = await prisma.$queryRawUnsafe(
+    `SELECT id, userId, token, language FROM DevicePushToken WHERE userId = ?`,
+    id,
+  );
+  return rows || [];
+}
+
+/**
+ * When a merchant replies in shop chat — push the buyer (QR App / Marketplace).
+ */
+export function notifyBuyerChatReply({
+  buyerId,
+  shopId,
+  threadId,
+  shopName,
+  text,
+}) {
+  void notifyBuyerChatReplyAsync({
+    buyerId,
+    shopId,
+    threadId,
+    shopName,
+    text,
+  }).catch((e) =>
+    console.warn("notify buyer chat", String(e?.message || e).slice(0, 200)),
+  );
+}
+
+async function notifyBuyerChatReplyAsync({
+  buyerId,
+  shopId,
+  threadId,
+  shopName,
+  text,
+}) {
+  if (!buyerId || !threadId || !shopId) return;
+
+  const who = String(shopName || "").trim() || "Shop";
+  const preview = String(text || "").trim().slice(0, 120);
+  const title = "New message";
+  const body = preview ? `${who}: ${preview}` : who;
+  const titleMy = "မက်ဆေ့ချ်အသစ်";
+  const bodyMy = preview ? `${who} — ${preview}` : who;
+  const data = {
+    type: "chat",
+    kind: "message",
+    threadId,
+    shopId,
+  };
+
+  await insertBuyerNotification({
+    kind: "message",
+    title,
+    body,
+    titleMy,
+    bodyMy,
+    data,
+  });
+
+  const tokens = await tokensForBuyer(buyerId);
+  await pushToBuyerTokens(tokens, {
+    title,
+    body,
+    titleMy,
+    bodyMy,
+    data,
+  });
+}
+
+async function resolveBuyerUserId(buyerId, buyerPhone) {
+  const id = String(buyerId || "").trim();
+  if (id) return id;
+  const phone = normalizePhone(buyerPhone);
+  if (!phone) return "";
+  const user = await prisma.user.findFirst({
+    where: { role: "buyer", active: true, phone },
+    select: { id: true },
+  });
+  return user?.id || "";
+}
+
+async function notifyBuyerOrderStatusAsync({
+  buyerId,
+  buyerPhone,
+  orderId,
+  orderCode,
+  shopName,
+  title,
+  body,
+  titleMy,
+  bodyMy,
+  status,
+}) {
+  const oid = String(orderId || "").trim();
+  if (!oid) return;
+
+  const userId = await resolveBuyerUserId(buyerId, buyerPhone);
+  if (!userId) return;
+
+  const who = String(shopName || "").trim() || "Shop";
+  const code = String(orderCode || "").trim();
+  const label = code || oid.slice(-6);
+  const data = {
+    type: "order",
+    kind: "order",
+    status: status || undefined,
+    orderId: oid,
+    orderCode: code || undefined,
+    shopName: who,
+  };
+
+  const notificationId = await insertBuyerNotification({
+    kind: "order",
+    title,
+    body,
+    titleMy,
+    bodyMy,
+    data,
+  });
+
+  const tokens = await tokensForBuyer(userId);
+  await pushToBuyerTokens(tokens, {
+    title,
+    body,
+    titleMy,
+    bodyMy,
+    data: { ...data, id: notificationId, label },
+  });
+}
+
+/** Buyer just placed an order — acknowledgment push. */
+export function notifyBuyerOrderPlaced({
+  buyerId,
+  buyerPhone,
+  orderId,
+  orderCode,
+  shopName,
+}) {
+  const who = String(shopName || "").trim() || "Shop";
+  const code = String(orderCode || "").trim();
+  void notifyBuyerOrderStatusAsync({
+    buyerId,
+    buyerPhone,
+    orderId,
+    orderCode,
+    shopName: who,
+    status: "placed",
+    title: "Order placed",
+    body: code
+      ? `Your order ${code} was sent to ${who}`
+      : `Your order was sent to ${who}`,
+    titleMy: "အော်ဒါ ပေးပို့ပြီး",
+    bodyMy: code
+      ? `အော်ဒါ ${code} ကို ${who} သို့ ပို့ပြီးပါပြီ`
+      : `သင့်အော်ဒါကို ${who} သို့ ပို့ပြီးပါပြီ`,
+  }).catch((e) =>
+    console.warn("notify buyer order placed", String(e?.message || e).slice(0, 200)),
+  );
+}
+
+/**
+ * When merchant confirms (approves) an order — push that buyer.
+ */
+export function notifyBuyerOrderConfirmed({
+  buyerId,
+  buyerPhone,
+  orderId,
+  orderCode,
+  shopName,
+}) {
+  const who = String(shopName || "").trim() || "Shop";
+  const code = String(orderCode || "").trim();
+  void notifyBuyerOrderStatusAsync({
+    buyerId,
+    buyerPhone,
+    orderId,
+    orderCode,
+    shopName: who,
+    status: "confirmed",
+    title: "Order confirmed",
+    body: code
+      ? `${who} confirmed order ${code}`
+      : `${who} confirmed your order`,
+    titleMy: "အော်ဒါ အတည်ပြုပြီး",
+    bodyMy: code
+      ? `${who} က အော်ဒါ ${code} ကို အတည်ပြုပါပြီ`
+      : `${who} က သင့်အော်ဒါကို အတည်ပြုပါပြီ`,
+  }).catch((e) =>
+    console.warn("notify buyer order", String(e?.message || e).slice(0, 200)),
+  );
 }

@@ -19,6 +19,10 @@ import {
 } from "../lib/ensure-schema.js";
 import { publishOrderEvent } from "../lib/realtime.js";
 import { notifyShopNewOrder } from "../lib/merchant-notify.js";
+import {
+  notifyBuyerOrderConfirmed,
+  notifyBuyerOrderPlaced,
+} from "../lib/buyer-notify.js";
 import { allocateOrderCode, looksLikeOrderCode } from "../lib/order-code.js";
 import {
   normalizeOrderStage,
@@ -421,6 +425,13 @@ async function createOrderPayload(
 
   publishOrderEvent(order, "created");
   notifyShopNewOrder(order);
+  notifyBuyerOrderPlaced({
+    buyerId: order.buyerId,
+    buyerPhone: order.buyerPhone,
+    orderId: order.id,
+    orderCode: order.code,
+    shopName: order.shop?.name,
+  });
   return { order };
 }
 
@@ -905,7 +916,7 @@ router.patch(
     const updated = await prisma.order.update({
       where: { id: order.id },
       data,
-      include: { lines: true },
+      include: { lines: true, shop: { select: { name: true } } },
     });
 
     /** Stock OUT when order leaves approved into out/ready/complete — not on Approve alone */
@@ -919,6 +930,20 @@ router.patch(
       } catch (e) {
         console.warn("stock out", e);
       }
+    }
+
+    /** Buyer push when merchant newly confirms (approve) the order */
+    const becameApproved =
+      normalizeOrderStage(updated.stage) === "approved" &&
+      normalizeOrderStage(order.stage) !== "approved";
+    if (becameApproved) {
+      notifyBuyerOrderConfirmed({
+        buyerId: updated.buyerId,
+        buyerPhone: updated.buyerPhone,
+        orderId: updated.id,
+        orderCode: updated.code,
+        shopName: updated.shop?.name,
+      });
     }
 
     publishOrderEvent(updated, "updated");

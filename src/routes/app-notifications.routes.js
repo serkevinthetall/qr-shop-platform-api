@@ -20,22 +20,51 @@ function newId(prefix) {
 }
 
 function mapRow(r) {
+  let data = {};
+  try {
+    data = r.dataJson ? JSON.parse(r.dataJson) : {};
+  } catch {
+    data = {};
+  }
+  const kind = String(r.kind || "");
+  const when =
+    r.createdAt instanceof Date
+      ? r.createdAt.toISOString()
+      : String(r.createdAt || "");
+  if (kind === "message") {
+    return {
+      id: r.id,
+      type: "message",
+      title: r.title || undefined,
+      body: r.body || undefined,
+      thread_id: data.threadId || undefined,
+      shop_id: data.shopId || undefined,
+      date: when,
+      create_date: when,
+    };
+  }
+  if (kind === "order") {
+    return {
+      id: r.id,
+      type: "order",
+      title: r.title || undefined,
+      body: r.body || undefined,
+      order_id: data.orderId || undefined,
+      order_code: data.orderCode || undefined,
+      date: when,
+      create_date: when,
+    };
+  }
   return {
     id: r.id,
-    type: r.kind === "coupon" ? "coupon" : "product",
+    type: kind === "coupon" ? "coupon" : "product",
     product_id: r.productId || undefined,
     product_name: r.productName || undefined,
     ribbon_name: r.ribbonName || undefined,
     coupon_code: r.couponCode || undefined,
     amount: r.amount == null ? undefined : Number(r.amount),
-    date:
-      r.createdAt instanceof Date
-        ? r.createdAt.toISOString()
-        : String(r.createdAt || ""),
-    create_date:
-      r.createdAt instanceof Date
-        ? r.createdAt.toISOString()
-        : String(r.createdAt || ""),
+    date: when,
+    create_date: when,
   };
 }
 

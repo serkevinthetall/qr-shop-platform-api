@@ -8,6 +8,7 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { shopIdOrFail } from "../lib/merchant-auth.js";
 import { publishMessageEvent } from "../lib/realtime.js";
+import { notifyBuyerChatReply } from "../lib/buyer-notify.js";
 import {
   isoOrNull,
   messageIsReadByPeer,
@@ -18,9 +19,21 @@ const router = Router();
 
 router.use(requireAuth, requireRole("merchant", "staff"));
 
-const sendSchema = z.object({
-  text: z.string().min(1).max(4000),
-});
+const sendSchema = z
+  .object({
+    text: z.string().max(4000).optional(),
+    productId: z.string().optional(),
+    productName: z.string().optional(),
+    productImageUrl: z.string().optional(),
+    productPriceLabel: z.string().optional(),
+  })
+  .refine(
+    (v) =>
+      Boolean(String(v.text || "").trim()) ||
+      Boolean(String(v.productName || "").trim()) ||
+      Boolean(String(v.productId || "").trim()),
+    { message: "Message or product required" },
+  );
 
 function publicThread(row, { includeMessages = false } = {}) {
   const buyerLastReadAt = isoOrNull(row.buyerLastReadAt);
@@ -118,16 +131,30 @@ router.post("/chat/threads/:id/messages", async (req, res) => {
 
     const thread = await prisma.chatThread.findFirst({
       where: { id: req.params.id, shopId },
+      include: { shop: { select: { name: true } } },
     });
     if (!thread) return fail(res, 404, "Chat not found");
 
-    const text = parsed.data.text.trim();
+    const text =
+      String(parsed.data.text || "").trim() ||
+      (parsed.data.productName
+        ? `Shared: ${String(parsed.data.productName).trim()}`
+        : "");
+    const productId = parsed.data.productId?.trim() || null;
+    const productName = parsed.data.productName?.trim() || null;
+    const productImageUrl = parsed.data.productImageUrl?.trim() || null;
+    const productPriceLabel = parsed.data.productPriceLabel?.trim() || null;
+
     const msg = await prisma.$transaction(async (tx) => {
       const created = await tx.chatMessage.create({
         data: {
           threadId: thread.id,
           from: "merchant",
           text,
+          productId,
+          productName,
+          productImageUrl,
+          productPriceLabel,
         },
       });
       const now = new Date();
@@ -155,6 +182,16 @@ router.post("/chat/threads/:id/messages", async (req, res) => {
       "replied",
     );
 
+    if (thread.buyerId) {
+      notifyBuyerChatReply({
+        buyerId: thread.buyerId,
+        shopId,
+        threadId: thread.id,
+        shopName: thread.shop?.name || null,
+        text,
+      });
+    }
+
     return ok(
       res,
       {
@@ -164,8 +201,10 @@ router.post("/chat/threads/:id/messages", async (req, res) => {
           threadId: msg.threadId,
           from: "merchant",
           text: msg.text,
-          productId: null,
-          productName: null,
+          productId: msg.productId,
+          productName: msg.productName,
+          productImageUrl: msg.productImageUrl,
+          productPriceLabel: msg.productPriceLabel,
           createdAt: msg.createdAt,
           read: messageIsReadByPeer(msg.createdAt, thread.buyerLastReadAt),
         },
