@@ -15,23 +15,16 @@ import { toAppCatalogProduct } from "../lib/app-catalog-product.js";
 import { parseMallProductId } from "../lib/mall-product.js";
 import { defaultCategories } from "../lib/mall-meta.js";
 import { ensureCategoriesSeeded } from "../lib/categories.js";
-import { sellChannelWhere } from "../lib/merchant-product.js";
+import {
+  findBuyerProduct,
+  findBuyerProducts,
+  sellChannelWhere,
+} from "../lib/merchant-product.js";
 import { optionalAuth } from "../middlewares/auth.middleware.js";
 import { normalizePhone } from "../lib/phone.js";
 import { isRegisteredBuyer } from "../lib/shop-customers.js";
 
 const router = Router();
-
-const productInclude = {
-  shop: {
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      features: true,
-    },
-  },
-};
 
 const appShopGate = {
   status: "approved",
@@ -157,9 +150,8 @@ router.get("/", async (req, res) => {
     const fetchTake = Math.min(500, limit + 24);
     const [totalRaw, products] = await Promise.all([
       prisma.product.count({ where }),
-      prisma.product.findMany({
+      findBuyerProducts({
         where,
-        include: productInclude,
         orderBy: { updatedAt: "desc" },
         skip,
         take: fetchTake,
@@ -196,7 +188,7 @@ router.get("/:id", async (req, res) => {
     const { productId } = parseMallProductId(req.params.id);
     if (!productId) return fail(res, 400, "product id required");
 
-    const product = await prisma.product.findFirst({
+    const product = await findBuyerProduct({
       where: {
         id: productId,
         ...sellChannelWhere("app"),
@@ -206,7 +198,6 @@ router.get("/:id", async (req, res) => {
         ],
         shop: appShopGate,
       },
-      include: productInclude,
     });
     if (!product) return fail(res, 404, "Product not found");
 

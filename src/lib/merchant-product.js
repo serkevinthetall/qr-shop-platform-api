@@ -8,8 +8,94 @@ function isUnknownColumnError(err) {
     err?.code === "P2022" ||
     /unknown column/i.test(msg) ||
     /does not exist in the current database/i.test(msg) ||
-    /foodInfoJson/i.test(msg)
+    /foodInfoJson/i.test(msg) ||
+    /description/i.test(msg)
   );
+}
+
+/** Buyer mall/app list — omit foodInfoJson so Hostinger still serves when column is missing. */
+const buyerProductScalars = {
+  id: true,
+  shopId: true,
+  name: true,
+  priceKs: true,
+  priceB2bKs: true,
+  wholesaleMinQty: true,
+  compareAtKs: true,
+  stock: true,
+  categoryId: true,
+  badge: true,
+  imageUrl: true,
+  templateId: true,
+  attributesJson: true,
+  active: true,
+  sellOnMarketplace: true,
+  sellOnApp: true,
+  updatedAt: true,
+  viewsWebsite: true,
+  viewsApp: true,
+  viewsQr: true,
+};
+
+const buyerShopSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  features: true,
+};
+
+function buyerProductSelect(includeFoodInfo) {
+  return {
+    ...buyerProductScalars,
+    ...(includeFoodInfo ? { foodInfoJson: true } : {}),
+    shop: { select: buyerShopSelect },
+  };
+}
+
+/**
+ * Mall / App catalog findMany that survives missing Product.foodInfoJson.
+ * Prefers including foodInfoJson when the column exists.
+ */
+export async function findBuyerProducts(args = {}) {
+  const { where, orderBy, skip, take } = args;
+  await ensureProductFoodInfoColumn().catch(() => {});
+
+  async function run(includeFoodInfo) {
+    return prisma.product.findMany({
+      where,
+      select: buyerProductSelect(includeFoodInfo),
+      ...(orderBy ? { orderBy } : {}),
+      ...(skip != null ? { skip } : {}),
+      ...(take != null ? { take } : {}),
+    });
+  }
+
+  try {
+    return await run(true);
+  } catch (err) {
+    if (!isUnknownColumnError(err)) throw err;
+  }
+  return run(false);
+}
+
+/** Single SKU for mall/app PDP — same resilience as findBuyerProducts. */
+export async function findBuyerProduct(args = {}) {
+  const { where } = args;
+  await ensureProductFoodInfoColumn().catch(() => {});
+
+  async function run(includeFoodInfo) {
+    return prisma.product.findFirst({
+      where,
+      select: buyerProductSelect(includeFoodInfo),
+    });
+  }
+
+  try {
+    return await run(true);
+  } catch (err) {
+    if (!isUnknownColumnError(err)) throw err;
+  }
+  return run(false);
 }
 
 /**

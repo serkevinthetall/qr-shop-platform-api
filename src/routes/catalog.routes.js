@@ -6,7 +6,11 @@ import { toMallProduct, parseMallProductId } from "../lib/mall-product.js";
 import { defaultCategories, defaultHero } from "../lib/mall-meta.js";
 import { ensureCategoriesSeeded } from "../lib/categories.js";
 import { listActiveProductBadges } from "../lib/product-badges.js";
-import { sellChannelWhere } from "../lib/merchant-product.js";
+import {
+  findBuyerProduct,
+  findBuyerProducts,
+  sellChannelWhere,
+} from "../lib/merchant-product.js";
 
 const router = Router();
 
@@ -20,17 +24,6 @@ function catalogClientChannel(req) {
   if (h === "web" || h === "website" || h === "marketplace") return "marketplace";
   return "marketplace";
 }
-
-const productInclude = {
-  shop: {
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      features: true,
-    },
-  },
-};
 
 /**
  * GET /api/catalog/categories — Marketplace category chips
@@ -177,16 +170,24 @@ router.get("/", async (req, res) => {
 
     const [total, products] = await Promise.all([
       prisma.product.count({ where }),
-      prisma.product.findMany({
+      findBuyerProducts({
         where,
-        include: productInclude,
         orderBy: { updatedAt: "desc" },
         skip,
         take: limit,
       }),
     ]);
 
-    return ok(res, products.map(toMallProduct), {
+    const mapped = [];
+    for (const p of products) {
+      try {
+        mapped.push(toMallProduct(p));
+      } catch (mapErr) {
+        console.error("catalog map product", p?.id, mapErr);
+      }
+    }
+
+    return ok(res, mapped, {
       page,
       limit,
       total,
@@ -194,7 +195,12 @@ router.get("/", async (req, res) => {
     });
   } catch (err) {
     console.error("catalog list", err);
-    return fail(res, 500, "Could not load catalog", "db_error");
+    return fail(
+      res,
+      500,
+      `Could not load catalog: ${String(err?.message || err).slice(0, 180)}`,
+      "db_error",
+    );
   }
 });
 
@@ -279,7 +285,7 @@ router.get("/:id", async (req, res) => {
     const clientChannel = catalogClientChannel(req);
     const channelKey =
       clientChannel === "app" ? "sellOnApp" : "sellOnMarketplace";
-    const product = await prisma.product.findFirst({
+    const product = await findBuyerProduct({
       where: {
         id: productId,
         active: true,
@@ -297,13 +303,17 @@ router.get("/:id", async (req, res) => {
           ],
         },
       },
-      include: productInclude,
     });
     if (!product) return fail(res, 404, "Product not found");
     return ok(res, toMallProduct(product));
   } catch (err) {
     console.error("catalog get", err);
-    return fail(res, 500, "Could not load product", "db_error");
+    return fail(
+      res,
+      500,
+      `Could not load product: ${String(err?.message || err).slice(0, 180)}`,
+      "db_error",
+    );
   }
 });
 
