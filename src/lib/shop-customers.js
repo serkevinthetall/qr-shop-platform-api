@@ -258,25 +258,49 @@ export async function listCustomers(opts = {}) {
   return list;
 }
 
+const registeredBuyerSelect = {
+  id: true,
+  name: true,
+  phone: true,
+  email: true,
+  role: true,
+  passwordLoginEnabled: true,
+};
+
 /** Find registered QR App buyer by email (exact, case-insensitive). */
 export async function findRegisteredBuyerByEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!normalized || !normalized.includes("@")) return null;
-  const user = await prisma.user.findFirst({
+  return prisma.user.findFirst({
     where: {
       role: "buyer",
       email: normalized,
       passwordLoginEnabled: true,
       active: true,
     },
-    select: {
-      id: true,
-      name: true,
-      phone: true,
-      email: true,
-      role: true,
-      passwordLoginEnabled: true,
-    },
+    select: registeredBuyerSelect,
   });
-  return user;
+}
+
+/** Find registered QR App buyer by phone (normalized). */
+export async function findRegisteredBuyerByPhone(phone) {
+  const normalized = normalizePhone(phone);
+  if (!normalized || normalized.length < 6) return null;
+  return prisma.user.findFirst({
+    where: {
+      role: "buyer",
+      phone: normalized,
+      passwordLoginEnabled: true,
+      active: true,
+    },
+    select: registeredBuyerSelect,
+  });
+}
+
+/** Resolve registered buyer from email or phone input. */
+export async function findRegisteredBuyerByContact(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  if (s.includes("@")) return findRegisteredBuyerByEmail(s);
+  return findRegisteredBuyerByPhone(s);
 }

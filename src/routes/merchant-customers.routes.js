@@ -8,7 +8,7 @@ import { ok, fail } from "../lib/response.js";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
 import { normalizePhone } from "../lib/phone.js";
 import {
-  findRegisteredBuyerByEmail,
+  findRegisteredBuyerByContact,
   isRegisteredBuyer,
   listCustomers,
 } from "../lib/shop-customers.js";
@@ -50,17 +50,19 @@ router.get("/customers", async (req, res) => {
   }
 });
 
-/** GET /api/merchant/customers/lookup?email= */
+/** GET /api/merchant/customers/lookup?email= | ?phone= | ?q= */
 router.get("/customers/lookup", async (req, res) => {
   const shopId = shopIdOrFail(req, res);
   if (!shopId) return;
-  const email = String(req.query.email || "").trim();
-  if (!email.includes("@")) {
-    return fail(res, 400, "Email required");
+  const contact = String(
+    req.query.q || req.query.email || req.query.phone || "",
+  ).trim();
+  if (!contact) {
+    return fail(res, 400, "Email or phone required");
   }
-  const user = await findRegisteredBuyerByEmail(email);
+  const user = await findRegisteredBuyerByContact(contact);
   if (!user) {
-    return fail(res, 404, "No registered QR App user with that email");
+    return fail(res, 404, "No registered QR App user with that email or phone");
   }
   if (!normalizePhone(user.phone)) {
     return fail(res, 400, "That App user has no phone on file");
@@ -81,22 +83,36 @@ router.get("/customers/lookup", async (req, res) => {
   });
 });
 
-const addSchema = z.object({
-  email: z.string().email(),
-  wholesaleAllowed: z.boolean().optional(),
-  note: z.string().max(500).optional(),
-});
+const addSchema = z
+  .object({
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    q: z.string().optional(),
+    wholesaleAllowed: z.boolean().optional(),
+    note: z.string().max(500).optional(),
+  })
+  .refine(
+    (d) =>
+      Boolean(String(d.q || "").trim()) ||
+      Boolean(String(d.email || "").trim()) ||
+      Boolean(String(d.phone || "").trim()),
+    { message: "email or phone required" },
+  );
 
-/** POST /api/merchant/customers — add registered App user by email */
+/** POST /api/merchant/customers — add registered App user by email or phone */
 router.post("/customers", async (req, res) => {
   const shopId = shopIdOrFail(req, res);
   if (!shopId) return;
   const parsed = addSchema.safeParse(req.body);
-  if (!parsed.success) return fail(res, 400, "Valid email required");
+  if (!parsed.success) return fail(res, 400, "Email or phone required");
 
-  const user = await findRegisteredBuyerByEmail(parsed.data.email);
+  const contact =
+    String(parsed.data.q || "").trim() ||
+    String(parsed.data.email || "").trim() ||
+    String(parsed.data.phone || "").trim();
+  const user = await findRegisteredBuyerByContact(contact);
   if (!user) {
-    return fail(res, 404, "No registered QR App user with that email");
+    return fail(res, 404, "No registered QR App user with that email or phone");
   }
   const phone = normalizePhone(user.phone);
   if (!phone) {
