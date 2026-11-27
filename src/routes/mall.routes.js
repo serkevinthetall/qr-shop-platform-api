@@ -11,6 +11,7 @@ import {
   publicAnnouncement,
   toDbFields,
 } from "../lib/announcement.js";
+import { ensurePlatformSettingsMerchantMaintenance } from "../lib/ensure-schema.js";
 
 const router = Router();
 
@@ -21,7 +22,25 @@ const defaultSettings = {
   marketplace: true,
   submissions: true,
   publicEnquiries: true,
+  merchantMaintenance: false,
+  merchantMaintenanceMessage: null,
 };
+
+function mapPlatformSettings(row) {
+  return {
+    homePage: row.homePage !== false,
+    shopsDirectory: row.shopsDirectory !== false,
+    marketplace: row.marketplace !== false,
+    submissions: row.submissions !== false,
+    publicEnquiries: row.publicEnquiries !== false,
+    merchantMaintenance: Boolean(row.merchantMaintenance),
+    merchantMaintenanceMessage:
+      row.merchantMaintenanceMessage == null
+        ? null
+        : String(row.merchantMaintenanceMessage),
+    updatedAt: row.updatedAt?.toISOString?.() ?? null,
+  };
+}
 
 /** GET /api/mall/payments — active platform payment catalog (public / merchants) */
 router.get("/payments", async (_req, res) => {
@@ -34,23 +53,17 @@ router.get("/payments", async (_req, res) => {
   }
 });
 
-/** GET /api/mall/settings — Marketplace kill-switches */
+/** GET /api/mall/settings — Marketplace kill-switches + Merchant maintenance */
 router.get("/settings", async (_req, res) => {
   try {
+    await ensurePlatformSettingsMerchantMaintenance();
     const row =
       (await prisma.platformSettings.findUnique({ where: { id: "default" } })) ??
       defaultSettings;
-    return ok(res, {
-      homePage: row.homePage,
-      shopsDirectory: row.shopsDirectory,
-      marketplace: row.marketplace,
-      submissions: row.submissions,
-      publicEnquiries: row.publicEnquiries,
-      updatedAt: row.updatedAt?.toISOString?.() ?? null,
-    });
+    return ok(res, mapPlatformSettings(row));
   } catch (err) {
     console.error("mall settings", err);
-    return ok(res, defaultSettings);
+    return ok(res, mapPlatformSettings(defaultSettings));
   }
 });
 
@@ -60,22 +73,38 @@ router.patch(
   requireAuth,
   requireRole("admin"),
   async (req, res) => {
-    const data = {};
-    for (const key of [
-      "homePage",
-      "shopsDirectory",
-      "marketplace",
-      "submissions",
-      "publicEnquiries",
-    ]) {
-      if (typeof req.body[key] === "boolean") data[key] = req.body[key];
+    try {
+      await ensurePlatformSettingsMerchantMaintenance();
+      const data = {};
+      for (const key of [
+        "homePage",
+        "shopsDirectory",
+        "marketplace",
+        "submissions",
+        "publicEnquiries",
+        "merchantMaintenance",
+      ]) {
+        if (typeof req.body[key] === "boolean") data[key] = req.body[key];
+      }
+      if (
+        "merchantMaintenanceMessage" in req.body &&
+        (req.body.merchantMaintenanceMessage == null ||
+          typeof req.body.merchantMaintenanceMessage === "string")
+      ) {
+        const raw = req.body.merchantMaintenanceMessage;
+        data.merchantMaintenanceMessage =
+          raw == null ? null : String(raw).trim().slice(0, 500) || null;
+      }
+      const row = await prisma.platformSettings.upsert({
+        where: { id: "default" },
+        create: { id: "default", ...data },
+        update: data,
+      });
+      return ok(res, mapPlatformSettings(row));
+    } catch (err) {
+      console.error("mall settings patch", err);
+      return fail(res, 500, "Could not save settings", "db_error");
     }
-    const row = await prisma.platformSettings.upsert({
-      where: { id: "default" },
-      create: { id: "default", ...data },
-      update: data,
-    });
-    return ok(res, row);
   },
 );
 

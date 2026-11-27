@@ -1,5 +1,7 @@
 import { Router } from "express";
+import { prisma } from "../lib/prisma.js";
 import { ok } from "../lib/response.js";
+import { ensurePlatformSettingsMerchantMaintenance } from "../lib/ensure-schema.js";
 
 const router = Router();
 
@@ -69,10 +71,14 @@ router.get("/", (_req, res) => {
 });
 
 /**
- * Public — Merchant native app polls this for force-update.
+ * Public — Merchant web + native polls this for force-update / maintenance.
  * GET /api/app-config/merchant
  *
+ * Maintenance is Admin-controlled (PlatformSettings.merchantMaintenance).
+ * Env MERCHANT_APP_MAINTENANCE=true can also force maintenance on.
+ *
  * Hostinger env (optional):
+ *   MERCHANT_APP_MAINTENANCE          (true|false — emergency override)
  *   MERCHANT_APP_MIN_VERSION          (default 0.0.1 — match current Merchant beta)
  *   MERCHANT_APP_MIN_IOS_VERSION
  *   MERCHANT_APP_MIN_ANDROID_VERSION
@@ -80,15 +86,45 @@ router.get("/", (_req, res) => {
  *   MERCHANT_IOS_STORE_URL
  *   MERCHANT_ANDROID_STORE_URL
  *   MERCHANT_UPDATE_MESSAGE
+ *   MERCHANT_MAINTENANCE_MESSAGE
  */
-router.get("/merchant", (_req, res) => {
+router.get("/merchant", async (_req, res) => {
   const minVersion = envStr("MERCHANT_APP_MIN_VERSION", "0.0.1");
   const minIos = envStr("MERCHANT_APP_MIN_IOS_VERSION", minVersion);
   const minAndroid = envStr("MERCHANT_APP_MIN_ANDROID_VERSION", minVersion);
   const forceUpdate = envBool("MERCHANT_FORCE_UPDATE", false);
+  const envMaintenance = envBool("MERCHANT_APP_MAINTENANCE", false);
+  const defaultMaintMsg =
+    "QR Merchant is temporarily under maintenance. Please try again later.";
+
+  let dbMaintenance = false;
+  let dbMaintMsg = null;
+  try {
+    await ensurePlatformSettingsMerchantMaintenance();
+    const row = await prisma.platformSettings.findUnique({
+      where: { id: "default" },
+    });
+    if (row) {
+      dbMaintenance = Boolean(row.merchantMaintenance);
+      dbMaintMsg = row.merchantMaintenanceMessage
+        ? String(row.merchantMaintenanceMessage)
+        : null;
+    }
+  } catch (err) {
+    console.warn(
+      "app-config merchant settings",
+      String(err?.message || err).slice(0, 200),
+    );
+  }
+
+  const maintenance = envMaintenance || dbMaintenance;
+  const maintenanceMessage =
+    dbMaintMsg ||
+    envStr("MERCHANT_MAINTENANCE_MESSAGE", defaultMaintMsg);
 
   return ok(res, {
     app: "merchant",
+    maintenance,
     forceUpdate,
     minVersion,
     minIosVersion: minIos,
@@ -112,6 +148,8 @@ router.get("/merchant", (_req, res) => {
       "MERCHANT_UPDATE_MESSAGE",
       "A new QR Merchant version is required. Please update from the store.",
     ),
+    maintenanceMessage,
+    maintenance_message: maintenanceMessage,
   });
 });
 

@@ -14,6 +14,7 @@ let merchantNotifyTablesReady = false;
 let buyerNotifyTablesReady = false;
 let productFoodInfoReady = false;
 let shopSubscriptionReady = false;
+let platformSettingsMerchantMaintReady = false;
 
 function isDupColumn(err) {
   const msg = String(err?.message || err);
@@ -405,6 +406,35 @@ export async function ensureShopSubscriptionColumns() {
   shopSubscriptionReady = true;
 }
 
+/** Admin-controlled Merchant maintenance flags on PlatformSettings. */
+export async function ensurePlatformSettingsMerchantMaintenance() {
+  if (platformSettingsMerchantMaintReady) return;
+  const cols = [
+    ["merchantMaintenance", "TINYINT(1) NOT NULL DEFAULT 0"],
+    ["merchantMaintenanceMessage", "VARCHAR(500) NULL"],
+  ];
+  for (const [col, def] of cols) {
+    try {
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE \`PlatformSettings\`
+        ADD COLUMN \`${col}\` ${def}
+      `);
+      console.log(`ensure-schema: added PlatformSettings.${col}`);
+    } catch (err) {
+      if (isDupColumn(err)) {
+        /* already migrated */
+      } else {
+        console.warn(
+          `ensure-schema: PlatformSettings.${col}`,
+          String(err?.message || err).slice(0, 240),
+        );
+        throw err;
+      }
+    }
+  }
+  platformSettingsMerchantMaintReady = true;
+}
+
 export async function ensureSchemaPatches() {
   await Promise.all([
     ensureExpressZonesColumn().catch(() => {}),
@@ -421,5 +451,6 @@ export async function ensureSchemaPatches() {
     ensureBuyerNotifyTables().catch(() => {}),
     ensureProductFoodInfoColumn().catch(() => {}),
     ensureShopSubscriptionColumns().catch(() => {}),
+    ensurePlatformSettingsMerchantMaintenance().catch(() => {}),
   ]);
 }

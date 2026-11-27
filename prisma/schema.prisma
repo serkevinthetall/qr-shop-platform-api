@@ -643,13 +643,16 @@ model PlatformPaymentMethod {
 
 /** Kill-switches for Marketplace (Admin) */
 model PlatformSettings {
-  id              String   @id @default("default")
-  homePage        Boolean  @default(true)
-  shopsDirectory  Boolean  @default(true)
-  marketplace     Boolean  @default(true)
-  submissions     Boolean  @default(true)
-  publicEnquiries Boolean  @default(true)
-  updatedAt       DateTime @updatedAt
+  id                         String   @id @default("default")
+  homePage                   Boolean  @default(true)
+  shopsDirectory             Boolean  @default(true)
+  marketplace                Boolean  @default(true)
+  submissions                Boolean  @default(true)
+  publicEnquiries            Boolean  @default(true)
+  /** Admin: pause QR Merchant web + native apps */
+  merchantMaintenance        Boolean  @default(false)
+  merchantMaintenanceMessage String?  @db.VarChar(500)
+  updatedAt                  DateTime @updatedAt
 }
 
 /**
